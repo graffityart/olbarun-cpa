@@ -1,48 +1,7 @@
 import { integer, jsonb, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { advertisers, conversions, partners } from "./core";
-
-export const advertiserLedger = pgTable("advertiser_ledger", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  advertiserId: uuid("advertiser_id").notNull().references(() => advertisers.id),
-  conversionId: uuid("conversion_id").references(() => conversions.id),
-  type: varchar("type", { length: 32 }).notNull(),
-  amount: integer("amount").notNull(),
-  balanceAfter: integer("balance_after"),
-  description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-export const earnings = pgTable("earnings", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  partnerId: uuid("partner_id").notNull().references(() => partners.id),
-  conversionId: uuid("conversion_id").references(() => conversions.id),
-  type: varchar("type", { length: 32 }).notNull(),
-  amount: integer("amount").notNull(),
-  status: varchar("status", { length: 24 }).default("AVAILABLE").notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-export const settlements = pgTable("settlements", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  settlementCode: varchar("settlement_code", { length: 40 }).notNull().unique(),
-  partnerId: uuid("partner_id").notNull().references(() => partners.id),
-  requestedAmount: integer("requested_amount").notNull(),
-  deductionAmount: integer("deduction_amount").default(0).notNull(),
-  paymentAmount: integer("payment_amount").notNull(),
-  status: varchar("status", { length: 24 }).default("REQUESTED").notNull(),
-  bankAccountSnapshot: jsonb("bank_account_snapshot"),
-  requestedAt: timestamp("requested_at", { withTimezone: true }).defaultNow().notNull(),
-  approvedAt: timestamp("approved_at", { withTimezone: true }),
-  paidAt: timestamp("paid_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
-
-export const settlementItems = pgTable("settlement_items", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  settlementId: uuid("settlement_id").notNull().references(() => settlements.id),
-  earningId: uuid("earning_id").notNull().references(() => earnings.id),
-  conversionId: uuid("conversion_id").references(() => conversions.id),
-  amount: integer("amount").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+import { postingSubmissions } from "./posting";
+export const advertiserLedger=pgTable("advertiser_ledger",{id:uuid("id").defaultRandom().primaryKey(),advertiserId:uuid("advertiser_id").notNull().references(()=>advertisers.id),conversionId:uuid("conversion_id").references(()=>conversions.id),postingSubmissionId:uuid("posting_submission_id").references(()=>postingSubmissions.id),type:varchar("type",{length:32}).notNull(),amount:integer("amount").notNull(),balanceAfter:integer("balance_after"),description:text("description"),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull()});
+export const earnings=pgTable("earnings",{id:uuid("id").defaultRandom().primaryKey(),partnerId:uuid("partner_id").notNull().references(()=>partners.id),conversionId:uuid("conversion_id").references(()=>conversions.id),postingSubmissionId:uuid("posting_submission_id").references(()=>postingSubmissions.id),type:varchar("type",{length:32}).notNull(),amount:integer("amount").notNull(),status:varchar("status",{length:24}).default("AVAILABLE").notNull(),description:text("description"),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull()});
+export const settlements=pgTable("settlements",{id:uuid("id").defaultRandom().primaryKey(),settlementCode:varchar("settlement_code",{length:40}).notNull().unique(),partnerId:uuid("partner_id").notNull().references(()=>partners.id),requestedAmount:integer("requested_amount").notNull(),deductionAmount:integer("deduction_amount").default(0).notNull(),paymentAmount:integer("payment_amount").notNull(),status:varchar("status",{length:24}).default("REQUESTED").notNull(),bankAccountSnapshot:jsonb("bank_account_snapshot"),requestedAt:timestamp("requested_at",{withTimezone:true}).defaultNow().notNull(),approvedAt:timestamp("approved_at",{withTimezone:true}),paidAt:timestamp("paid_at",{withTimezone:true}),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull()});
+export const settlementItems=pgTable("settlement_items",{id:uuid("id").defaultRandom().primaryKey(),settlementId:uuid("settlement_id").notNull().references(()=>settlements.id),earningId:uuid("earning_id").notNull().references(()=>earnings.id),conversionId:uuid("conversion_id").references(()=>conversions.id),amount:integer("amount").notNull(),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull()});
