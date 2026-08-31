@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db";
-import { advertiserUsers, advertisers, authSessions, partners, users } from "@/db/schema";
+import { authSessions, partners, users } from "@/db/schema";
 
 const COOKIE_NAME = "olbarun_session";
 const SESSION_DAYS = 14;
@@ -31,23 +31,10 @@ export async function getCurrentUser() {
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
   const now = new Date();
-  const rows = await getDb().select({
-    id: users.id,
-    email: users.email,
-    role: users.role,
-    status: users.status,
-    partnerId: partners.id,
-    partnerCode: partners.partnerCode,
-    partnerName: partners.name,
-    advertiserId: advertiserUsers.advertiserId,
-    advertiserCode: advertisers.advertiserCode,
-    advertiserName: advertisers.companyName,
-  })
+  const rows = await getDb().select({ id: users.id, email: users.email, role: users.role, status: users.status, partnerId: partners.id, partnerCode: partners.partnerCode, partnerName: partners.name })
     .from(authSessions)
     .innerJoin(users, eq(authSessions.userId, users.id))
     .leftJoin(partners, eq(partners.userId, users.id))
-    .leftJoin(advertiserUsers, eq(advertiserUsers.userId, users.id))
-    .leftJoin(advertisers, eq(advertisers.id, advertiserUsers.advertiserId))
     .where(and(eq(authSessions.tokenHash, hashToken(token)), gt(authSessions.expiresAt, now)))
     .limit(1);
   return rows[0] ?? null;
