@@ -1,0 +1,2 @@
+import { getDb } from "@/db";import { auditLogs } from "@/db/schema";
+export async function writeAudit(input:{actorUserId?:string|null;action:string;targetType?:string;targetId?:string;summary:string;metadata?:Record<string,unknown>}){await getDb().insert(auditLogs).values({actorUserId:input.actorUserId??null,action:input.action,targetType:input.targetType??null,targetId:input.targetId??null,summary:input.summary,metadata:input.metadata??{}});}
