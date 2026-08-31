@@ -1,0 +1,2 @@
+import { integer,pgTable,timestamp,uuid,varchar } from "drizzle-orm/pg-core";
+export const loginAttempts=pgTable("login_attempts",{id:uuid("id").defaultRandom().primaryKey(),keyHash:varchar("key_hash",{length:64}).notNull(),failedCount:integer("failed_count").notNull().default(0),windowStartedAt:timestamp("window_started_at",{withTimezone:true}).defaultNow().notNull(),blockedUntil:timestamp("blocked_until",{withTimezone:true}),updatedAt:timestamp("updated_at",{withTimezone:true}).defaultNow().notNull()});
