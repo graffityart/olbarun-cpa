@@ -1,47 +1,18 @@
 import DashboardShell from "@/components/DashboardShell";
-
-const nav = [
-  { href: "/admin", label: "대시보드" },
-  { href: "/admin/partners", label: "파트너 관리" },
-  { href: "/admin/advertisers", label: "광고주 관리" },
-  { href: "/admin/campaigns", label: "캠페인 관리" },
-  { href: "/admin/conversions", label: "전환 DB" },
-  { href: "/admin/posting", label: "포스팅 작업" },
-  { href: "/admin/ledger", label: "광고비·수익" },
-  { href: "/admin/settlements", label: "정산" },
-  { href: "/admin/audit", label: "감사로그" },
-];
-
-export default function AdminPage() {
-  return (
-    <DashboardShell title="올바른광고 ADMIN" description="운영자가 오늘 처리할 업무와 주요 성과를 한눈에 확인합니다." nav={nav}>
-      <section className="stats">
-        <div className="panel stat"><span>오늘 클릭</span><strong>0</strong></div>
-        <div className="panel stat"><span>오늘 DB</span><strong>0</strong></div>
-        <div className="panel stat"><span>승인</span><strong>0</strong></div>
-        <div className="panel stat"><span>승인율</span><strong>0%</strong></div>
-      </section>
-
-      <section className="grid-3" style={{ marginBottom: 20 }}>
-        <div className="panel card"><h3>광고주 매출</h3><p>0원</p></div>
-        <div className="panel card"><h3>파트너 확정수익</h3><p>0원</p></div>
-        <div className="panel card"><h3>매출총차액</h3><p>0원</p></div>
-      </section>
-
-      <section className="panel card">
-        <h3>처리 필요</h3>
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>항목</th><th>건수</th><th>상태</th></tr></thead>
-            <tbody>
-              <tr><td>검수중 전환</td><td>0</td><td><span className="badge">대기</span></td></tr>
-              <tr><td>거절 요청</td><td>0</td><td><span className="badge">대기</span></td></tr>
-              <tr><td>포스팅 검수</td><td>0</td><td><span className="badge">대기</span></td></tr>
-              <tr><td>정산 신청</td><td>0</td><td><span className="badge">대기</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </DashboardShell>
-  );
-}
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { getDb } from "@/db";
+import { advertiserLedger, clicks, conversions, earnings, postingSubmissions, settlements } from "@/db/schema";
+import { requireAdmin } from "@/lib/auth/guards";
+const nav=[{href:"/admin",label:"대시보드"},{href:"/admin/partners",label:"파트너 관리"},{href:"/admin/advertisers",label:"광고주 관리"},{href:"/admin/campaigns",label:"캠페인 관리"},{href:"/admin/conversions",label:"전환 DB"},{href:"/admin/posting",label:"포스팅 작업"},{href:"/admin/ledger",label:"광고비·수익"},{href:"/admin/settlements",label:"정산"},{href:"/admin/audit",label:"감사로그"}];
+export const dynamic="force-dynamic";
+export default async function AdminPage(){await requireAdmin();const db=getDb();const now=new Date();const kst=new Date(now.getTime()+9*3600000);const todayKst=new Date(Date.UTC(kst.getUTCFullYear(),kst.getUTCMonth(),kst.getUTCDate())-9*3600000);
+const[[clickRow],[convRow],[salesRow],[earningRow],[reviewRow],[rejectRow],[postingRow],[settleRow]]=await Promise.all([
+db.select({n:sql<number>`count(*)`}).from(clicks).where(gte(clicks.clickedAt,todayKst)),
+db.select({total:sql<number>`count(*)`,approved:sql<number>`count(*) filter (where ${conversions.status}='APPROVED')`}).from(conversions).where(gte(conversions.submittedAt,todayKst)),
+db.select({v:sql<number>`coalesce(sum(case when ${advertiserLedger.amount}<0 then -${advertiserLedger.amount} else 0 end),0)`}).from(advertiserLedger),
+db.select({v:sql<number>`coalesce(sum(${earnings.amount}),0)`}).from(earnings),
+db.select({n:sql<number>`count(*)`}).from(conversions).where(inArray(conversions.status,["RECEIVED","REVIEWING"])),
+db.select({n:sql<number>`count(*)`}).from(conversions).where(eq(conversions.status,"REJECTION_REQUESTED")),
+db.select({n:sql<number>`count(*)`}).from(postingSubmissions).where(inArray(postingSubmissions.status,["SUBMITTED","REVISION_REQUESTED"])),
+db.select({n:sql<number>`count(*)`}).from(settlements).where(eq(settlements.status,"REQUESTED"))]);
+const clicksToday=Number(clickRow?.n??0),total=Number(convRow?.total??0),approved=Number(convRow?.approved??0),sales=Number(salesRow?.v??0),partner=Number(earningRow?.v??0);return <DashboardShell title="올바른광고 ADMIN" description="운영자가 오늘 처리할 업무와 주요 성과를 한눈에 확인합니다." nav={nav}><section className="stats"><div className="panel stat"><span>오늘 클릭</span><strong>{clicksToday}</strong></div><div className="panel stat"><span>오늘 DB</span><strong>{total}</strong></div><div className="panel stat"><span>오늘 승인</span><strong>{approved}</strong></div><div className="panel stat"><span>승인율</span><strong>{total?((approved/total)*100).toFixed(1):"0"}%</strong></div></section><section className="grid-3" style={{marginBottom:20}}><div className="panel card"><h3>광고주 누적매출</h3><p>{sales.toLocaleString("ko-KR")}원</p></div><div className="panel card"><h3>파트너 누적수익</h3><p>{partner.toLocaleString("ko-KR")}원</p></div><div className="panel card"><h3>매출총차액</h3><p>{Math.max(0,sales-partner).toLocaleString("ko-KR")}원</p></div></section><section className="panel card"><h3>처리 필요</h3><div className="table-wrap"><table><thead><tr><th>항목</th><th>건수</th><th>바로가기</th></tr></thead><tbody><tr><td>검수중 전환</td><td>{Number(reviewRow?.n??0)}</td><td><a href="/admin/conversions">처리</a></td></tr><tr><td>거절 요청</td><td>{Number(rejectRow?.n??0)}</td><td><a href="/admin/conversions">처리</a></td></tr><tr><td>포스팅 검수</td><td>{Number(postingRow?.n??0)}</td><td><a href="/admin/posting">처리</a></td></tr><tr><td>정산 신청</td><td>{Number(settleRow?.n??0)}</td><td><a href="/admin/settlements">처리</a></td></tr></tbody></table></div></section></DashboardShell>}
