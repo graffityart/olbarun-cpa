@@ -1,0 +1,88 @@
+:root {
+  --bg: #f6f8fb;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --primary: #155eef;
+  --primary-dark: #0b45bf;
+  --success: #0f9f6e;
+  --warning: #d97706;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+  font-family: Arial, "Noto Sans KR", sans-serif;
+}
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; }
+
+.shell { min-height: 100vh; }
+.topbar {
+  height: 64px;
+  padding: 0 28px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { font-size: 20px; font-weight: 800; }
+.brand span { color: var(--primary); }
+.nav { display: flex; gap: 20px; color: #374151; font-size: 14px; }
+.container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+.hero { padding: 88px 0 72px; }
+.hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 28px; align-items: center; }
+.eyebrow { color: var(--primary); font-weight: 800; font-size: 14px; margin-bottom: 14px; }
+h1 { font-size: clamp(38px, 6vw, 66px); line-height: 1.08; margin: 0 0 20px; letter-spacing: -0.04em; }
+.lead { color: var(--muted); font-size: 19px; line-height: 1.7; margin: 0 0 28px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-weight: 700; cursor: pointer; }
+.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.primary:hover { background: var(--primary-dark); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 12px 30px rgba(17,24,39,.05); }
+.hero-panel { padding: 24px; }
+.metric { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.metric:last-child { border-bottom: 0; }
+.metric strong { display: block; font-size: 28px; margin-top: 6px; }
+.section { padding: 22px 0 70px; }
+.section-title { font-size: 30px; letter-spacing: -0.03em; margin: 0 0 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card { padding: 22px; }
+.card h3 { margin: 0 0 10px; font-size: 20px; }
+.card p { margin: 0; color: var(--muted); line-height: 1.65; }
+.dashboard { display: grid; grid-template-columns: 230px 1fr; min-height: calc(100vh - 64px); }
+.sidebar { background: #111827; color: #d1d5db; padding: 24px 16px; }
+.sidebar strong { display: block; color: #fff; margin-bottom: 18px; }
+.sidebar a { display: block; padding: 11px 12px; border-radius: 8px; margin-bottom: 4px; }
+.sidebar a:hover { background: #1f2937; color: #fff; }
+.content { padding: 28px; }
+.page-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 22px; }
+.page-head h1 { font-size: 30px; margin: 0; }
+.muted { color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat { padding: 18px; }
+.stat span { color: var(--muted); font-size: 13px; }
+.stat strong { display: block; margin-top: 8px; font-size: 25px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 13px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+th { color: #4b5563; background: #f9fafb; }
+.badge { display: inline-flex; align-items: center; min-height: 24px; padding: 0 9px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 12px; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .hero-grid, .grid-3, .stats { grid-template-columns: 1fr 1fr; }
+  .dashboard { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+@media (max-width: 620px) {
+  .nav { display: none; }
+  .hero { padding-top: 54px; }
+  .hero-grid, .grid-3, .stats { grid-template-columns: 1fr; }
+  .content { padding: 18px; }
+  .container { width: min(100% - 28px, 1180px); }
+}
