@@ -1,0 +1,3 @@
+import { boolean, jsonb, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { users } from "./core";
+export const notifications=pgTable("notifications",{id:uuid("id").defaultRandom().primaryKey(),userId:uuid("user_id").notNull().references(()=>users.id),type:varchar("type",{length:50}).notNull(),title:varchar("title",{length:200}).notNull(),message:text("message").notNull(),href:text("href"),metadata:jsonb("metadata").$type<Record<string,unknown>>().notNull().default({}),isRead:boolean("is_read").notNull().default(false),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull()});
