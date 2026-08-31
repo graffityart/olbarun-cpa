@@ -1,12 +1,13 @@
 import { sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const db = getDb();
     const result = await db.execute(sql`select now() as database_time`);
-    const row = result.rows?.[0] as { database_time?: string } | undefined;
+    const row = result[0] as { database_time?: string | Date } | undefined;
 
     return Response.json({
       ok: true,
