@@ -1,0 +1,6 @@
+import { eq, inArray } from "drizzle-orm";
+import { getDb } from "@/db";
+import { advertiserUsers, notifications, users } from "@/db/schema";
+export async function notifyUser(userId:string,input:{type:string;title:string;message:string;href?:string;metadata?:Record<string,unknown>}){await getDb().insert(notifications).values({userId,type:input.type,title:input.title,message:input.message,href:input.href??null,metadata:input.metadata??{}});}
+export async function notifyAdmins(input:{type:string;title:string;message:string;href?:string}){const admins=await getDb().select({id:users.id}).from(users).where(inArray(users.role,["ADMIN","SUPER_ADMIN"]));if(admins.length)await getDb().insert(notifications).values(admins.map(a=>({userId:a.id,type:input.type,title:input.title,message:input.message,href:input.href??null,metadata:{}})));}
+export async function notifyAdvertiser(advertiserId:string,input:{type:string;title:string;message:string;href?:string}){const members=await getDb().select({userId:advertiserUsers.userId}).from(advertiserUsers).where(eq(advertiserUsers.advertiserId,advertiserId));if(members.length)await getDb().insert(notifications).values(members.map(m=>({userId:m.userId,type:input.type,title:input.title,message:input.message,href:input.href??null,metadata:{}})));}
