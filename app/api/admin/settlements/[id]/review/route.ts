@@ -1,29 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { earnings, settlementItems, settlements } from "@/db/schema";
-
-export async function POST(request: Request,{params}:{params:Promise<{id:string}>}){
-  const {id}=await params; const body=await request.json(); const action=String(body.action??"");
-  if(!["APPROVE","PAID","REJECT"].includes(action)) return Response.json({ok:false,error:"INVALID_ACTION"},{status:400});
-  try{
-    const result=await getDb().transaction(async tx=>{
-      const [row]=await tx.select().from(settlements).where(eq(settlements.id,id)).limit(1); if(!row) throw new Error("NOT_FOUND");
-      if(action==="APPROVE"){
-        if(row.status!=="REQUESTED") throw new Error("INVALID_STATUS");
-        await tx.update(settlements).set({status:"APPROVED",approvedAt:new Date()}).where(eq(settlements.id,id));
-      }else if(action==="PAID"){
-        if(row.status!=="APPROVED") throw new Error("INVALID_STATUS");
-        await tx.update(settlements).set({status:"PAID",paidAt:new Date()}).where(eq(settlements.id,id));
-        const items=await tx.select().from(settlementItems).where(eq(settlementItems.settlementId,id));
-        for(const item of items) await tx.update(earnings).set({status:"PAID"}).where(eq(earnings.id,item.earningId));
-      }else{
-        if(row.status!=="REQUESTED") throw new Error("INVALID_STATUS");
-        await tx.update(settlements).set({status:"REJECTED"}).where(eq(settlements.id,id));
-        const items=await tx.select().from(settlementItems).where(eq(settlementItems.settlementId,id));
-        for(const item of items) await tx.update(earnings).set({status:"AVAILABLE"}).where(eq(earnings.id,item.earningId));
-      }
-      return true;
-    });
-    return Response.json({ok:result});
-  }catch(e){const error=e instanceof Error?e.message:"REVIEW_FAILED";return Response.json({ok:false,error},{status:error==="NOT_FOUND"?404:409});}
-}
+import { earnings, partners, settlementItems, settlements } from "@/db/schema";
+import { notifyUser } from "@/lib/notifications";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){const{id}=await params;const body=await request.json();const action=String(body.action??"");if(!["APPROVE","PAID","REJECT"].includes(action))return Response.json({ok:false,error:"INVALID_ACTION"},{status:400});try{const result=await getDb().transaction(async tx=>{const[row]=await tx.select({settlement:settlements,userId:partners.userId,partnerName:partners.name}).from(settlements).innerJoin(partners,eq(settlements.partnerId,partners.id)).where(eq(settlements.id,id)).limit(1);if(!row)throw new Error("NOT_FOUND");if(action==="APPROVE"){if(row.settlement.status!=="REQUESTED")throw new Error("INVALID_STATUS");await tx.update(settlements).set({status:"APPROVED",approvedAt:new Date()}).where(eq(settlements.id,id));}else if(action==="PAID"){if(row.settlement.status!=="APPROVED")throw new Error("INVALID_STATUS");await tx.update(settlements).set({status:"PAID",paidAt:new Date()}).where(eq(settlements.id,id));const items=await tx.select().from(settlementItems).where(eq(settlementItems.settlementId,id));for(const item of items)await tx.update(earnings).set({status:"PAID"}).where(eq(earnings.id,item.earningId));}else{if(row.settlement.status!=="REQUESTED")throw new Error("INVALID_STATUS");await tx.update(settlements).set({status:"REJECTED"}).where(eq(settlements.id,id));const items=await tx.select().from(settlementItems).where(eq(settlementItems.settlementId,id));for(const item of items)await tx.update(earnings).set({status:"AVAILABLE"}).where(eq(earnings.id,item.earningId));}return{userId:row.userId,code:row.settlement.settlementCode,amount:row.settlement.paymentAmount,action};});const map={APPROVE:{title:"정산 신청이 승인되었습니다",message:`${result.code} 정산 ${result.amount.toLocaleString("ko-KR")}원이 승인되었습니다.`},PAID:{title:"정산금 지급이 완료되었습니다",message:`${result.code} 정산 ${result.amount.toLocaleString("ko-KR")}원이 지급 완료되었습니다.`},REJECT:{title:"정산 신청이 반려되었습니다",message:`${result.code} 정산 신청이 반려되어 금액이 다시 출금가능 상태로 복구되었습니다.`}} as const;const n=map[result.action as keyof typeof map];await notifyUser(result.userId,{type:`SETTLEMENT_${result.action}`,title:n.title,message:n.message,href:"/partner/settlements"});return Response.json({ok:true});}catch(e){const error=e instanceof Error?e.message:"REVIEW_FAILED";return Response.json({ok:false,error},{status:error==="NOT_FOUND"?404:409});}}
