@@ -1,77 +1,12 @@
 import DashboardShell from "@/components/DashboardShell";
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { campaigns, partners, postingApplications, postingCampaigns, postingSubmissions } from "@/db/schema";
+import { requireAdmin } from "@/lib/auth/guards";
 
-export const dynamic = "force-dynamic";
-
-const nav = [
-  { href: "/admin", label: "대시보드" },
-  { href: "/admin/partners", label: "파트너 관리" },
-  { href: "/admin/advertisers", label: "광고주 관리" },
-  { href: "/admin/campaigns", label: "캠페인 관리" },
-  { href: "/admin/conversions", label: "전환 DB" },
-  { href: "/admin/posting", label: "포스팅 작업" },
-  { href: "/admin/ledger", label: "광고비·수익" },
-  { href: "/admin/settlements", label: "정산" },
-];
-
-async function loadRows() {
-  try {
-    return await getDb()
-      .select({
-        id: postingSubmissions.id,
-        title: postingSubmissions.title,
-        postUrl: postingSubmissions.postUrl,
-        status: postingSubmissions.status,
-        submittedAt: postingSubmissions.submittedAt,
-        campaignName: campaigns.name,
-        partnerName: partners.name,
-        partnerCode: partners.partnerCode,
-      })
-      .from(postingSubmissions)
-      .innerJoin(postingApplications, eq(postingSubmissions.applicationId, postingApplications.id))
-      .innerJoin(postingCampaigns, eq(postingApplications.postingCampaignId, postingCampaigns.id))
-      .innerJoin(campaigns, eq(postingCampaigns.campaignId, campaigns.id))
-      .innerJoin(partners, eq(postingApplications.partnerId, partners.id))
-      .orderBy(desc(postingSubmissions.submittedAt));
-  } catch {
-    return [];
-  }
-}
-
-export default async function PostingAdminPage() {
-  const rows = await loadRows();
-  const counts = rows.reduce<Record<string, number>>((acc, row) => { acc[row.status] = (acc[row.status] ?? 0) + 1; return acc; }, {});
-
-  return (
-    <DashboardShell title="포스팅 작업관리" description="제출된 게시물의 검수·수정요청·승인·거절을 관리합니다." nav={nav}>
-      <section className="stats">
-        <div className="panel stat"><span>전체 제출</span><strong>{rows.length}</strong></div>
-        <div className="panel stat"><span>검수중</span><strong>{counts.SUBMITTED ?? 0}</strong></div>
-        <div className="panel stat"><span>수정요청</span><strong>{counts.REVISION_REQUESTED ?? 0}</strong></div>
-        <div className="panel stat"><span>승인</span><strong>{counts.APPROVED ?? 0}</strong></div>
-      </section>
-
-      <section className="panel card">
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>캠페인</th><th>파트너</th><th>제목</th><th>제출일</th><th>상태</th><th>관리</th></tr></thead>
-            <tbody>
-              {rows.length ? rows.map((row) => (
-                <tr key={row.id}>
-                  <td><strong>{row.campaignName}</strong></td>
-                  <td>{row.partnerName} <span className="muted">({row.partnerCode})</span></td>
-                  <td>{row.title || "제목 없음"}</td>
-                  <td>{row.submittedAt.toLocaleString("ko-KR")}</td>
-                  <td><span className="badge">{row.status}</span></td>
-                  <td><a className="btn" href={`/admin/posting/${row.id}`}>검수</a></td>
-                </tr>
-              )) : <tr><td colSpan={6} className="empty-cell">아직 제출된 포스팅 작업이 없습니다.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </DashboardShell>
-  );
-}
+export const dynamic="force-dynamic";
+const nav=[{href:"/admin",label:"대시보드"},{href:"/admin/partners",label:"파트너 관리"},{href:"/admin/advertisers",label:"광고주 관리"},{href:"/admin/campaigns",label:"캠페인 관리"},{href:"/admin/conversions",label:"전환 DB"},{href:"/admin/posting",label:"포스팅 작업"},{href:"/admin/ledger",label:"광고비·수익"},{href:"/admin/settlements",label:"정산"}];
+const labels:Record<string,string>={SUBMITTED:"검수대기",REVISION_REQUESTED:"수정요청",APPROVED:"승인완료",REJECTED:"거절"};
+const filters=[{value:"ALL",label:"전체"},{value:"SUBMITTED",label:"검수대기"},{value:"REVISION_REQUESTED",label:"수정요청"},{value:"APPROVED",label:"승인완료"},{value:"REJECTED",label:"거절"}];
+async function loadRows(){return getDb().select({id:postingSubmissions.id,title:postingSubmissions.title,postUrl:postingSubmissions.postUrl,status:postingSubmissions.status,revisionCount:postingSubmissions.revisionCount,submittedAt:postingSubmissions.submittedAt,campaignName:campaigns.name,partnerName:partners.name,partnerCode:partners.partnerCode}).from(postingSubmissions).innerJoin(postingApplications,eq(postingSubmissions.applicationId,postingApplications.id)).innerJoin(postingCampaigns,eq(postingApplications.postingCampaignId,postingCampaigns.id)).innerJoin(campaigns,eq(postingCampaigns.campaignId,campaigns.id)).innerJoin(partners,eq(postingApplications.partnerId,partners.id)).orderBy(asc(sql`case when ${postingSubmissions.status}='SUBMITTED' then 0 when ${postingSubmissions.status}='REVISION_REQUESTED' then 1 else 2 end`),desc(postingSubmissions.submittedAt));}
+export default async function PostingAdminPage({searchParams}:{searchParams:Promise<{status?:string;q?:string}>}){await requireAdmin();const p=await searchParams;const status=filters.some(f=>f.value===p.status)?p.status??"ALL":"ALL",q=(p.q??"").trim().toLowerCase();const all=await loadRows();const counts=all.reduce<Record<string,number>>((a,r)=>(a[r.status]=(a[r.status]??0)+1,a),{});const rows=all.filter(r=>(status==="ALL"||r.status===status)&&(!q||r.campaignName.toLowerCase().includes(q)||r.partnerName.toLowerCase().includes(q)||r.partnerCode.toLowerCase().includes(q)||(r.title??"").toLowerCase().includes(q)));return <DashboardShell title="포스팅 작업관리" description="검수대기 작업을 우선 확인하고 수정요청·승인·거절을 관리합니다." nav={nav}><section className="stats"><div className="panel stat"><span>전체 제출</span><strong>{all.length}</strong></div><div className="panel stat"><span>검수대기</span><strong>{counts.SUBMITTED??0}</strong></div><div className="panel stat"><span>수정요청</span><strong>{counts.REVISION_REQUESTED??0}</strong></div><div className="panel stat"><span>승인완료</span><strong>{counts.APPROVED??0}</strong></div></section><section className="panel card"><form method="get" className="page-toolbar"><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{filters.map(f=><a key={f.value} className={`btn ${status===f.value?"primary":""}`} href={`/admin/posting?status=${f.value}${q?`&q=${encodeURIComponent(q)}`:""}`}>{f.label}</a>)}</div><div style={{display:"flex",gap:8}}><input name="q" defaultValue={p.q??""} placeholder="캠페인·파트너·제목 검색"/><input type="hidden" name="status" value={status}/><button className="btn" type="submit">검색</button></div></form><div className="table-wrap"><table><thead><tr><th>캠페인</th><th>파트너</th><th>제목</th><th>제출일</th><th>상태</th><th>관리</th></tr></thead><tbody>{rows.length?rows.map(row=><tr key={row.id}><td><strong>{row.campaignName}</strong></td><td>{row.partnerName}<br/><span className="muted">{row.partnerCode}</span></td><td><a href={row.postUrl} target="_blank" rel="noopener noreferrer">{row.title||"게시물 보기"}</a></td><td>{row.submittedAt.toLocaleString("ko-KR")}</td><td><span className="badge">{labels[row.status]??row.status}</span>{row.revisionCount>0?<div className="muted">수정 {row.revisionCount}회</div>:null}</td><td><a className={`btn ${row.status==="SUBMITTED"?"primary":""}`} href={`/admin/posting/${row.id}`}>{row.status==="SUBMITTED"?"검수하기":"상세보기"}</a></td></tr>):<tr><td colSpan={6} className="empty-cell">조건에 맞는 포스팅 작업이 없습니다.</td></tr>}</tbody></table></div></section></DashboardShell>}
