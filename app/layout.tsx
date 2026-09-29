@@ -29,6 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/campaigns">광고 캠페인</Link>
               <Link href="/partner">파트너센터</Link>
               <Link href="/advertiser">광고주센터</Link>
+              <Link href="/customer">고객센터</Link>
               <Link href="/login">로그인</Link>
             </nav>
           </header>
