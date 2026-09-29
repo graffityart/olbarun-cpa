@@ -14,7 +14,7 @@ export default function HomePage() {
           <div>
             <div className="eyebrow">성과형 광고를 더 투명하게</div>
             <h1>광고주와 파트너를<br />성과로 연결합니다.</h1>
-            <p className="lead">올바른광고는 CPA 전환, 포스팅 작업, 광고비, 파트너 수익과 정산을 하나의 흐름으로 관리하는 성과형 광고 플랫폼입니다.</p>
+            <p className="lead">마이픽업은 CPA 전환, 포스팅 작업, 광고비, 파트너 수익과 정산을 하나의 흐름으로 관리하는 성과형 광고 플랫폼입니다.</p>
             <div className="actions">
               <Link className="btn primary" href="/partner">파트너센터 보기</Link>
               <Link className="btn" href="/advertiser">광고주센터 보기</Link>
@@ -30,7 +30,7 @@ export default function HomePage() {
 
       <section className="section">
         <div className="container">
-          <h2 className="section-title">올바른광고 핵심 구조</h2>
+          <h2 className="section-title">마이픽업 핵심 구조</h2>
           <div className="grid-3">
             {features.map(([title, body]) => (
               <article className="panel card" key={title}>
