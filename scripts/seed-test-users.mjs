@@ -1,18 +1,18 @@
 import crypto from "node:crypto";
 import postgres from "postgres";
 
+if(process.env.SEED_TEST_USERS!=="true"){
+ console.log("Test account seed skipped (SEED_TEST_USERS is not true)");
+ process.exit(0);
+}
 const url=process.env.DATABASE_URL;
 if(!url) throw new Error("DATABASE_URL is required");
 const password=process.env.TEST_ACCOUNT_PASSWORD;
-if(!password || password.length<12) throw new Error("TEST_ACCOUNT_PASSWORD must be at least 12 characters");
+if(!password || password.length<8) throw new Error("TEST_ACCOUNT_PASSWORD must be at least 8 characters");
 const sql=postgres(url,{max:1});
 function hashPassword(value){const salt=crypto.randomBytes(16).toString("hex");const hash=crypto.scryptSync(value,salt,64).toString("hex");return `scrypt$${salt}$${hash}`;}
 const hash=hashPassword(password);
-const accounts=[
- {email:"test-admin@olbarunad.kr",role:"ADMIN"},
- {email:"test-advertiser@olbarunad.kr",role:"ADVERTISER"},
- {email:"test-partner@olbarunad.kr",role:"PARTNER"},
-];
+const accounts=[{email:"test-admin@olbarunad.kr",role:"ADMIN"},{email:"test-advertiser@olbarunad.kr",role:"ADVERTISER"},{email:"test-partner@olbarunad.kr",role:"PARTNER"}];
 try{
  await sql.begin(async tx=>{
   for(const a of accounts){await tx`insert into users (email,password_hash,role,status,email_verified_at,updated_at) values (${a.email},${hash},${a.role}::user_role,'ACTIVE'::user_status,now(),now()) on conflict (email) do update set password_hash=excluded.password_hash,role=excluded.role,status='ACTIVE'::user_status,email_verified_at=coalesce(users.email_verified_at,now()),updated_at=now()`;}
