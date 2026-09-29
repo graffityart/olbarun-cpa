@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "seed:test-users": "node scripts/seed-test-users.mjs"
   },
   "dependencies": {
     "drizzle-orm": "latest",
