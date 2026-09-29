@@ -9,6 +9,7 @@ const url=process.env.DATABASE_URL;
 if(!url) throw new Error("DATABASE_URL is required");
 const password=process.env.TEST_ACCOUNT_PASSWORD;
 if(!password || password.length<8) throw new Error("TEST_ACCOUNT_PASSWORD must be at least 8 characters");
+console.log(`Test account seed enabled (${password.length} character password configured)`);
 const sql=postgres(url,{max:1});
 function hashPassword(value){const salt=crypto.randomBytes(16).toString("hex");const hash=crypto.scryptSync(value,salt,64).toString("hex");return `scrypt$${salt}$${hash}`;}
 const hash=hashPassword(password);
