@@ -1,4 +1,5 @@
 import Link from "next/link";
+import "./biz-home.css";
 
 const campaigns=[
  {tag:"진행중",brand:"STARBUCKS",title:"스타벅스 신규 앱 회원가입",rate:"승인율 95%",reward:"3,900원",kind:"카드/금융"},
