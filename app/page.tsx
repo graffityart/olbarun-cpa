@@ -9,10 +9,18 @@ const campaigns=[
  {tag:"진행중",brand:"배달의민족",title:"배달의민족 신규 회원가입",rate:"승인율 90%",reward:"3,100원",kind:"앱/게임"},
  {tag:"인기",brand:"N",title:"네이버페이 신규 회원가입",rate:"승인율 88%",reward:"2,500원",kind:"통신/앱"}
 ];
-const cats=["전체상품","카드/금융","쇼핑몰","통신/앱","앱/게임","설문조사","블로그 포스팅","이벤트","API 연동"];
+const quickMenus=[
+ {label:"전체 상품",href:"/campaigns",icon:"all-products.png",fallback:"🛍"},
+ {label:"CPA알바",href:"/campaigns?type=cpa",icon:"cpa-job.png",fallback:"📣"},
+ {label:"포스팅알바",href:"/campaigns?type=posting",icon:"posting-job.png",fallback:"📝"},
+ {label:"1초알바",href:"/campaigns?type=quick",icon:"one-second-job.png",fallback:"⚡"},
+ {label:"수익확인",href:"/partner",icon:"earnings.png",fallback:"📈"},
+ {label:"고객센터",href:"/customer",icon:"customer-center.png",fallback:"🎧"},
+ {label:"광고의뢰(광고주)",href:"/advertiser",icon:"advertiser.png",fallback:"🤝"}
+];
 export default function Home(){return <main className="biz-home">
  <section className="biz-hero"><div className="container biz-hero-grid"><div><span className="biz-pill">성과 인만큼 온라인 부업 플랫폼</span><h1>지금, 당신의 시간을<br/><b>수익으로 바꿔보세요</b></h1><p>CPA 참여부터 포스팅 알바까지<br/>마이픽업과 함께라면 누구나 쉽게 시작할 수 있습니다.</p><form className="biz-search" action="/campaigns"><input name="q" placeholder="원하는 캠페인을 검색해보세요 (예: 쿠팡, 스타벅스, 카드 등)"/><button aria-label="검색">⌕</button></form><div className="biz-keywords">인기검색어　 카드발급　 쇼핑몰 가입　 앱 설치　 설문조사　 블로그 포스팅</div></div><div className="hero-image-slot hero-image-live"><Image src="/images/home/hero-main.png" alt="마이픽업 CPA 및 포스팅 성과형 광고 플랫폼" fill priority sizes="(max-width: 950px) 100vw, 48vw"/></div></div></section>
- <nav className="container category-bar">{cats.map((x,i)=><Link key={x} href={`/campaigns?category=${encodeURIComponent(x)}`}><i>{["▦","▣","▰","▯","◉","☑","✎","◆","↗"][i]}</i><span>{x}</span></Link>)}</nav>
+ <nav className="container category-bar quick-menu-bar">{quickMenus.map((m,i)=><Link key={m.label} href={m.href} className={`quick-menu quick-menu-${i+1}`}><span className="quick-icon"><span className="quick-fallback" aria-hidden="true">{m.fallback}</span><img src={`/images/home/menu-icons/${m.icon}`} alt="" aria-hidden="true"/></span><strong>{m.label}</strong><span className="quick-arrow" aria-hidden="true">›</span></Link>)}</nav>
  <section className="container biz-campaign"><div className="biz-section-head"><div><h2>MD's Pick! 지금 인기 있는 캠페인</h2><p>지금 가장 많이 참여하고 있는 인기 캠페인을 확인해보세요.</p></div><Link href="/campaigns">전체 캠페인 보기 →</Link></div><div className="campaign-row">{campaigns.map((c,i)=><Link href={`/campaigns?q=${encodeURIComponent(c.title)}`} className="biz-card" key={c.title}><span className="state">{c.tag}</span><div className={`biz-thumb thumb-${i+1}`}><small>{c.kind}</small><b>{c.brand}</b><em>IMAGE SLOT</em></div><h3>{c.title}</h3><p>{c.rate}</p><strong>{c.reward}</strong></Link>)}</div></section>
  <section className="biz-service"><div className="container service-grid"><div className="service-intro"><span>ⓘ MYPICKUP SERVICE</span><h2>한 번의 참여로<br/>다양한 브랜드의<br/>캠페인을 만나보세요</h2><p>검증된 기업과 함께하는 신뢰할 수 있는 CPA·포스팅 알바 플랫폼입니다.</p><Link className="biz-btn" href="/campaigns">지금 시작하기 →</Link></div><div className="service-cards"><article><b>⌘</b><div><h3>간편한 참여</h3><p>회원가입 후 원하는 캠페인을 선택하고 미션만 수행하면 끝!</p></div></article><article><b>▣</b><div><h3>다양한 플랫폼</h3><p>네이버, 카카오, 인스타, 유튜브 등 다양한 채널의 캠페인 제공</p></div></article><article><b>♢</b><div><h3>안전한 정산</h3><p>검증된 광고주와 투명한 정산으로 안전하게 수익을 받을 수 있습니다.</p></div></article><article><b>◷</b><div><h3>빠른 승인</h3><p>대부분의 캠페인은 빠르게 승인 상태를 확인할 수 있습니다.</p></div></article></div></div></section>
  <section className="container proof"><h2>이미 많은 분들이 마이픽업과 함께하고 있습니다</h2><div><p><b>700+</b><span>제휴 기업</span></p><p><b>19만+</b><span>누적 회원 수</span></p><p><b>99.9%</b><span>정산 완료율</span></p><p><b>4.8/5</b><span>회원 만족도</span></p></div></section>
