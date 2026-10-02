@@ -33,7 +33,9 @@ export default function AnimatedCounter({
 
         const tick = (now: number) => {
           const progress = Math.min((now - start) / duration, 1);
-          const eased = progress < 0.5\n            ? 4 * progress * progress * progress\n            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+          const eased = progress < 0.5
+            ? 4 * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
           setValue(end * eased);
           if (progress < 1) requestAnimationFrame(tick);
         };
