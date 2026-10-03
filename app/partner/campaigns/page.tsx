@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { requirePartner } from "@/lib/auth/guards";
 import { campaignRates, campaigns } from "@/db/schema";
 import "./cpa-market.css";
+import CpaMarketControls from "@/components/CpaMarketControls";
 
 export const dynamic = "force-dynamic";
 const nav = [{ href: "/partner", label: "대시보드" }, { href: "/partner/campaigns", label: "CPA 캠페인" }, { href: "/partner/posting", label: "포스팅 광고" }, { href: "/partner/links", label: "광고링크" }];
@@ -29,10 +30,9 @@ export default async function PartnerCampaignsPage(){
     <div><span className="cpa-kicker">MY PICKUP · CPA JOB</span><h2>원하는 캠페인을 골라<br/><em>성과만큼 수익을 쌓아보세요</em></h2><p>캠페인별 승인 조건과 수익을 한눈에 비교하고, 참여 후 전용 링크를 생성할 수 있습니다.</p><div className="hero-pills"><span>✓ 무료 참여</span><span>✓ 성과형 수익</span><span>✓ 투명한 정산</span></div></div>
     <div className="hero-stat"><small>현재 참여 가능</small><strong>{rows.filter(r=>r.status==="ACTIVE").length}</strong><span>CPA 캠페인</span><div className="hero-bars"><i/><i/><i/><i/><i/></div></div>
    </section>
-   <section className="market-tools"><div className="searchbox"><span>⌕</span><input placeholder="캠페인명 또는 카테고리를 검색해보세요" /></div><div className="sort-tabs"><button className="active">전체</button><button>추천순</button><button>수익 높은순</button><button>신규순</button></div></section>
-   <section className="category-panel"><div className="category-title"><b>카테고리</b><span>관심 분야를 빠르게 찾아보세요</span></div><div className="category-chips">{categories.map((x,i)=><button key={x} className={i===0?"active":""}>{x}</button>)}</div></section>
+   <CpaMarketControls categories={categories} />
    <div className="market-heading"><div><span className="eyebrow">AVAILABLE CAMPAIGNS</span><h2>지금 참여 가능한 CPA 캠페인</h2><p>실제 등록 캠페인은 관리자·광고주 설정과 자동 연동됩니다.</p></div><span className="count"><b>{rows.length}</b>개의 캠페인</span></div>
-   <section className="cpa-card-grid">{rows.map((row,i)=>{const demo=String(row.id).startsWith("demo-"); return <a key={row.id} className="cpa-card" href={demo?"#":`/partner/campaigns/${row.id}`}>
+   <section className="cpa-card-grid" id="campaign-grid">{rows.map((row,i)=>{const demo=String(row.id).startsWith("demo-"); return <a key={row.id} className="cpa-card" data-campaign-card data-name={row.name} data-category={row.category??"기타"} data-rate={row.partnerRate??0} data-demo={demo?"1":"0"} href={demo?"#":`/partner/campaigns/${row.id}`}>
     <div className={`card-visual ${tone(i)}`}><span className="card-category">{row.category??"CPA"}</span><div className="visual-mark"><b>{["₩","↗","✓","◎","＋","★"][i%6]}</b></div><div className="visual-copy"><small>MY PICKUP CPA</small><strong>{row.name}</strong></div><span className="live-dot">● 모집중</span></div>
     <div className="card-body"><div className="card-title"><h3>{row.name}</h3><span>›</span></div><p>{row.description??"상세 조건을 확인하세요."}</p><div className="card-rate"><span>승인 수익</span><strong>{(row.partnerRate??0).toLocaleString("ko-KR")}원</strong></div><div className="card-meta"><span><small>중복기간</small><b>{row.duplicateDays}일</b></span><span><small>검수기간</small><b>{row.reviewDays}일</b></span><span><small>상태</small><b className="status-active">{row.status==="ACTIVE"?"진행중":row.status}</b></span></div><div className="card-cta">{demo?"샘플 캠페인":"상세보기 · 참여하기"} <b>→</b></div></div>
    </a>})}</section>
