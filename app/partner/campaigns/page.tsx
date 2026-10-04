@@ -39,7 +39,6 @@ export default async function PartnerCampaignsPage(){
    </a>})}</section>
    <section className="cpa-guide"><div><span>처음이신가요?</span><h3>CPA알바는 이렇게 시작합니다</h3></div><ol><li><b>01</b><span><strong>캠페인 선택</strong>조건과 승인 수익 확인</span></li><li><b>02</b><span><strong>전용 링크 생성</strong>나만의 추적 링크 발급</span></li><li><b>03</b><span><strong>성과 발생</strong>상담·신청 DB 접수</span></li><li><b>04</b><span><strong>승인·정산</strong>검수 후 수익 반영</span></li></ol></section>
    </main>
-   </div>
   </div>
  </DashboardShell>
 }
