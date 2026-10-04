@@ -3,7 +3,7 @@ import { eq, gte, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { advertiserLedger, clicks, conversions, customerQna, earnings, postingSubmissions, settlements } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
-const nav=[{href:"/admin",label:"대시보드"},{href:"/admin/partners",label:"파트너 관리"},{href:"/admin/advertisers",label:"광고주 관리"},{href:"/admin/campaigns",label:"캠페인 관리"},{href:"/admin/conversions",label:"전환 DB"},{href:"/admin/posting",label:"포스팅 작업"},{href:"/admin/ledger",label:"광고비·수익"},{href:"/admin/settlements",label:"정산"},{href:"/admin/customer",label:"고객센터"},{href:"/admin/audit",label:"감사로그"}];
+const nav=[{href:"/admin",label:"대시보드"},{href:"/admin/partners",label:"파트너 관리"},{href:"/admin/advertisers",label:"광고주 관리"},{href:"/admin/campaigns",label:"캠페인 관리"},{href:"/admin/conversions",label:"전환 DB"},{href:"/admin/posting",label:"포스팅 작업"},{href:"/admin/ledger",label:"광고비·수익"},{href:"/admin/settlements",label:"정산"},{href:"/admin/customer",label:"고객센터"},{href:"/admin/audit",label:"감사로그"},{href:"/admin/settings",label:"관리자 설정"}];
 export const dynamic="force-dynamic";
 export default async function AdminPage(){await requireAdmin();const db=getDb();const now=new Date();const kst=new Date(now.getTime()+9*3600000);const todayKst=new Date(Date.UTC(kst.getUTCFullYear(),kst.getUTCMonth(),kst.getUTCDate())-9*3600000);
 const[[clickRow],[convRow],[salesRow],[earningRow],[reviewRow],[rejectRow],[postingRow],[settleRow],[qnaRow]]=await Promise.all([
