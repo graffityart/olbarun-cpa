@@ -16,3 +16,14 @@
 .page-inline-nav a{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:10px;text-decoration:none!important;color:#42506a;font-size:13px;font-weight:800}
 .page-inline-nav a:hover{background:#eef4ff;color:#2867f3}
 @media(max-width:700px){.page-inline-nav{flex-wrap:nowrap;overflow-x:auto}.page-inline-nav a{white-space:nowrap}.dashboard-public>.content{padding-left:12px!important;padding-right:12px!important}}
+
+/* partner workspace sidebar */
+.partner-sidebar{width:190px!important;min-width:190px!important;background:#fff!important;color:#172238!important;border-right:1px solid #e6eaf1!important;padding:22px 14px!important;box-shadow:none!important}
+.partner-sidebar>strong{display:block;font-size:17px!important;margin:0 10px 15px!important;color:#172238!important}
+.partner-sidebar>a{display:flex!important;align-items:center!important;min-height:42px!important;margin:3px 0!important;padding:0 12px!important;border-radius:9px!important;color:#536078!important;font-size:12px!important;font-weight:800!important;text-decoration:none!important}
+.partner-sidebar>a:hover{background:#edf4ff!important;color:#2867f3!important}
+.partner-sidebar .sidebar-account{margin-top:18px!important;padding:14px 10px!important;border-top:1px solid #edf0f5!important}
+.partner-sidebar .sidebar-account .muted{font-size:10px!important;word-break:break-all}
+.dashboard:has(.partner-sidebar)>.content{min-width:0!important;padding:22px clamp(16px,2.5vw,34px)!important}
+.dashboard:has(.partner-sidebar)>.content>.posting-market,.dashboard:has(.partner-sidebar)>.content>.cpa-market{margin-left:auto!important;margin-right:auto!important}
+@media(max-width:760px){.dashboard:has(.partner-sidebar){display:block!important}.partner-sidebar{width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;gap:5px!important;overflow-x:auto!important;padding:7px 10px!important;border-right:0!important;border-bottom:1px solid #e6eaf1!important;position:static!important}.partner-sidebar>strong,.partner-sidebar .sidebar-account{display:none!important}.partner-sidebar>a{white-space:nowrap!important;min-height:35px!important;padding:0 10px!important;font-size:10px!important}.dashboard:has(.partner-sidebar)>.content{padding:12px!important}}
