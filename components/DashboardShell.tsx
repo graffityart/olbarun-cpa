@@ -12,7 +12,7 @@ export default async function DashboardShell({title,description,nav,children}:{t
  return <div className={showSidebar?"dashboard":"dashboard dashboard-public"}>
   {showSidebar&&<aside className="sidebar"><strong>{title}</strong>{nav.map(item=><Link key={item.href} href={item.href}>{item.label}</Link>)}<Link href="/notifications">알림센터 {unread>0&&<span className="nav-count">{unread>99?"99+":unread}</span>}</Link>{user&&<div className="sidebar-account"><span className="muted">{user.email}</span><LogoutButton/></div>}</aside>}
   <main className="content">
-   <div className="page-head"><div><h1>{title}</h1>{description?<div className="muted">{description}</div>:null}</div><div style={{display:"flex",gap:8,alignItems:"center"}}><Link className="notification-button" href="/notifications">알림 {unread>0&&<span>{unread>99?"99+":unread}</span>}</Link>{!showSidebar&&user&&<LogoutButton/>}</div></div>
+   {showSidebar&&<div className="page-head"><div><h1>{title}</h1>{description?<div className="muted">{description}</div>:null}</div><Link className="notification-button" href="/notifications">알림 {unread>0&&<span>{unread>99?"99+":unread}</span>}</Link></div>}
    {!showSidebar&&nav.length>0&&<nav className="page-inline-nav">{nav.map(item=><Link key={item.href} href={item.href}>{item.label}</Link>)}<Link href="/notifications">알림센터{unread>0?` (${unread>99?"99+":unread})`:""}</Link></nav>}
    {children}
   </main>
