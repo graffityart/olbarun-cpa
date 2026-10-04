@@ -9,6 +9,7 @@ import CpaMarketControls from "@/components/CpaMarketControls";
 export const dynamic = "force-dynamic";
 const nav = [{ href: "/partner", label: "대시보드" }, { href: "/partner/campaigns", label: "CPA 캠페인" }, { href: "/partner/posting", label: "포스팅 광고" }, { href: "/partner/links", label: "광고링크" }];
 const categories=["전체","이사/청소","인터넷/통신","렌탈","교육","금융","자동차","생활서비스","기타"];
+const sideCategories=["전체 캠페인","이사·청소","인터넷·통신","렌탈","교육·자격증","금융·보험","자동차","생활서비스"];
 const fallback=[
  {id:"demo-move",name:"포장이사 무료견적 상담",category:"이사/청소",description:"이사 예정 고객의 무료 비교견적 상담 신청 캠페인",status:"ACTIVE",partnerRate:24000,duplicateDays:30,reviewDays:7},
  {id:"demo-clean",name:"입주·이사청소 견적 신청",category:"이사/청소",description:"입주청소 및 이사청소 상담을 원하는 고객 모집",status:"ACTIVE",partnerRate:18000,duplicateDays:30,reviewDays:5},
@@ -25,12 +26,12 @@ export default async function PartnerCampaignsPage(){
  let dbRows:any[]=[]; try{dbRows=await getDb().select({ id: campaigns.id, name: campaigns.name, category: campaigns.category, description: campaigns.description, status: campaigns.status, partnerRate: campaignRates.partnerBaseRate, duplicateDays: campaigns.duplicateDays, reviewDays: campaigns.reviewDays }).from(campaigns).leftJoin(campaignRates, eq(campaignRates.campaignId, campaigns.id)).where(eq(campaigns.type, "CPA")).orderBy(desc(campaigns.createdAt));}catch{}
  const rows=dbRows.length?dbRows:fallback;
  return <DashboardShell title="CPA알바" description="승인형 CPA 캠페인을 골라 나만의 광고링크로 수익을 시작하세요." nav={nav}>
-  <div className="cpa-market">
+  <div className="cpa-market cpa-reference-layout">
    <section className="cpa-hero">
     <div><span className="cpa-kicker">MY PICKUP · CPA JOB</span><h2>원하는 캠페인을 골라<br/><em>성과만큼 수익을 쌓아보세요</em></h2><p>캠페인별 승인 조건과 수익을 한눈에 비교하고, 참여 후 전용 링크를 생성할 수 있습니다.</p><div className="hero-pills"><span>✓ 무료 참여</span><span>✓ 성과형 수익</span><span>✓ 투명한 정산</span></div></div>
     <div className="hero-stat"><small>현재 참여 가능</small><strong>{rows.filter(r=>r.status==="ACTIVE").length}</strong><span>CPA 캠페인</span><div className="hero-bars"><i/><i/><i/><i/><i/></div></div>
    </section>
-   <CpaMarketControls categories={categories} />
+   <div className="cpa-workspace"><aside className="cpa-sidebar"><div className="side-title">CPA알바</div><nav>{sideCategories.map((x,i)=><a key={x} href="#campaign-grid" className={i===0?"active":""}>{x}<span>›</span></a>)}</nav><div className="side-promo"><small>MY PICKUP</small><strong>처음이어도<br/>쉽게 시작하는<br/>CPA 수익</strong><span>이용가이드 보기 →</span></div><div className="side-help"><b>고객센터</b><strong>빠른 문의 안내</strong><span>캠페인·정산 문의를 도와드립니다.</span></div></aside><main className="cpa-main"><CpaMarketControls categories={categories} />
    <div className="market-heading"><div><span className="eyebrow">AVAILABLE CAMPAIGNS</span><h2>지금 참여 가능한 CPA 캠페인</h2><p>실제 등록 캠페인은 관리자·광고주 설정과 자동 연동됩니다.</p></div><span className="count"><b>{rows.length}</b>개의 캠페인</span></div>
    <section className="cpa-card-grid" id="campaign-grid">{rows.map((row,i)=>{const demo=String(row.id).startsWith("demo-"); return <a key={row.id} className="cpa-card" data-campaign-card data-name={row.name} data-category={row.category??"기타"} data-rate={row.partnerRate??0} data-demo={demo?"1":"0"} href={demo?"#":`/partner/campaigns/${row.id}`}>
     <div className={`card-visual ${tone(i)}`}><span className="card-category">{row.category??"CPA"}</span><div className="visual-mark"><b>{["₩","↗","✓","◎","＋","★"][i%6]}</b></div><div className="visual-copy"><small>MY PICKUP CPA</small><strong>{row.name}</strong></div><span className="live-dot">● 모집중</span></div>
