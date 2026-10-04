@@ -1,65 +1,9 @@
 import DashboardShell from "@/components/DashboardShell";
-import { desc, eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { campaignRates, campaigns, postingCampaigns } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
-
-const nav = [
-  { href: "/partner", label: "대시보드" },
-  { href: "/partner/campaigns", label: "CPA 캠페인" },
-  { href: "/partner/posting", label: "포스팅 광고" },
-  { href: "/partner/posting/my", label: "내 포스팅" },
-  { href: "/partner/earnings", label: "수익" },
-  { href: "/partner/settlements", label: "정산" },
-];
-
-async function loadCampaigns() {
-  try {
-    return await getDb()
-      .select({
-        id: campaigns.id,
-        name: campaigns.name,
-        category: campaigns.category,
-        description: campaigns.description,
-        status: campaigns.status,
-        endAt: campaigns.endAt,
-        mediaType: postingCampaigns.mediaType,
-        participantLimit: postingCampaigns.participantLimit,
-        totalSubmissionLimit: postingCampaigns.totalSubmissionLimit,
-        perPartnerLimit: postingCampaigns.perPartnerLimit,
-        partnerRate: campaignRates.partnerBaseRate,
-      })
-      .from(campaigns)
-      .innerJoin(postingCampaigns, eq(postingCampaigns.campaignId, campaigns.id))
-      .leftJoin(campaignRates, eq(campaignRates.campaignId, campaigns.id))
-      .where(eq(campaigns.type, "POSTING"))
-      .orderBy(desc(campaigns.createdAt));
-  } catch {
-    return [];
-  }
-}
-
-export default async function PartnerPostingPage() {
-  const rows = await loadCampaigns();
-  return (
-    <DashboardShell title="포스팅 광고" description="참여 가능한 블로그·카페·SNS 작업을 확인합니다." nav={nav}>
-      <div className="page-toolbar"><div className="muted">전체 {rows.length}개</div><div className="badge">모집 캠페인</div></div>
-      <section className="campaign-market-grid">
-        {rows.length ? rows.map((row) => (
-          <a key={row.id} className="panel card campaign-market-card" href={`/partner/posting/${row.id}`}>
-            <div className="campaign-card-head"><span className="badge">{row.mediaType}</span><span className="muted">{row.status}</span></div>
-            <h2>{row.name}</h2>
-            <p>{row.description || "캠페인 상세 가이드를 확인하고 참여할 수 있습니다."}</p>
-            <div className="campaign-card-metrics">
-              <div><span>건당수익</span><strong>{(row.partnerRate ?? 0).toLocaleString("ko-KR")}원</strong></div>
-              <div><span>총 작업</span><strong>{row.totalSubmissionLimit ?? "제한없음"}</strong></div>
-              <div><span>1인 한도</span><strong>{row.perPartnerLimit}건</strong></div>
-            </div>
-            <div className="campaign-card-foot">상세보기 →</div>
-          </a>
-        )) : <div className="panel card empty-cell">현재 표시할 포스팅 캠페인이 없습니다.</div>}
-      </section>
-    </DashboardShell>
-  );
-}
+import PostingMarket,{type PostingItem} from "@/components/PostingMarket";
+import {desc,eq} from "drizzle-orm";import {getDb} from "@/db";import {campaignRates,campaigns,postingCampaigns} from "@/db/schema";
+import "./posting-market.css";
+export const dynamic="force-dynamic";
+const nav=[{href:"/partner",label:"대시보드"},{href:"/partner/campaigns",label:"CPA 캠페인"},{href:"/partner/posting",label:"포스팅 광고"},{href:"/partner/posting/my",label:"내 포스팅"},{href:"/partner/earnings",label:"수익"},{href:"/partner/settlements",label:"정산"}];
+async function loadCampaigns(){try{return await getDb().select({id:campaigns.id,name:campaigns.name,category:campaigns.category,description:campaigns.description,status:campaigns.status,endAt:campaigns.endAt,mediaType:postingCampaigns.mediaType,totalSubmissionLimit:postingCampaigns.totalSubmissionLimit,perPartnerLimit:postingCampaigns.perPartnerLimit,partnerRate:campaignRates.partnerBaseRate}).from(campaigns).innerJoin(postingCampaigns,eq(postingCampaigns.campaignId,campaigns.id)).leftJoin(campaignRates,eq(campaignRates.campaignId,campaigns.id)).where(eq(campaigns.type,"POSTING")).orderBy(desc(campaigns.createdAt))}catch{return[]}}
+const demo=[["블로그 체험 후기 포스팅","블로그",3000],["지역 맛집 방문 후기","블로그",5000],["생활서비스 정보성 포스팅","카페",3500],["앱 사용후기 콘텐츠 작성","SNS",4000],["인테리어 시공 후기 포스팅","블로그",6000],["교육서비스 체험 리뷰","블로그",4500],["자동차 비교정보 포스팅","카페",5000],["여행·숙박 후기 콘텐츠","SNS",4000]].map((x,i)=>({id:"demo-"+i,name:x[0] as string,category:"포스팅",description:"가이드에 맞춰 콘텐츠를 작성하고 승인 후 수익을 받는 캠페인입니다.",status:"ACTIVE",endAt:null,mediaType:x[1] as string,totalSubmissionLimit:50,perPartnerLimit:1,partnerRate:x[2] as number}));
+export default async function Page(){const db=await loadCampaigns();const rows=(db.length?db:demo).map(x=>({...x,endAt:x.endAt?x.endAt.toISOString():null})) as PostingItem[];return <DashboardShell title="포스팅알바" description="콘텐츠를 작성하고 승인된 작업만큼 수익을 받아보세요." nav={nav}><div className="posting-market"><section className="posting-hero"><div><span>MY PICKUP · POSTING JOB</span><h1>글을 쓰는 시간이<br/><b>수익이 되는 포스팅알바</b></h1><p>블로그·카페·SNS 캠페인을 골라 가이드에 맞춰 작성하고 승인 후 수익을 받아보세요.</p><div><i>✓ 무료 참여</i><i>✓ 작업별 수익</i><i>✓ 투명한 검수</i></div></div><aside><small>현재 모집중</small><strong>{rows.length}</strong><b>포스팅 캠페인</b></aside></section><section className="posting-guidebar"><b>포스팅알바</b><span>캠페인 선택</span><span>참여 신청</span><span>콘텐츠 작성</span><span>URL 제출</span><span>검수·정산</span></section><PostingMarket items={rows}/><section className="posting-bottom-guide"><div><small>처음이신가요?</small><h2>포스팅알바 참여 방법</h2></div><ol><li><b>01</b>캠페인 선택</li><li><b>02</b>참여 신청</li><li><b>03</b>콘텐츠 작성</li><li><b>04</b>URL 제출</li><li><b>05</b>승인·정산</li></ol></section></div></DashboardShell>}
