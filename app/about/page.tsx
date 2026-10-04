@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "마이픽업이란 | CPA 성과형 광고 플랫폼",
-  description: "광고주와 파트너를 성과로 연결하는 마이픽업의 운영 구조와 원칙을 소개합니다.",
+  title: "초보자 이용 가이드 | 마이픽업",
+  description: "마이픽업을 처음 이용하는 회원을 위한 CPA 알바, 포스팅 알바, 수익 확인과 정산 이용 가이드입니다.",
   alternates: { canonical: "/about" },
 };
 
@@ -16,6 +16,7 @@ const promises = [
 export default function AboutPage() {
   return (
     <main className="about-page">
+      <nav className="guide-subnav"><div className="container"><Link href="/about">초보자 가이드</Link><Link href="/about/cpa">CPA 알바란</Link><Link href="/about/posting">포스팅 알바란</Link></div></nav>
       <section className="about-hero">
         <div className="container about-hero-inner">
           <div>
