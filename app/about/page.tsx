@@ -1,64 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "초보자 이용 가이드 | 마이픽업",
-  description: "마이픽업을 처음 이용하는 회원을 위한 CPA 알바, 포스팅 알바, 수익 확인과 정산 이용 가이드입니다.",
-  alternates: { canonical: "/about" },
-};
+export const metadata: Metadata = {title:"초보자 이용 가이드 | 마이픽업",description:"마이픽업 회원가입부터 캠페인 선택, 참여, 성과 확인, 수익 정산까지 처음 이용하는 파트너를 위한 안내입니다.",alternates:{canonical:"/about"}};
 
-const promises = [
-  { no: "01", title: "성과 중심의 캠페인", text: "단순 노출이 아니라 상담, 견적, 예약, 신청 등 광고주가 원하는 실제 성과를 기준으로 캠페인을 운영합니다." },
-  { no: "02", title: "명확한 전환 검수", text: "접수된 전환을 정해진 승인 기준에 따라 검수하고 파트너가 진행 상태를 확인할 수 있는 구조를 지향합니다." },
-  { no: "03", title: "투명한 수익·정산", text: "승인된 CPA 성과와 포스팅 작업 수익을 하나의 장부에서 확인하고 정산 흐름까지 연결합니다." },
+const steps=[
+ {no:"01",title:"회원가입과 시작 준비",desc:"회원가입 후 파트너 계정으로 로그인하면 CPA 캠페인과 포스팅 광고를 확인할 수 있습니다.",points:["회원가입 및 로그인","내 활동에 맞는 광고 유형 확인","캠페인 참여 전 조건 확인"],image:"/images/guide/beginner/step-01.webp"},
+ {no:"02",title:"나에게 맞는 알바 선택",desc:"CPA는 성과가 승인될 때 수익이 발생하고, 포스팅은 작성한 콘텐츠가 검수·승인되면 수익이 발생합니다.",points:["CPA: 상담·신청 등 승인 성과 기준","포스팅: 블로그·카페·SNS 콘텐츠 기준","단가·기간·참여 조건을 비교 후 선택"],image:"/images/guide/beginner/step-02.webp"},
+ {no:"03",title:"캠페인 참여하기",desc:"상세페이지에서 광고주의 참여 조건과 금지사항을 확인한 뒤 캠페인에 참여합니다.",points:["CPA는 참여 링크를 발급받아 홍보","포스팅은 참여 신청 후 작성 가이드 확인","허위·과장 및 금지 매체 사용 금지"],image:"/images/guide/beginner/step-03.webp"},
+ {no:"04",title:"진행상태와 수익 확인",desc:"내 활동 페이지에서 접수·검수·승인 상태와 반영된 수익을 확인할 수 있습니다.",points:["진행 중인 캠페인 확인","성과 또는 게시물 검수상태 확인","승인된 건의 수익 확인"],image:"/images/guide/beginner/step-04.webp"},
+ {no:"05",title:"정산 신청",desc:"정산 가능한 수익과 신청 조건을 확인한 뒤 정산 메뉴에서 신청합니다.",points:["정산 가능 금액 확인","필요한 정산 정보 확인","신청 후 처리상태 확인"],image:"/images/guide/beginner/step-05.webp"}
 ];
-
-export default function AboutPage() {
-  return (
-    <main className="about-page">
-      <nav className="guide-subnav"><div className="container"><Link href="/about">초보자 가이드</Link><Link href="/about/cpa">CPA 알바란</Link><Link href="/about/posting">포스팅 알바란</Link></div></nav>
-      <section className="about-hero">
-        <div className="container about-hero-inner">
-          <div>
-            <span className="about-kicker">ABOUT MY PICKUP</span>
-            <h1>성과를 만들고,<br />가치를 연결하는 <em>마이픽업</em></h1>
-            <p>마이픽업은 광고주가 원하는 성과와 파트너의 마케팅 활동을 연결하는 CPA 성과형 광고 플랫폼입니다. 캠페인 등록부터 참여, 전환 검수, 수익 확인과 정산까지 복잡한 과정을 하나의 흐름으로 관리합니다.</p>
-          </div>
-          <div className="about-mark"><strong>MY<br /><span>PICKUP</span></strong><small>PERFORMANCE MARKETING PLATFORM</small></div>
-        </div>
-      </section>
-
-      <section className="about-intro">
-        <div className="container about-intro-grid">
-          <div><span className="about-label">WHY MY PICKUP</span><h2>광고주는 필요한 성과를,<br />파트너는 가치 있는 캠페인을.</h2></div>
-          <div><p>성과형 광고의 핵심은 많은 노출이 아니라 <strong>측정 가능한 결과</strong>입니다. 마이픽업은 광고주와 파트너가 같은 성과 기준을 바라볼 수 있도록 캠페인 조건과 전환 상태, 승인 결과, 수익 정보를 연결합니다.</p><p>CPA 광고뿐 아니라 포스팅 광고도 함께 운영해 파트너가 자신의 채널과 방식에 맞는 캠페인을 선택할 수 있도록 확장하고 있습니다.</p></div>
-        </div>
-      </section>
-
-      <section className="about-promise">
-        <div className="container">
-          <div className="about-section-head"><span>OUR PROMISE</span><h2>마이픽업의 3가지 운영 원칙</h2></div>
-          <div className="promise-grid">
-            {promises.map((item) => <article key={item.no}><b>{item.no}</b><h3>{item.title}</h3><p>{item.text}</p></article>)}
-          </div>
-        </div>
-      </section>
-
-      <section className="about-flow">
-        <div className="container">
-          <div className="about-section-head"><span>HOW IT WORKS</span><h2>하나의 흐름으로 연결되는 성과</h2></div>
-          <div className="flow-grid">
-            <div><b>01</b><strong>캠페인 등록</strong><p>광고주가 목표와 승인 조건을 설정합니다.</p></div><i>→</i>
-            <div><b>02</b><strong>파트너 참여</strong><p>파트너가 적합한 캠페인을 선택합니다.</p></div><i>→</i>
-            <div><b>03</b><strong>성과 발생·검수</strong><p>전환을 접수하고 기준에 따라 검수합니다.</p></div><i>→</i>
-            <div><b>04</b><strong>수익·정산</strong><p>승인 성과를 수익으로 반영하고 정산합니다.</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="about-cta">
-        <div className="container about-cta-inner"><div><span>MY PICKUP</span><h2>성과형 광고의 다음 캠페인을 시작하세요.</h2><p>광고주와 파트너에게 필요한 운영 흐름을 마이픽업에서 연결합니다.</p></div><div className="about-actions"><Link href="/advertiser">광고주 시작하기</Link><Link href="/partner">파트너 시작하기</Link></div></div>
-      </section>
-    </main>
-  );
-}
+const terms=[["CPA","상담·신청 등 캠페인이 정한 성과가 승인될 때 수익이 발생하는 방식"],["캠페인","광고주가 참여 조건, 단가, 기간과 승인 기준을 정해 등록한 광고"],["전환","광고를 통해 상담·신청 등 목표 행동이 발생한 건"],["승인","광고주의 인정 기준을 충족해 수익 대상으로 확정된 상태"],["포스팅","블로그·카페·SNS 등에 가이드에 맞는 콘텐츠를 작성하는 활동"],["검수","접수된 성과나 게시물이 캠페인 조건을 충족했는지 확인하는 과정"],["정산","승인되어 지급 가능한 수익을 신청하고 지급받는 과정"],["중복 기준","동일 고객의 반복 신청을 인정하는지 판단하는 캠페인별 조건"]];
+const faqs=[["CPA와 포스팅 알바 중 무엇부터 해야 하나요?","운영하는 채널과 활동 방식에 맞춰 선택하면 됩니다. 콘텐츠 작성이 익숙하면 포스팅, 고객 유입과 성과형 홍보에 익숙하면 CPA부터 살펴보세요."],["캠페인마다 수익이 다른 이유는 무엇인가요?","광고 유형, 인정 조건, 난이도와 광고주가 설정한 단가가 다르기 때문입니다."],["참여하면 모든 건이 바로 수익으로 인정되나요?","아닙니다. 각 캠페인의 승인 기준에 따라 검수 후 승인된 건이 수익에 반영됩니다."],["포스팅은 아무 글이나 작성해도 되나요?","캠페인별 최소 글자 수, 이미지 수, 유지기간, 필수 내용과 금지사항을 따라야 합니다."],["성과가 반려되면 어떻게 확인하나요?","내 활동의 진행상태와 캠페인별 검수 결과를 확인해 주세요."],["정산 전 무엇을 확인해야 하나요?","정산 가능 수익, 신청 조건과 필요한 회원 정보를 먼저 확인해 주세요."]];
+export default function AboutPage(){return <main className="beginner-guide"><nav className="guide-subnav"><div className="container"><Link className="active" href="/about">초보자 가이드</Link><Link href="/about/cpa">CPA 알바란</Link><Link href="/about/posting">포스팅 알바란</Link></div></nav><section className="bg-hero"><div className="container"><span>MY PICKUP START GUIDE</span><h1>마이픽업이 처음이라면<br/><em>이 순서대로 시작하세요.</em></h1><p>회원가입부터 광고 선택, 참여, 수익 확인과 정산까지 처음 이용하는 분이 필요한 핵심 과정만 순서대로 안내합니다.</p><div className="bg-quick">{steps.map(s=><a key={s.no} href={"#step-"+s.no}><b>{s.no}</b><span>{s.title}</span></a>)}</div></div></section><section className="bg-start container"><div><span>처음 시작하기</span><h2>CPA와 포스팅, 무엇이 다른가요?</h2></div><div className="bg-choice"><Link href="/about/cpa"><b>CPA 알바</b><p>홍보를 통해 상담·신청 등 정해진 성과가 발생하고 승인되면 수익이 반영됩니다.</p><strong>CPA 자세히 보기 →</strong></Link><Link href="/about/posting"><b>포스팅 알바</b><p>가이드에 맞는 콘텐츠를 작성·제출하고 검수 승인을 받으면 수익이 반영됩니다.</p><strong>포스팅 자세히 보기 →</strong></Link></div></section><section className="bg-steps">{steps.map((s,i)=><article id={"step-"+s.no} key={s.no} className={i%2?"alt":""}><div className="container bg-step-grid"><div className="bg-step-copy"><span>STEP {s.no}</span><h2>{s.title}</h2><p>{s.desc}</p><ul>{s.points.map(x=><li key={x}>{x}</li>)}</ul></div><div className="bg-image-slot"><img src={s.image} alt="" /><div><b>가이드 이미지 영역</b><small>{s.image}</small><p>해당 경로에 직접 이미지를 업로드하면 자동으로 표시됩니다.</p></div></div></div></article>)}</section><section className="bg-terms"><div className="container"><span className="bg-label">BASIC TERMS</span><h2>처음 보는 용어, 이것만 알아두세요</h2><div className="bg-term-grid">{terms.map(t=><article key={t[0]}><b>{t[0]}</b><p>{t[1]}</p></article>)}</div></div></section><section className="bg-faq container"><span className="bg-label">FAQ</span><h2>초보자가 자주 묻는 질문</h2><div>{faqs.map((q,i)=><details key={q[0]} open={i===0}><summary>{q[0]}</summary><p>{q[1]}</p></details>)}</div></section><section className="bg-final"><div className="container"><h2>이제 원하는 캠페인을 찾아보세요.</h2><p>참여 전에는 반드시 캠페인별 단가, 인정 조건, 금지사항과 검수 기준을 확인하세요.</p><div><Link href="/partner/campaigns">CPA 캠페인 보기</Link><Link href="/partner/posting">포스팅 광고 보기</Link></div></div></section></main>}
