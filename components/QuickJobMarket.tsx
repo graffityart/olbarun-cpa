@@ -1,0 +1,10 @@
+"use client";
+import Link from "next/link";
+import {useMemo,useState} from "react";
+export type QuickJob={id:string;title:string;type:string;reward:number;remaining:number;status:"OPEN"|"CLOSED";icon:string;description:string};
+export default function QuickJobMarket({items}:{items:QuickJob[]}){
+ const [q,setQ]=useState("");const [type,setType]=useState("전체");const [sort,setSort]=useState("추천순");
+ const types=["전체",...Array.from(new Set(items.map(x=>x.type)))];
+ const rows=useMemo(()=>items.filter(x=>(type==="전체"||x.type===type)&&(!q||(x.title+" "+x.description).toLowerCase().includes(q.toLowerCase()))).sort((a,b)=>sort==="수익높은순"?b.reward-a.reward:sort==="잔여많은순"?b.remaining-a.remaining:0),[items,q,type,sort]);
+ return <><section className="qj-tools"><div className="qj-search"><span>⌕</span><input value={q} onChange={e=>setQ(e.target.value)} placeholder="1초알바 작업을 검색해보세요"/></div><select value={sort} onChange={e=>setSort(e.target.value)}><option>추천순</option><option>수익높은순</option><option>잔여많은순</option></select></section><div className="qj-types">{types.map(x=><button className={type===x?"active":""} onClick={()=>setType(x)} key={x}>{x}</button>)}</div><div className="qj-list-title"><div><h2>1초알바 리스트</h2><p>간단한 미션을 완료하고 검수 후 수익을 받아보세요.</p></div><span>총 <b>{rows.length}</b>개</span></div><div className="qj-table"><div className="qj-row qj-head"><span>작업내용</span><span>건당비용</span><span>남은 수량</span><span>상태</span><span></span></div>{rows.map(x=><div className="qj-row" key={x.id}><div className="qj-job"><i>{x.icon}</i><div><b>{x.title}</b><small>{x.description}</small><em>{x.type}</em></div></div><strong className="qj-reward">{x.reward.toLocaleString("ko-KR")}원</strong><div className="qj-remain"><b>{x.remaining.toLocaleString("ko-KR")}</b><small>건 남음</small></div><span className={"qj-state "+(x.status==="OPEN"?"open":"closed")}>{x.status==="OPEN"?"참여가능":"마감"}</span>{x.status==="OPEN"?<Link href={"/partner/quick/"+x.id}>작업등록</Link>:<button disabled>진행종료</button>}</div>)}{!rows.length&&<div className="qj-empty">조건에 맞는 1초알바가 없습니다.</div>}</div></>
+}
