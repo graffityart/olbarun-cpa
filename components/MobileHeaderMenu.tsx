@@ -10,7 +10,7 @@ export default function MobileHeaderMenu({loggedIn=false,accountHref="/login"}:{
  <div id="mp-mobile-menu" className={"mp-mobile-menu "+(open?"is-open":"")} aria-hidden={!open}>
   <button className="mp-mobile-backdrop" aria-label="메뉴 닫기" onClick={close}/>
   <div className="mp-mobile-panel">
-   <div className="mp-mobile-head"><b>전체 메뉴</b><button type="button" onClick={close} aria-label="메뉴 닫기">×</button></div>
+   <div className="mp-mobile-head"><b>전체 메뉴</b></div>
    <nav>
     <Link onClick={close} href="/partner/campaigns"><span>CPA알바</span><i>→</i></Link>
     <Link onClick={close} href="/partner/posting"><span>포스팅알바</span><i>→</i></Link>
