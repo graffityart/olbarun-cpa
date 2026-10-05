@@ -1,0 +1,3 @@
+import DashboardShell from '@/components/DashboardShell';import QuickHistory from '@/components/QuickHistory';import {requirePartner} from '@/lib/auth/guards';import {quickReady,listSubmissions,partnerNav} from '@/lib/quick';import '../quick.css';
+export const dynamic='force-dynamic';
+export default async function Page(){const u=await requirePartner();const ready=await quickReady();return <DashboardShell title="1초알바 제출내역" nav={partnerNav}><main className="quick-market"><div className="qj-list-title"><h1>참여 · 제출내역</h1><a href="/partner/quick">작업 목록 →</a></div><p>참여중 → 검수중 → 승인 시 수익 반영. 반려 사유를 확인하고 보완하여 다시 제출할 수 있습니다.</p>{ready?<QuickHistory items={await listSubmissions(u.partnerId!)}/>:<div className="qjd-warn">1초알바 저장 기능을 준비 중입니다.</div>}</main></DashboardShell>}
