@@ -59,8 +59,6 @@ export default function AboutPage() {
       <section className="about-cta">
         <div className="container about-cta-inner"><div><span>MY PICKUP</span><h2>성과형 광고의 다음 캠페인을 시작하세요.</h2><p>광고주와 파트너에게 필요한 운영 흐름을 마이픽업에서 연결합니다.</p></div><div className="about-actions"><Link href="/advertiser">광고주 시작하기</Link><Link href="/partner">파트너 시작하기</Link></div></div>
       </section>
-
-      <section className="about-contact"><div className="container"><span>마이픽업 고객센터</span><a href="tel:01026365008">010-2636-5008</a><small>서비스 이용 · 광고주 · 파트너 문의</small></div></section>
     </main>
   );
 }
