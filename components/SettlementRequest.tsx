@@ -1,13 +1,44 @@
 "use client";
 import { FormEvent, useState } from "react";
-
+import { useRouter } from "next/navigation";
+const errors: Record<string,string> = {
+  NO_AVAILABLE_EARNINGS: "현재 출금할 수 있는 수익이 없습니다.",
+  REQUEST_FULL_AVAILABLE_AMOUNT: "출금 가능 금액이 변경되었습니다. 화면을 새로고침한 뒤 다시 신청해 주세요.",
+  INVALID_INPUT: "은행명, 계좌번호, 예금주를 확인해 주세요.",
+  UNAUTHORIZED: "로그인 상태를 확인해 주세요.",
+  INVALID_ORIGIN: "화면을 새로고침한 뒤 다시 신청해 주세요.",
+  ORIGIN_CHECK_FAILED: "화면을 새로고침한 뒤 다시 신청해 주세요.",
+};
 export default function SettlementRequest({ available }: { available: number }) {
-  const [message, setMessage] = useState(""); const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [message,setMessage] = useState("");
+  const [loading,setLoading] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setLoading(true); setMessage(""); const f = new FormData(e.currentTarget);
-    const payload = { amount: available, bankName: f.get("bankName"), accountNumber: f.get("accountNumber"), accountHolder: f.get("accountHolder") };
-    const res = await fetch("/api/partner/settlements", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(payload) }); const data = await res.json(); setLoading(false);
-    setMessage(data.ok ? `정산 신청 완료: ${data.settlementCode}` : `신청 실패: ${data.error}`); if (data.ok) location.reload();
+    e.preventDefault();
+    if (loading || available <= 0) return;
+    const form = new FormData(e.currentTarget);
+    setLoading(true); setMessage("");
+    try {
+      const res = await fetch("/api/partner/settlements", {
+        method:"POST", headers:{"content-type":"application/json"},
+        body:JSON.stringify({amount:available,bankName:form.get("bankName"),accountNumber:form.get("accountNumber"),accountHolder:form.get("accountHolder")}),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(errors[data.error] ?? "신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      setMessage(`출금 신청이 접수되었습니다. 신청번호: ${data.settlementCode}`);
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof TypeError ? "연결이 원활하지 않습니다. 신청 내역을 확인한 뒤 다시 시도해 주세요." : error instanceof Error ? error.message : "신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally { setLoading(false); }
   }
-  return <form onSubmit={submit} className="panel card"><h2>정산 신청</h2><p className="muted">현재는 출금가능금액 전체를 한 번에 정산 신청합니다.</p><div className="form-grid"><label>신청금액<input value={available.toLocaleString("ko-KR")} readOnly /></label><label>은행명 *<input name="bankName" required /></label><label>계좌번호 *<input name="accountNumber" required /></label><label>예금주 *<input name="accountHolder" required /></label></div>{message&&<p className="form-message">{message}</p>}<div className="form-actions"><button disabled={loading||available<=0}>{loading?"신청 중...":"전체 금액 정산 신청"}</button></div></form>;
+  return <section className="pf-panel" id="request"><div className="pf-section-head"><div><h2>출금 신청</h2><p>출금 가능한 금액 전체를 한 번에 신청합니다.</p></div></div>
+    {available<=0&&<div className="pf-notice">현재 출금 가능한 금액이 없습니다. 작업 승인 후 수익이 확정되면 신청할 수 있습니다.</div>}
+    <form onSubmit={submit} aria-busy={loading}><fieldset disabled={loading||available<=0} className="pf-fieldset"><div className="pf-fields">
+      <label>신청 금액<input value={`${available.toLocaleString("ko-KR")}원`} readOnly /></label>
+      <label>은행명<input name="bankName" required maxLength={50} autoComplete="off" placeholder="예: 국민은행" /></label>
+      <label>계좌번호<input name="accountNumber" required maxLength={50} inputMode="numeric" autoComplete="off" placeholder="계좌번호를 입력해 주세요" /></label>
+      <label>예금주<input name="accountHolder" required maxLength={50} autoComplete="off" placeholder="예금주명을 입력해 주세요" /></label>
+    </div><p className="pf-help">입력한 계좌로 지급되므로 은행명·계좌번호·예금주를 정확히 확인해 주세요. 신청한 금액은 처리 중 금액으로 이동합니다.</p>
+    <button className="pf-primary" type="submit">{loading?"신청 중…":`${available.toLocaleString("ko-KR")}원 출금 신청`}</button></fieldset>
+    {message&&<p className="pf-notice" role="status">{message}</p>}</form></section>;
 }
