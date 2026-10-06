@@ -1,5 +1,2 @@
-import LoginForm from "@/components/LoginForm";
-
-export default function LoginPage() {
-  return <main className="auth-page"><div className="auth-wrap"><a className="brand auth-brand" href="/">올바른<span>광고</span></a><LoginForm /></div></main>;
-}
+import Link from 'next/link';import LoginForm from '@/components/LoginForm';import './auth.css';
+export default async function Page({searchParams}:{searchParams:Promise<{next?:string|string[];error?:string|string[]}>}){const params=await searchParams;return <main className="au-page"><div className="au-wrap"><Link className="au-brand" href="/">마이픽업<small>MY PICKUP</small></Link><LoginForm next={typeof params.next==='string'?params.next:undefined} notice={params.error==='account_not_active'?'계정 상태를 확인해 주세요. 승인 대기 또는 이용이 제한된 계정일 수 있습니다.':undefined}/><Link className="au-home" href="/">홈으로 돌아가기</Link></div></main>}

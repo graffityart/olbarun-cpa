@@ -1,35 +1,6 @@
 "use client";
-
-import { FormEvent, useState } from "react";
-
-const messages: Record<string, string> = {
-  INVALID_CREDENTIALS: "이메일 또는 비밀번호가 올바르지 않습니다.",
-  APPROVAL_PENDING: "관리자 승인 대기 중입니다.",
-  ACCOUNT_DISABLED: "사용할 수 없는 계정입니다. 관리자에게 문의해 주세요.",
-  LOGIN_FAILED: "로그인 처리 중 오류가 발생했습니다.",
-};
-
-export default function LoginForm() {
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setLoading(true); setMessage("");
-    const form = new FormData(event.currentTarget);
-    const res = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
-    const data = await res.json(); setLoading(false);
-    if (data.ok) window.location.href = data.destination;
-    else setMessage(messages[data.error] ?? "로그인할 수 없습니다.");
-  }
-
-  return <form onSubmit={submit} className="panel card auth-card">
-    <h2>로그인</h2>
-    <p className="muted">파트너·광고주·관리자 계정이 하나의 로그인 화면을 사용합니다.</p>
-    <div className="form-grid">
-      <label className="full">이메일<input name="email" type="email" required autoComplete="email" /></label>
-      <label className="full">비밀번호<input name="password" type="password" required autoComplete="current-password" /></label>
-    </div>
-    {message && <p className="form-message">{message}</p>}
-    <div className="form-actions"><a className="btn" href="/partner/signup">파트너 가입</a><button disabled={loading}>{loading ? "로그인 중..." : "로그인"}</button></div>
-  </form>;
+import Link from 'next/link';import {type FormEvent,useState} from 'react';import {loginDestination} from '@/lib/auth/destination';
+const messages:Record<string,string>={INVALID_CREDENTIALS:'이메일 또는 비밀번호가 올바르지 않습니다.',APPROVAL_PENDING:'가입 신청이 접수된 계정입니다. 관리자 승인 후 로그인할 수 있습니다.',ACCOUNT_DISABLED:'현재 사용할 수 없는 계정입니다. 고객센터로 문의해 주세요.',INVALID_INPUT:'이메일과 비밀번호를 확인해 주세요.',LOGIN_FAILED:'로그인을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',INVALID_ORIGIN:'화면을 새로고침한 뒤 다시 시도해 주세요.',ORIGIN_CHECK_FAILED:'화면을 새로고침한 뒤 다시 시도해 주세요.'};
+export default function LoginForm({next,notice}:{next?:string;notice?:string}){const[message,setMessage]=useState(''),[loading,setLoading]=useState(false),[show,setShow]=useState(false);async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();if(loading)return;const form=new FormData(event.currentTarget);setLoading(true);setMessage('');try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.fromEntries(form))});const data=await res.json().catch(()=>{throw new Error('응답을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');});if(!res.ok||!data.ok){if(data.error==='TOO_MANY_ATTEMPTS')throw new Error(`로그인 시도가 많아 잠시 제한되었습니다. 약 ${Math.max(1,Math.ceil(Number(data.retryAfter||900)/60))}분 후 다시 시도해 주세요.`);throw new Error(messages[data.error]??messages.LOGIN_FAILED);}window.location.assign(loginDestination(next,data.role));}catch(e){setMessage(e instanceof TypeError?'연결이 원활하지 않습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.':e instanceof Error?e.message:messages.LOGIN_FAILED);}finally{setLoading(false);}}
+ return <section className="au-card"><h1>로그인</h1><p className="au-intro">파트너·광고주·관리자는 같은 화면에서 로그인합니다.</p>{notice&&<p className="au-notice">{notice}</p>}<form onSubmit={submit} aria-busy={loading}><fieldset disabled={loading} className="au-fieldset"><div className="au-fields"><label>이메일<input name="email" type="email" required maxLength={320} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="가입한 이메일 주소"/></label><label>비밀번호<div className="au-password"><input name="password" type={show?'text':'password'} required autoComplete="current-password"/><button type="button" aria-pressed={show} onClick={()=>setShow(!show)}>{show?'숨기기':'보기'}</button></div></label></div><button className="au-primary" type="submit">{loading?'로그인 중…':'로그인'}</button></fieldset>{message&&<p className="au-error" role="alert">{message}</p>}</form><div className="au-links"><span>처음 방문하셨나요?</span><Link href="/partner/signup">파트너 회원가입 →</Link></div><Link className="au-help" href="/customer">로그인이 어려우신가요? 고객센터</Link></section>;
 }

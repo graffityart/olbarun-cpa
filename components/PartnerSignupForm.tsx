@@ -1,38 +1,7 @@
 "use client";
-
-import { FormEvent, useState } from "react";
-
-const messages: Record<string, string> = {
-  INVALID_INPUT: "이메일, 이름, 비밀번호(8자 이상)를 확인해 주세요.",
-  EMAIL_ALREADY_EXISTS: "이미 가입된 이메일입니다.",
-  SIGNUP_FAILED: "가입 처리 중 오류가 발생했습니다.",
-};
-
-export default function PartnerSignupForm() {
-  const [message, setMessage] = useState("");
-  const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setLoading(true); setMessage("");
-    const form = new FormData(event.currentTarget);
-    const res = await fetch("/api/auth/partner-signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
-    const data = await res.json(); setLoading(false);
-    if (data.ok) { setDone(true); setMessage(`가입 신청이 완료되었습니다. 파트너 코드: ${data.partnerCode}`); event.currentTarget.reset(); }
-    else setMessage(messages[data.error] ?? "가입 신청을 완료하지 못했습니다.");
-  }
-
-  return <form onSubmit={submit} className="panel card auth-card">
-    <h2>파트너 회원가입</h2>
-    <p className="muted">가입 후 관리자 승인이 완료되면 광고 참여와 정산 기능을 사용할 수 있습니다.</p>
-    <div className="form-grid">
-      <label className="full">이메일 *<input name="email" type="email" required autoComplete="email" /></label>
-      <label>이름 *<input name="name" required /></label>
-      <label>휴대전화<input name="phone" placeholder="010-0000-0000" /></label>
-      <label>회원유형<select name="memberType" defaultValue="INDIVIDUAL"><option value="INDIVIDUAL">개인</option><option value="SOLE_PROPRIETOR">개인사업자</option><option value="CORPORATION">법인</option></select></label>
-      <label>비밀번호 *<input name="password" type="password" minLength={8} required autoComplete="new-password" /></label>
-    </div>
-    {message && <p className={done ? "success-message" : "form-message"}>{message}</p>}
-    <div className="form-actions"><a className="btn" href="/login">로그인</a><button disabled={loading}>{loading ? "처리 중..." : "가입 신청"}</button></div>
-  </form>;
+import Link from 'next/link';import {type FormEvent,useState} from 'react';
+const messages:Record<string,string>={INVALID_INPUT:'이메일·이름·회원유형과 비밀번호(8~128자)를 확인해 주세요.',EMAIL_ALREADY_EXISTS:'이미 가입된 이메일입니다. 로그인 화면에서 확인해 주세요.',SIGNUP_FAILED:'가입 신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',INVALID_ORIGIN:'화면을 새로고침한 뒤 다시 시도해 주세요.',ORIGIN_CHECK_FAILED:'화면을 새로고침한 뒤 다시 시도해 주세요.'};
+export default function PartnerSignupForm(){const[message,setMessage]=useState(''),[code,setCode]=useState(''),[loading,setLoading]=useState(false),[show,setShow]=useState(false);async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();if(loading||code)return;const formElement=event.currentTarget,form=new FormData(formElement);if(form.get('password')!==form.get('confirmPassword')){setMessage('비밀번호와 비밀번호 확인이 일치하지 않습니다.');return;}form.delete('confirmPassword');setLoading(true);setMessage('');try{const res=await fetch('/api/auth/partner-signup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.fromEntries(form))});const data=await res.json().catch(()=>{throw new Error('응답을 확인하지 못했습니다. 로그인 화면에서 가입 여부를 확인해 주세요.');});if(!res.ok||!data.ok)throw new Error(messages[data.error]??messages.SIGNUP_FAILED);setCode(data.partnerCode);formElement.reset();}catch(e){setMessage(e instanceof TypeError?'연결이 원활하지 않습니다. 로그인 화면에서 가입 여부를 확인한 뒤 다시 시도해 주세요.':e instanceof Error?e.message:messages.SIGNUP_FAILED);}finally{setLoading(false);}}
+ if(code)return <section className="au-card"><h1>가입 신청 완료</h1><p className="au-intro">관리자 승인 후 광고 참여와 출금 신청을 이용할 수 있습니다.</p><div className="au-notice" role="status">파트너 코드 <strong>{code}</strong><br/>현재 상태: 승인 대기</div><Link className="au-primary" href="/login">로그인 화면으로</Link><Link className="au-help" href="/customer">가입 문의 · 고객센터</Link></section>;
+ return <section className="au-card"><h1>파트너 회원가입</h1><p className="au-intro">가입 신청 → 관리자 승인 → 광고 참여</p><form onSubmit={submit} aria-busy={loading}><fieldset className="au-fieldset" disabled={loading}><div className="au-fields"><label>이메일<input name="email" type="email" required maxLength={320} autoComplete="email" autoCapitalize="none" spellCheck={false} placeholder="로그인에 사용할 이메일"/></label><label>이름<input name="name" required maxLength={100} autoComplete="name"/></label><label>휴대전화 (선택)<input name="phone" type="tel" maxLength={40} autoComplete="tel" placeholder="010-0000-0000"/></label><label>회원유형<select name="memberType" defaultValue="INDIVIDUAL"><option value="INDIVIDUAL">개인</option><option value="SOLE_PROPRIETOR">개인사업자</option><option value="CORPORATION">법인</option></select></label><label>비밀번호<div className="au-password"><input name="password" type={show?'text':'password'} minLength={8} maxLength={128} required autoComplete="new-password"/><button type="button" aria-pressed={show} onClick={()=>setShow(!show)}>{show?'숨기기':'보기'}</button></div><small>8~128자로 입력해 주세요.</small></label><label>비밀번호 확인<input name="confirmPassword" type={show?'text':'password'} minLength={8} maxLength={128} required autoComplete="new-password"/></label></div><p className="au-intro">가입 후 바로 참여할 수 있는 계정은 아닙니다. 관리자 승인이 완료되면 로그인할 수 있습니다.</p><button className="au-primary" type="submit">{loading?'신청 중…':'가입 신청'}</button></fieldset>{message&&<p className="au-error" role="alert">{message}</p>}</form><div className="au-links"><span>이미 가입하셨나요?</span><Link href="/login">로그인 →</Link></div><div className="au-links"><Link href="/terms">이용약관</Link><Link href="/privacy">개인정보처리방침</Link></div></section>;
 }
