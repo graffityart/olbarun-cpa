@@ -23,7 +23,7 @@ export default function SettlementRequest({ available }: { available: number }) 
         method:"POST", headers:{"content-type":"application/json"},
         body:JSON.stringify({amount:available,bankName:form.get("bankName"),accountNumber:form.get("accountNumber"),accountHolder:form.get("accountHolder")}),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => { throw new Error("응답을 확인하지 못했습니다. 신청 내역을 확인한 뒤 다시 시도해 주세요."); });
       if (!res.ok || !data.ok) throw new Error(errors[data.error] ?? "신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
       setMessage(`출금 신청이 접수되었습니다. 신청번호: ${data.settlementCode}`);
       router.refresh();
