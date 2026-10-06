@@ -1,7 +1,6 @@
 import DashboardShell from "@/components/DashboardShell";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { requirePartner } from "@/lib/auth/guards";
 import { campaignRates, campaigns } from "@/db/schema";
 import "./cpa-market.css";
 import CpaMarketControls from "@/components/CpaMarketControls";
@@ -22,7 +21,6 @@ const fallback=[
 ];
 function tone(i:number){return ["blue","violet","mint","orange","rose","navy"][i%6]}
 export default async function PartnerCampaignsPage(){
- await requirePartner();
  let dbRows:any[]=[]; try{dbRows=await getDb().select({ id: campaigns.id, name: campaigns.name, category: campaigns.category, description: campaigns.description, status: campaigns.status, partnerRate: campaignRates.partnerBaseRate, duplicateDays: campaigns.duplicateDays, reviewDays: campaigns.reviewDays }).from(campaigns).leftJoin(campaignRates, eq(campaignRates.campaignId, campaigns.id)).where(eq(campaigns.type, "CPA")).orderBy(desc(campaigns.createdAt));}catch{}
  const rows=dbRows.length?dbRows:fallback;
  return <DashboardShell title="CPA알바" description="승인형 CPA 캠페인을 골라 나만의 광고링크로 수익을 시작하세요." nav={nav}>
