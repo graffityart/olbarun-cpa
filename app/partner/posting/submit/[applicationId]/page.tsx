@@ -1,55 +1,17 @@
-import DashboardShell from "@/components/DashboardShell";
-import { eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { campaigns, postingApplications, postingCampaigns, postingSubmissions } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
-const nav = [{ href: "/partner/posting/my", label: "← 내 포스팅" }];
-
-async function loadApplication(applicationId: string) {
-  try {
-    const [row] = await getDb().select({
-      applicationId: postingApplications.id,
-      partnerId: postingApplications.partnerId,
-      campaignName: campaigns.name,
-      mediaType: postingCampaigns.mediaType,
-      submissionId: postingSubmissions.id,
-      title: postingSubmissions.title,
-      postUrl: postingSubmissions.postUrl,
-      note: postingSubmissions.note,
-      status: postingSubmissions.status,
-    }).from(postingApplications)
-      .innerJoin(postingCampaigns, eq(postingApplications.postingCampaignId, postingCampaigns.id))
-      .innerJoin(campaigns, eq(postingCampaigns.campaignId, campaigns.id))
-      .leftJoin(postingSubmissions, eq(postingSubmissions.applicationId, postingApplications.id))
-      .where(eq(postingApplications.id, applicationId));
-    return row ?? null;
-  } catch { return null; }
-}
-
-export default async function SubmitPostingPage({ params, searchParams }: { params: Promise<{ applicationId: string }>, searchParams: Promise<{ partnerId?: string }> }) {
-  const { applicationId } = await params;
-  const { partnerId = "" } = await searchParams;
-  const row = await loadApplication(applicationId);
-  if (!row) return <DashboardShell title="작업결과 등록" description="작업을 찾을 수 없습니다." nav={nav}><section className="panel card">작업정보가 없습니다.</section></DashboardShell>;
-  if (partnerId && partnerId !== row.partnerId) return <DashboardShell title="작업결과 등록" description="접근할 수 없습니다." nav={nav}><section className="panel card">파트너 정보가 일치하지 않습니다.</section></DashboardShell>;
-
-  return <DashboardShell title="작업결과 등록" description={`${row.campaignName} · ${row.mediaType}`} nav={nav}>
-    <section className="panel card form-card">
-      <h2>{row.submissionId ? "작업결과 수정·재제출" : "새 작업결과 제출"}</h2>
-      {row.status && <p><span className="badge">현재 상태: {row.status}</span></p>}
-      <form action="/api/partner/posting/submit" method="post">
-        <input type="hidden" name="applicationId" value={row.applicationId} />
-        <input type="hidden" name="partnerId" value={row.partnerId} />
-        <div className="form-grid">
-          <label className="full">게시물 제목 *<input name="title" required defaultValue={row.title ?? ""} placeholder="게시한 콘텐츠 제목" /></label>
-          <label className="full">게시 URL *<input name="postUrl" required defaultValue={row.postUrl ?? ""} placeholder="https://..." /></label>
-          <label>게시일<input name="publishedAt" type="date" /></label>
-          <label className="full">작업 메모<textarea name="note" rows={5} defaultValue={row.note ?? ""} placeholder="검수자가 참고할 내용을 입력하세요." /></label>
-        </div>
-        <div className="notice-box" style={{ marginTop: 18 }}>제출 전 캠페인의 필수 키워드, 이미지 수, 링크, 금지 표현, 유지기간을 다시 확인해 주세요.</div>
-        <div className="form-actions"><a className="btn" href={`/partner/posting/my?partnerId=${row.partnerId}`}>취소</a><button type="submit">{row.submissionId ? "재제출" : "검수 요청"}</button></div>
-      </form>
-    </section>
-  </DashboardShell>;
+import Link from 'next/link';
+import {notFound} from 'next/navigation';
+import DashboardShell from '@/components/DashboardShell';
+import PostingActionForm from '@/components/PostingActionForm';
+import {and,desc,eq} from 'drizzle-orm';
+import {getDb} from '@/db';
+import {requirePartner} from '@/lib/auth/guards';
+import {campaigns,postingApplications,postingCampaigns,postingSubmissions} from '@/db/schema';
+import '../../posting-market.css';
+export const dynamic='force-dynamic';
+const labels:Record<string,string>={APPLIED:'참여 중',SUBMITTED:'검수 대기',REVISION_REQUESTED:'수정 요청',APPROVED:'승인 완료',REJECTED:'반려',CANCELLED:'취소'};
+export default async function Page({params}:{params:Promise<{applicationId:string}>}){
+ const user=await requirePartner();const {applicationId}=await params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId))notFound();
+ const [row]=await getDb().select({applicationId:postingApplications.id,applicationStatus:postingApplications.status,campaignId:campaigns.id,campaignName:campaigns.name,mediaType:postingCampaigns.mediaType,revisionLimit:postingCampaigns.revisionLimit,submissionId:postingSubmissions.id,revisionCount:postingSubmissions.revisionCount,title:postingSubmissions.title,postUrl:postingSubmissions.postUrl,note:postingSubmissions.note,publishedAt:postingSubmissions.publishedAt,status:postingSubmissions.status}).from(postingApplications).innerJoin(postingCampaigns,eq(postingApplications.postingCampaignId,postingCampaigns.id)).innerJoin(campaigns,eq(postingCampaigns.campaignId,campaigns.id)).leftJoin(postingSubmissions,eq(postingSubmissions.applicationId,postingApplications.id)).where(and(eq(postingApplications.id,applicationId),eq(postingApplications.partnerId,user.partnerId!))).orderBy(desc(postingSubmissions.submittedAt)).limit(1);
+ if(!row)notFound();const status=row.status??row.applicationStatus;const allowed=!['REJECTED','CANCELLED'].includes(row.applicationStatus)&&(!row.submissionId||['SUBMITTED','REVISION_REQUESTED'].includes(status))&&!(status==='REVISION_REQUESTED'&&(row.revisionCount??0)>=row.revisionLimit);
+ return <DashboardShell title="포스팅알바" nav={[]}><main className="pt-detail"><Link className="pt-back" href="/partner/posting/my">← 내 포스팅</Link><header className="pt-panel"><span className="pt-media">{row.mediaType}</span><h1>포스팅 결과 제출</h1><p>{row.campaignName}</p><span className="pt-state">{labels[status]??status}</span><p>수정 횟수 {row.revisionCount??0} / {row.revisionLimit}회</p><Link href={'/partner/posting/'+row.campaignId} className="pt-back">작성 가이드 다시 보기 →</Link></header><section className="pt-panel"><h2>{row.submissionId?'작업 결과 수정·재제출':'새 작업 결과 제출'}</h2>{allowed?<PostingActionForm action="submit" label={row.submissionId?'수정 내용 제출':'검수 요청하기'}><input type="hidden" name="applicationId" value={row.applicationId}/><div className="pt-fields"><label>게시물 제목<input name="title" required maxLength={300} defaultValue={row.title??''} placeholder="실제 게시한 콘텐츠 제목"/></label><label>게시물 URL<input name="postUrl" type="url" required defaultValue={row.postUrl??''} placeholder="https://로 시작하는 게시물 주소"/></label><label>게시일 (선택)<input name="publishedAt" type="date" defaultValue={row.publishedAt?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(row.publishedAt):''}/></label><label>작업 메모 (선택)<textarea name="note" rows={5} defaultValue={row.note??''} placeholder="검수자가 참고할 내용을 입력해 주세요"/></label></div><div className="pt-notice">필수 키워드·이미지 수·링크·금지 표현을 확인하고, 검수자가 게시물을 볼 수 있는지 확인해 주세요.</div><label className="pt-agree"><input type="checkbox" required/> 작성 조건을 확인했고 제출 정보가 정확합니다.</label></PostingActionForm>:<div className="pt-notice">현재 상태 또는 수정 횟수 제한으로 제출할 수 없습니다. 내 포스팅에서 검수 결과를 확인해 주세요.</div>}</section></main></DashboardShell>;
 }

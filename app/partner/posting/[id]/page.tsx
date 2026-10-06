@@ -1,95 +1,20 @@
-import DashboardShell from "@/components/DashboardShell";
-import { eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { campaignRates, campaigns, postingCampaigns } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
-
-const nav = [
-  { href: "/partner/posting", label: "← 포스팅 광고" },
-  { href: "/partner/posting/my", label: "내 포스팅" },
-];
-
-async function loadCampaign(id: string) {
-  try {
-    const [row] = await getDb()
-      .select({
-        id: campaigns.id,
-        name: campaigns.name,
-        description: campaigns.description,
-        category: campaigns.category,
-        startAt: campaigns.startAt,
-        endAt: campaigns.endAt,
-        status: campaigns.status,
-        mediaType: postingCampaigns.mediaType,
-        participantLimit: postingCampaigns.participantLimit,
-        totalSubmissionLimit: postingCampaigns.totalSubmissionLimit,
-        perPartnerLimit: postingCampaigns.perPartnerLimit,
-        minimumCharacters: postingCampaigns.minimumCharacters,
-        minimumImages: postingCampaigns.minimumImages,
-        maintenanceDays: postingCampaigns.maintenanceDays,
-        reviewDays: postingCampaigns.reviewDays,
-        revisionLimit: postingCampaigns.revisionLimit,
-        rules: postingCampaigns.rules,
-        partnerRate: campaignRates.partnerBaseRate,
-      })
-      .from(campaigns)
-      .innerJoin(postingCampaigns, eq(postingCampaigns.campaignId, campaigns.id))
-      .leftJoin(campaignRates, eq(campaignRates.campaignId, campaigns.id))
-      .where(eq(campaigns.id, id));
-    return row ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export default async function PartnerPostingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const row = await loadCampaign(id);
-  if (!row) return <DashboardShell title="포스팅 광고" description="캠페인을 찾을 수 없습니다." nav={nav}><section className="panel card">캠페인 정보가 없습니다.</section></DashboardShell>;
-
-  const rules = (row.rules ?? {}) as Record<string, unknown>;
-  return (
-    <DashboardShell title={row.name} description="작성조건을 확인한 뒤 참여신청을 진행하세요." nav={nav}>
-      <section className="grid-3" style={{ marginBottom: 20 }}>
-        <div className="panel card"><h3>건당 수익</h3><p><strong>{(row.partnerRate ?? 0).toLocaleString("ko-KR")}원</strong></p></div>
-        <div className="panel card"><h3>매체</h3><p>{row.mediaType}</p></div>
-        <div className="panel card"><h3>1인 작업한도</h3><p>{row.perPartnerLimit}건</p></div>
-      </section>
-
-      <section className="detail-grid">
-        <div className="panel card">
-          <h2>캠페인 안내</h2>
-          <p className="muted">{row.description || "별도 설명 없음"}</p>
-          <div className="condition-list">
-            <div><span>최소 글자수</span><strong>{row.minimumCharacters ?? "제한없음"}</strong></div>
-            <div><span>최소 이미지</span><strong>{row.minimumImages ?? "제한없음"}</strong></div>
-            <div><span>게시 유지기간</span><strong>{row.maintenanceDays ? `${row.maintenanceDays}일` : "별도없음"}</strong></div>
-            <div><span>검수기간</span><strong>{row.reviewDays}일</strong></div>
-            <div><span>수정 가능횟수</span><strong>{row.revisionLimit}회</strong></div>
-          </div>
-        </div>
-        <div className="panel card">
-          <h2>작성가이드</h2>
-          <dl className="guide-list">
-            <dt>필수 키워드</dt><dd>{String(rules.keywords ?? "-")}</dd>
-            <dt>제목 규칙</dt><dd>{String(rules.titleRule ?? "-")}</dd>
-            <dt>필수 링크</dt><dd>{String(rules.requiredLink ?? "-")}</dd>
-            <dt>금지 표현</dt><dd>{String(rules.prohibitedWords ?? "-")}</dd>
-            <dt>작성 가이드</dt><dd>{String(rules.guide ?? "-")}</dd>
-          </dl>
-        </div>
-      </section>
-
-      <section className="panel card" style={{ marginTop: 20 }}>
-        <h2>참여신청</h2>
-        <p className="muted">로그인 연동 전 개발 단계에서는 파트너 ID를 직접 입력합니다. 인증 기능 연결 후 자동으로 현재 계정이 적용됩니다.</p>
-        <form action="/api/partner/posting/apply" method="post" className="form-grid">
-          <input type="hidden" name="campaignId" value={row.id} />
-          <label className="full">파트너 ID<input name="partnerId" required placeholder="파트너 UUID" /></label>
-          <div className="full form-actions"><button type="submit">포스팅 참여신청</button></div>
-        </form>
-      </section>
-    </DashboardShell>
-  );
+import Link from 'next/link';
+import {notFound} from 'next/navigation';
+import DashboardShell from '@/components/DashboardShell';
+import PostingActionForm from '@/components/PostingActionForm';
+import {getCurrentUser} from '@/lib/auth/session';
+import {and,eq,sql} from 'drizzle-orm';
+import {getDb} from '@/db';
+import {campaigns,postingCampaigns} from '@/db/schema';
+import '../posting-market.css';
+export const dynamic='force-dynamic';
+const text=(value:unknown)=>Array.isArray(value)?value.map(String).join(', '):typeof value==='string'||typeof value==='number'?String(value):'별도 안내 없음';
+export default async function Page({params}:{params:Promise<{id:string}>}){
+ const {id}=await params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))notFound();
+ const [row]=await getDb().select({id:campaigns.id,name:campaigns.name,description:campaigns.description,startAt:campaigns.startAt,endAt:campaigns.endAt,status:campaigns.status,mediaType:postingCampaigns.mediaType,perPartnerLimit:postingCampaigns.perPartnerLimit,minimumCharacters:postingCampaigns.minimumCharacters,minimumImages:postingCampaigns.minimumImages,maintenanceDays:postingCampaigns.maintenanceDays,reviewDays:postingCampaigns.reviewDays,revisionLimit:postingCampaigns.revisionLimit,rules:postingCampaigns.rules,partnerRate:sql<number|null>`(select partner_base_rate from campaign_rates where campaign_id=${campaigns.id} and effective_from<=now() and (effective_to is null or effective_to>now()) order by effective_from desc,created_at desc,id desc limit 1)`}).from(campaigns).innerJoin(postingCampaigns,eq(postingCampaigns.campaignId,campaigns.id)).where(and(eq(campaigns.id,id),sql`${campaigns.status} in ('ACTIVE','PAUSED','COMPLETED')`));
+ if(!row)notFound();const user=await getCurrentUser(),now=new Date();const open=row.status==='ACTIVE'&&(!row.startAt||row.startAt<=now)&&(!row.endAt||row.endAt>now);const rules=(row.rules??{}) as Record<string,unknown>;
+ return <DashboardShell title="포스팅알바" nav={[]}><main className="pt-detail"><Link className="pt-back" href="/partner/posting">← 포스팅 작업 목록</Link><header className="pt-panel pt-detail-head"><span className="pt-media">{row.mediaType}</span><h1>{row.name}</h1><p className="pt-preserve">{row.description||'아래 작성 조건과 가이드를 확인해 주세요.'}</p><div className="pt-summary"><div><span>건당 수익</span><strong>{row.partnerRate==null?'단가 확인 중':row.partnerRate.toLocaleString('ko-KR')+'원'}</strong></div><div><span>1인 작업 한도</span><strong>{row.perPartnerLimit}건</strong></div><div><span>모집 상태</span><strong>{open?'모집 중':row.startAt&&row.startAt>now?'모집 예정':'모집 종료·중지'}</strong></div></div></header>
+ <section className="pt-panel"><h2>작성 조건</h2><dl className="pt-conditions">{[['최소 글자 수',row.minimumCharacters==null?'별도 지정 없음':row.minimumCharacters+'자'],['최소 이미지',row.minimumImages==null?'별도 지정 없음':row.minimumImages+'장'],['게시 유지기간',row.maintenanceDays==null?'별도 지정 없음':row.maintenanceDays+'일'],['검수 안내기간',row.reviewDays+'일'],['수정 가능 횟수',row.revisionLimit+'회'],['모집 종료일',row.endAt?row.endAt.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'}):'별도 지정 없음']].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
+ <section className="pt-panel"><h2>작성 가이드</h2><dl className="pt-guide">{[['필수 키워드',rules.keywords],['제목 규칙',rules.titleRule],['필수 링크',rules.requiredLink],['금지 표현',rules.prohibitedWords],['상세 작성 가이드',rules.guide]].map(([label,value])=><div key={String(label)}><dt>{String(label)}</dt><dd className="pt-preserve">{text(value)}</dd></div>)}</dl></section>
+ <section className="pt-panel"><h2>참여 신청</h2><p>참여 신청 후 콘텐츠를 작성하고 게시물 URL을 제출해 주세요. 관리자 승인 후 수익에 반영됩니다.</p>{!open?<div className="pt-notice">현재 참여 신청을 받지 않는 작업입니다.</div>:user?.role==='PARTNER'&&user.status==='ACTIVE'&&user.partnerId?<PostingActionForm action="apply" label="포스팅 참여 신청"><input type="hidden" name="campaignId" value={id}/><label className="pt-agree"><input type="checkbox" required/> 작성 조건과 유지기간을 확인했습니다.</label></PostingActionForm>:<Link className="pt-button" href={'/login?next='+encodeURIComponent('/partner/posting/'+id)}>파트너 로그인 후 참여하기</Link>}<Link className="pt-back" href="/partner/posting/my">내 포스팅 확인 →</Link></section></main></DashboardShell>;
 }
