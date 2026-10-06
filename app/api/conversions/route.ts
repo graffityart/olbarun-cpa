@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db";
 import { advertiserLedger, campaignRates, campaigns, clicks, conversionData, conversions } from "@/db/schema";
@@ -33,7 +33,7 @@ export async function POST(request:Request){
       if(campaign.startAt&&campaign.startAt>now)throw new Error("CAMPAIGN_NOT_STARTED");
       if(campaign.endAt&&campaign.endAt<now)throw new Error("CAMPAIGN_ENDED");
 
-      const[rate]=await tx.select().from(campaignRates).where(eq(campaignRates.campaignId,campaignId)).limit(1);
+      const[rate]=await tx.select().from(campaignRates).where(and(eq(campaignRates.campaignId,campaignId),lte(campaignRates.effectiveFrom,now),or(isNull(campaignRates.effectiveTo),gt(campaignRates.effectiveTo,now)))).orderBy(desc(campaignRates.effectiveFrom)).limit(1);
       if(!rate)throw new Error("RATE_NOT_CONFIGURED");
       if(rate.advertiserRate<rate.partnerBaseRate+rate.minimumMargin)throw new Error("RATE_CONFIGURATION_INVALID");
 

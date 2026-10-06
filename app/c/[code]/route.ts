@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   const clickCode = `CLK-${randomBytes(7).toString("hex").toUpperCase()}`;
   const landingUrl = `/l/${row.slug}`;
   await db.insert(clicks).values({ clickCode, trackingLinkId: row.linkId, campaignId: row.campaignId, partnerId: row.partnerId, subId: row.subId, referrer: request.headers.get("referer"), landingUrl, ipHash: hashIp(forwarded), userAgent: request.headers.get("user-agent") });
-  const response = Response.redirect(new URL(`${landingUrl}?click=${encodeURIComponent(clickCode)}`, request.url), 302);
+  const response = new Response(null, {status:302,headers:{Location:new URL(`${landingUrl}?click=${encodeURIComponent(clickCode)}`,request.url).toString(),"Cache-Control":"private, no-store"}});
   response.headers.append("Set-Cookie", `olbarun_click=${encodeURIComponent(clickCode)}; Path=/; Max-Age=2592000; SameSite=Lax; Secure; HttpOnly`);
   return response;
 }
