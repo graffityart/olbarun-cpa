@@ -22,3 +22,14 @@
 .qj-bottom{margin-top:2px;padding:34px 38px;border-radius:20px;background:linear-gradient(120deg,#14243a,#172a45)}.qj-bottom h2{font-size:22px}.qj-bottom p,.qj-bottom li{font-size:11px}
 @media(max-width:850px){.quick-market{gap:18px}.qj-hero{padding:34px 28px}.qj-hero h1{font-size:31px}.qj-row{grid-template-columns:minmax(0,1fr) 92px 86px;min-height:82px;padding:0 16px}.qj-list-title h2{font-size:21px}}
 @media(max-width:560px){.quick-market{gap:15px}.qj-hero{padding:29px 21px;border-radius:20px}.qj-hero h1{font-size:27px;line-height:1.23}.qj-hero p{font-size:11px}.qj-how{padding:14px 16px;gap:18px}.qj-notice{padding:14px 16px}.qj-types button{padding:8px 13px}.qj-list-title{align-items:center}.qj-list-title h2{font-size:20px}.qj-list-title p{max-width:260px;line-height:1.5}.qj-table{border-radius:15px}.qj-row{min-height:100px;padding:12px 14px;grid-template-columns:minmax(0,1fr) 82px}.qj-job{align-items:flex-start}.qj-job>i{width:40px;height:40px;flex:0 0 40px}.qj-job small{max-width:190px}.qj-row>.qj-reward{align-self:start;margin-top:5px;text-align:right}.qj-row>a,.qj-row>button{align-self:end;min-width:68px}.qj-bottom{padding:27px 21px;border-radius:17px}}
+
+/* quick job category pills v3 - visible labels + glossy interaction */
+.qj-types{display:flex;align-items:center;gap:9px;padding:3px 1px 5px}
+.qj-types button{position:relative;isolation:isolate;overflow:hidden;min-width:78px;height:40px;padding:0 17px;border:1px solid #d6e1ef;border-radius:999px;background:linear-gradient(180deg,#fff 0%,#f3f7fc 100%);color:#3d5069!important;font-size:11px;font-weight:800;letter-spacing:-.02em;box-shadow:0 3px 9px rgba(32,59,91,.045);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,color .18s ease}
+.qj-types button:hover{color:#185ca8!important;border-color:#a9c7ec;transform:translateY(-1px);box-shadow:0 7px 16px rgba(35,92,155,.10)}
+.qj-types button.active{border-color:#174d7b;background:linear-gradient(135deg,#173d64 0%,#17649b 100%);color:#fff!important;box-shadow:0 7px 17px rgba(21,75,123,.22)}
+.qj-types button::after{content:"";position:absolute;z-index:-1;top:-65%;left:-45%;width:34%;height:230%;transform:rotate(22deg) translateX(-260%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.78),transparent);transition:transform .48s ease}
+.qj-types button:hover::after,.qj-types button:focus-visible::after{transform:rotate(22deg) translateX(520%)}
+.qj-types button:active{transform:translateY(1px) scale(.97);box-shadow:0 2px 7px rgba(20,65,110,.16)}
+.qj-types button:focus-visible{outline:3px solid rgba(48,133,226,.20);outline-offset:2px}
+@media(max-width:560px){.qj-types{gap:7px;padding-bottom:5px}.qj-types button{min-width:70px;height:38px;padding:0 14px;font-size:10px}}
