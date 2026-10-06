@@ -95,3 +95,6 @@
 /* Marketplace shell cleanup: global header is the single navigation source */
 .dashboard-public{display:block;min-height:auto}.dashboard-public>.content{width:100%;padding:24px max(20px,calc((100vw - 1500px)/2));min-width:0}.dashboard-public .page-inline-nav{display:none}
 @media(max-width:760px){.dashboard-public>.content{padding:14px 14px 28px}.dashboard-public .partner-floating-nav{display:none!important}}
+
+/* Withdrawal shortcut */
+.mp-withdraw-link{display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border:1px solid #d9e3f5;border-radius:9px;color:#245fc5!important;background:#f7faff;font-weight:850}.mp-withdraw-link:hover{border-color:#b8cdf3;background:#edf4ff}.mp-mobile-panel nav a.mp-mobile-withdraw{margin-top:7px;border:1px solid #d7e4fb;border-radius:10px;background:#f3f7ff;color:#235fc7}.mp-mobile-panel nav a.mp-mobile-withdraw i{color:#3974d8}
