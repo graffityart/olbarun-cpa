@@ -1,16 +1,4 @@
 "use client";
-
-import { useState } from "react";
-
-export default function PartnerApprovalButton({ partnerId }: { partnerId: string }) {
-  const [loading, setLoading] = useState(false);
-  async function approve() {
-    if (!confirm("이 파트너를 승인하시겠습니까?")) return;
-    setLoading(true);
-    const res = await fetch(`/api/admin/partners/${partnerId}/approve`, { method: "POST" });
-    const data = await res.json();
-    setLoading(false);
-    if (data.ok) window.location.reload(); else alert("승인 처리에 실패했습니다.");
-  }
-  return <button onClick={approve} disabled={loading}>{loading ? "처리 중" : "승인"}</button>;
-}
+import {useState} from 'react';import {useRouter} from 'next/navigation';
+const messages:Record<string,string>={ALREADY_APPROVED:'이미 승인된 파트너입니다. 목록을 새로고침해 주세요.',NOT_PENDING:'승인 대기 계정만 승인할 수 있습니다.',PARTNER_NOT_FOUND:'파트너를 찾을 수 없습니다.',UNAUTHORIZED:'관리자로 다시 로그인해 주세요.',FORBIDDEN:'관리자만 승인할 수 있습니다.',INVALID_ORIGIN:'화면을 새로고침한 뒤 다시 시도해 주세요.'};
+export default function PartnerApprovalButton({partnerId}:{partnerId:string}){const[busy,setBusy]=useState(false),[message,setMessage]=useState('');const router=useRouter();async function approve(){if(busy||!confirm('이 파트너를 승인하시겠습니까?'))return;setBusy(true);setMessage('');try{const res=await fetch(`/api/admin/partners/${partnerId}/approve`,{method:'POST'});const data=await res.json();if(!res.ok||!data.ok)throw new Error(messages[data.error]??'승인하지 못했습니다. 잠시 후 다시 시도해 주세요.');router.refresh();}catch(error){setMessage(error instanceof TypeError?'연결이 원활하지 않습니다. 목록에서 승인 여부를 확인해 주세요.':error instanceof Error?error.message:'처리하지 못했습니다.');}finally{setBusy(false);}}return <div className="am-approve"><button onClick={approve} disabled={busy}>{busy?'승인 중…':'승인'}</button>{message&&<p className="am-error" role="alert">{message}</p>}</div>}

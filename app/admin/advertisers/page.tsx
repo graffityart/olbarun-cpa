@@ -1,19 +1,7 @@
-import DashboardShell from "@/components/DashboardShell";
-import { desc } from "drizzle-orm";
-import { getDb } from "@/db";
-import { advertisers } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth/guards";
-
-export const dynamic = "force-dynamic";
-const nav = [{ href: "/admin", label: "대시보드" }, { href: "/admin/partners", label: "파트너 관리" }, { href: "/admin/advertisers", label: "광고주 관리" }, { href: "/admin/campaigns", label: "캠페인 관리" }, { href: "/admin/conversions", label: "전환 DB" }, { href: "/admin/posting", label: "포스팅 작업" }, { href: "/admin/ledger", label: "광고비·수익" }, { href: "/admin/settlements", label: "정산" }];
-
-export default async function AdvertisersPage() {
-  await requireAdmin();
-  let rows: typeof advertisers.$inferSelect[] = []; try { rows = await getDb().select().from(advertisers).orderBy(desc(advertisers.createdAt)); } catch {}
-  return <DashboardShell title="광고주 관리" description="광고주 기본정보, 로그인 계정, 예치금을 관리합니다." nav={nav}>
-    <div className="page-toolbar"><div className="muted">등록 광고주 {rows.length}곳</div><a className="btn primary" href="/admin/advertisers/new">+ 광고주 등록</a></div>
-    <section className="panel card"><div className="table-wrap"><table><thead><tr><th>광고주 코드</th><th>업체명</th><th>대표자</th><th>계약상태</th><th>결제방식</th><th>등록일</th><th>관리</th></tr></thead><tbody>
-      {rows.length ? rows.map(row=><tr key={row.id}><td>{row.advertiserCode}</td><td><strong>{row.companyName}</strong></td><td>{row.representativeName||"-"}</td><td><span className="badge">{row.contractStatus}</span></td><td>{row.paymentType}</td><td>{row.createdAt.toLocaleDateString("ko-KR")}</td><td><a href={`/admin/advertisers/${row.id}`}>상세관리</a></td></tr>) : <tr><td colSpan={7} className="empty-cell">아직 등록된 광고주가 없습니다.</td></tr>}
-    </tbody></table></div></section>
-  </DashboardShell>;
+import DashboardShell from '@/components/DashboardShell';import Link from 'next/link';import {and,desc,sql} from 'drizzle-orm';import {getDb} from '@/db';import {advertisers} from '@/db/schema';import {requireAdmin} from '@/lib/auth/guards';import {memberNav,contractStatus,paymentTypes} from '@/lib/admin-members';import '../member-management.css';
+export const dynamic='force-dynamic';
+export default async function Page({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
+ await requireAdmin();const p=await searchParams,q=typeof p.q==='string'?p.q.trim().slice(0,160):'',status=typeof p.status==='string'&&Object.hasOwn(contractStatus,p.status)?p.status:'ALL';let rows=null;
+ try{rows=await getDb().select().from(advertisers).where(and(status==='ALL'?undefined:sql`${advertisers.contractStatus}=${status}`,q?sql`position(lower(${q}) in lower(${advertisers.companyName} || ' ' || ${advertisers.advertiserCode} || ' ' || coalesce(${advertisers.representativeName},'')))>0`:undefined)).orderBy(desc(advertisers.createdAt)).limit(100);}catch(error){console.error('Admin advertisers list failed',error);}
+ return <DashboardShell title="광고주 관리" description="광고주 기본정보, 로그인 계정, 예치금을 관리합니다." nav={memberNav}><div className="page-toolbar"><p className="muted">계약 상태와 회사정보로 광고주를 찾으세요.</p><Link className="btn primary" href="/admin/advertisers/new">+ 광고주 등록</Link></div><section className="panel card"><form className="am-search" method="get"><input name="q" aria-label="광고주 검색" defaultValue={q} maxLength={160} placeholder="업체명·광고주 코드·대표자"/><select name="status" defaultValue={status} aria-label="계약 상태"><option value="ALL">전체 계약 상태</option>{Object.entries(contractStatus).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select><button type="submit">조회</button><Link href="/admin/advertisers">초기화</Link></form>{rows===null?<p className="am-error" role="alert">광고주 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>:<p className="muted">조건에 맞는 최신 {rows.length}곳 · 최대 100곳 표시</p>}<div className="table-wrap"><table><thead><tr><th>광고주 코드</th><th>업체명</th><th>대표자</th><th>계약 상태</th><th>결제 방식</th><th>등록일</th><th>관리</th></tr></thead><tbody>{rows?.map(r=><tr key={r.id}><td>{r.advertiserCode}</td><td><Link href={`/admin/advertisers/${r.id}`}><strong>{r.companyName}</strong></Link></td><td>{r.representativeName??'-'}</td><td>{contractStatus[r.contractStatus]??r.contractStatus}</td><td>{paymentTypes[r.paymentType]??r.paymentType}</td><td>{r.createdAt.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'})}</td><td><Link href={`/admin/advertisers/${r.id}`}>상세 관리</Link></td></tr>)}{rows?.length===0&&<tr><td colSpan={7} className="empty-cell">{q||status!=='ALL'?'조건에 맞는 광고주가 없습니다.':'등록된 광고주가 없습니다.'}</td></tr>}</tbody></table></div></section></DashboardShell>;
 }

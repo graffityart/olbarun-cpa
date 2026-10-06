@@ -1,44 +1,7 @@
-import DashboardShell from "@/components/DashboardShell";
-import PartnerApprovalButton from "@/components/PartnerApprovalButton";
-import { desc, eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { partners, users } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
-
-const nav = [
-  { href: "/admin", label: "대시보드" },
-  { href: "/admin/partners", label: "파트너 관리" },
-  { href: "/admin/advertisers", label: "광고주 관리" },
-  { href: "/admin/campaigns", label: "캠페인 관리" },
-  { href: "/admin/conversions", label: "전환 DB" },
-  { href: "/admin/posting", label: "포스팅 작업" },
-  { href: "/admin/ledger", label: "광고비·수익" },
-  { href: "/admin/settlements", label: "정산" },
-];
-
-async function loadPartners() {
-  try {
-    return await getDb().select({ id: partners.id, partnerCode: partners.partnerCode, name: partners.name, phone: partners.phone, memberType: partners.memberType, grade: partners.grade, approvedAt: partners.approvedAt, createdAt: partners.createdAt, email: users.email, status: users.status })
-      .from(partners).innerJoin(users, eq(partners.userId, users.id)).orderBy(desc(partners.createdAt));
-  } catch { return []; }
-}
-
-export default async function PartnersPage() {
-  const rows = await loadPartners();
-  const pending = rows.filter((row) => row.status === "PENDING").length;
-  return <DashboardShell title="파트너 관리" description="가입 신청, 승인 상태, 등급을 관리합니다." nav={nav}>
-    <section className="stats">
-      <div className="panel stat"><span>전체 파트너</span><strong>{rows.length}</strong></div>
-      <div className="panel stat"><span>승인대기</span><strong>{pending}</strong></div>
-      <div className="panel stat"><span>활동중</span><strong>{rows.filter(r => r.status === "ACTIVE").length}</strong></div>
-      <div className="panel stat"><span>중지/탈퇴</span><strong>{rows.filter(r => r.status === "SUSPENDED" || r.status === "WITHDRAWN").length}</strong></div>
-    </section>
-    <section className="panel card"><div className="table-wrap"><table>
-      <thead><tr><th>파트너</th><th>이메일</th><th>회원유형</th><th>등급</th><th>상태</th><th>가입일</th><th>처리</th></tr></thead>
-      <tbody>{rows.length ? rows.map(row => <tr key={row.id}>
-        <td><strong>{row.name}</strong><br/><span className="muted">{row.partnerCode}</span></td><td>{row.email}</td><td>{row.memberType}</td><td>{row.grade}</td><td><span className="badge">{row.status}</span></td><td>{row.createdAt.toLocaleDateString("ko-KR")}</td><td>{row.status === "PENDING" ? <PartnerApprovalButton partnerId={row.id} /> : row.approvedAt ? `승인 ${row.approvedAt.toLocaleDateString("ko-KR")}` : "-"}</td>
-      </tr>) : <tr><td colSpan={7} className="empty-cell">등록된 파트너가 없습니다.</td></tr>}</tbody>
-    </table></div></section>
-  </DashboardShell>;
+import DashboardShell from '@/components/DashboardShell';import PartnerApprovalButton from '@/components/PartnerApprovalButton';import Link from 'next/link';import {and,desc,eq,sql} from 'drizzle-orm';import {getDb} from '@/db';import {partners,users} from '@/db/schema';import {requireAdmin} from '@/lib/auth/guards';import {memberNav,memberStatus} from '@/lib/admin-members';import '../member-management.css';
+export const dynamic='force-dynamic';
+export default async function Page({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
+ await requireAdmin();const p=await searchParams,q=typeof p.q==='string'?p.q.trim().slice(0,160):'',status=typeof p.status==='string'&&Object.hasOwn(memberStatus,p.status)?p.status:'ALL';const db=getDb();let data=null;
+ try{data=await Promise.all([db.select({id:partners.id,partnerCode:partners.partnerCode,name:partners.name,memberType:partners.memberType,grade:partners.grade,approvedAt:partners.approvedAt,createdAt:partners.createdAt,email:users.email,status:users.status}).from(partners).innerJoin(users,eq(partners.userId,users.id)).where(and(status==='ALL'?undefined:sql`${users.status}=${status}`,q?sql`position(lower(${q}) in lower(${partners.name} || ' ' || ${partners.partnerCode} || ' ' || ${users.email}))>0`:undefined)).orderBy(desc(partners.createdAt)).limit(100),db.select({total:sql<number>`count(*)`,pending:sql<number>`count(*) filter (where ${users.status}='PENDING')`,active:sql<number>`count(*) filter (where ${users.status}='ACTIVE')`,inactive:sql<number>`count(*) filter (where ${users.status} in ('SUSPENDED','WITHDRAWN'))`}).from(partners).innerJoin(users,eq(partners.userId,users.id))]);}catch(error){console.error('Admin partner list failed',error);}const rows=data?.[0]??[],stats=data?.[1]?.[0];
+ return <DashboardShell title="파트너 관리" description="가입 신청과 승인 상태를 관리합니다." nav={memberNav}>{data===null&&<p className="am-error" role="alert">파트너 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>}<section className="stats">{[{label:'전체 파트너',value:stats?.total},{label:'승인 대기',value:stats?.pending},{label:'활동 중',value:stats?.active},{label:'중지·탈퇴',value:stats?.inactive}].map(x=><div className="panel stat" key={x.label}><span>{x.label}</span><strong>{data===null?'—':Number(x.value??0)}</strong></div>)}</section><section className="panel card"><form className="am-search" method="get"><input name="q" aria-label="파트너 검색" maxLength={160} defaultValue={q} placeholder="이름·파트너 코드·이메일"/><select name="status" aria-label="파트너 상태" defaultValue={status}><option value="ALL">전체 상태</option>{Object.entries(memberStatus).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select><button type="submit">조회</button><Link href="/admin/partners">초기화</Link></form><p className="muted">조건에 맞는 최신 {rows.length}명 · 최대 100명 표시 · 상단 집계는 전체 파트너 기준</p><div className="table-wrap"><table><thead><tr><th>파트너</th><th>이메일</th><th>회원 유형</th><th>등급</th><th>상태</th><th>가입일</th><th>처리</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td><strong>{r.name}</strong><br/><span className="muted">{r.partnerCode}</span></td><td>{r.email}</td><td>{{INDIVIDUAL:'개인',SOLE_PROPRIETOR:'개인사업자',CORPORATION:'법인'}[r.memberType]??r.memberType}</td><td>{r.grade==='NEW'?'신규':r.grade}</td><td>{memberStatus[r.status]}</td><td>{r.createdAt.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'})}</td><td>{r.status==='PENDING'?<PartnerApprovalButton partnerId={r.id}/>:r.approvedAt?`승인 ${r.approvedAt.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'})}`:'-'}</td></tr>)}{!rows.length&&data!==null&&<tr><td colSpan={7} className="empty-cell">{q||status!=='ALL'?'조건에 맞는 파트너가 없습니다.':'등록된 파트너가 없습니다.'}</td></tr>}</tbody></table></div></section></DashboardShell>;
 }
