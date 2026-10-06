@@ -1,0 +1,4 @@
+export const advertiserNav=[{href:'/advertiser',label:'대시보드'},{href:'/advertiser/campaigns',label:'캠페인'},{href:'/advertiser/conversions',label:'전환 DB'},{href:'/advertiser/posting',label:'포스팅 작업'},{href:'/advertiser/ledger',label:'광고비'}];
+export const campaignStatusLabels:Record<string,string>={DRAFT:'작성 중',REVIEW:'검토 중',ACTIVE:'운영 중',PAUSED:'일시 중지',COMPLETED:'모집 종료',ARCHIVED:'보관'};
+export function koreanPeriod(now=new Date()){const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);return {today:new Date(`${date}T00:00:00+09:00`),month:new Date(`${date.slice(0,7)}-01T00:00:00+09:00`)};}
+export const ledgerTypeLabels:Record<string,string>={DEPOSIT:'예치금 충전',CPA_APPROVAL:'CPA 승인 차감',POSTING_APPROVAL:'포스팅 승인 차감',REFUND:'환급',ADJUSTMENT:'금액 조정'};
