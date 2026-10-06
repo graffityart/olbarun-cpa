@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { campaignRates, campaigns } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -15,7 +15,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
    const [row]=await tx.select({id:campaigns.id,status:campaigns.status,startAt:campaigns.startAt,endAt:campaigns.endAt}).from(campaigns).where(eq(campaigns.id,id)).for("update").limit(1);
    if(!row)throw new Error("NOT_FOUND");if(!allowed[row.status].includes(next))throw new Error("INVALID_TRANSITION");
    if(next==="ACTIVE"){
-    const[rate]=await tx.select({advertiserRate:campaignRates.advertiserRate,partnerBaseRate:campaignRates.partnerBaseRate,minimumMargin:campaignRates.minimumMargin}).from(campaignRates).where(eq(campaignRates.campaignId,id)).limit(1);
+    const[rate]=await tx.select({advertiserRate:campaignRates.advertiserRate,partnerBaseRate:campaignRates.partnerBaseRate,minimumMargin:campaignRates.minimumMargin}).from(campaignRates).where(and(eq(campaignRates.campaignId,id),sql`${campaignRates.effectiveFrom}<=now() and (${campaignRates.effectiveTo} is null or ${campaignRates.effectiveTo}>now())`)).orderBy(desc(campaignRates.effectiveFrom)).limit(1);
     if(!rate||rate.advertiserRate<=0||rate.partnerBaseRate<0||rate.partnerBaseRate+rate.minimumMargin>rate.advertiserRate)throw new Error("RATE_NOT_READY");
     const now=new Date();if(row.endAt&&row.endAt<=now)throw new Error("CAMPAIGN_ENDED");
    }

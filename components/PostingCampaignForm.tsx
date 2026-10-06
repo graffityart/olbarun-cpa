@@ -9,13 +9,13 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
   const [saving, setSaving] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault();if(saving)return;const formElement=event.currentTarget;
     setSaving(true); setMessage("");
     const form = new FormData(event.currentTarget);
     const payload = {
       type: "POSTING",
       advertiserId: form.get("advertiserId"), name: form.get("name"), description: form.get("description"),
-      startAt: form.get("startAt"), endAt: form.get("endAt"), mediaType: form.get("mediaType"),
+      startAt: form.get("startAt")?String(form.get("startAt"))+"T00:00:00+09:00":null, endAt: form.get("endAt")?String(form.get("endAt"))+"T00:00:00+09:00":null, mediaType: form.get("mediaType"),
       advertiserRate: Number(form.get("advertiserRate") || 0), partnerBaseRate: Number(form.get("partnerBaseRate") || 0),
       participantLimit: Number(form.get("participantLimit") || 0) || null,
       totalSubmissionLimit: Number(form.get("totalSubmissionLimit") || 0) || null,
@@ -31,21 +31,21 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
       settings: { participationMode: form.get("participationMode") },
     };
 
-    const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data = await res.json(); setSaving(false);
-    setMessage(data.ok ? `임시저장 완료: ${data.campaign.campaignCode}` : `저장 실패: ${data.error}`);
-    if (data.ok) event.currentTarget.reset();
+    try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    const data=await res.json();if(!res.ok||!data.ok)throw new Error("SAVE_FAILED");setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
+    }catch{setMessage("저장하지 못했습니다. 입력값·운영기간·단가를 확인하고, 통신 오류가 있었다면 목록에서 저장 여부를 먼저 확인해 주세요.");}finally{setSaving(false);}
+
   }
 
   return <form onSubmit={submit} className="panel card form-card">
     <h2>포스팅 캠페인 통합 입력</h2>
-    <p className="muted">모집조건, 작성가이드, 검수조건, 비용을 입력하고 DRAFT 상태로 저장합니다.</p>
+    <p className="muted">모집조건과 작성·검수 가이드를 입력하면 초안으로 저장됩니다.</p>
     <div className="form-grid">
       <label>광고주 *<select name="advertiserId" required defaultValue=""><option value="" disabled>광고주 선택</option>{advertisers.map(a => <option key={a.id} value={a.id}>{a.companyName} ({a.advertiserCode})</option>)}</select></label>
       <label>광고매체 *<select name="mediaType" defaultValue="BLOG"><option value="BLOG">네이버 블로그</option><option value="CAFE">카페</option><option value="SNS">SNS</option><option value="OTHER">기타</option></select></label>
-      <label className="full">캠페인명 *<input name="name" required placeholder="예: 부산 포장이사 후기 콘텐츠 모집" /></label>
+      <label className="full">캠페인명 *<input name="name" maxLength={200} required placeholder="예: 부산 포장이사 후기 콘텐츠 모집" /></label>
       <label className="full">캠페인 소개<textarea name="description" rows={4} /></label>
-      <label>모집 시작일<input name="startAt" type="date" /></label><label>모집 종료일<input name="endAt" type="date" /></label>
+      <label>모집 시작일 (한국 시간 00시)<input name="startAt" type="date" /></label><label>모집 종료일 (한국 시간 00시)<input name="endAt" type="date" /></label>
       <label>모집 파트너 수<input name="participantLimit" type="number" min="1" /></label><label>총 작업수량<input name="totalSubmissionLimit" type="number" min="1" /></label>
       <label>1인 최대 작업<input name="perPartnerLimit" type="number" min="1" defaultValue="1" /></label>
       <label>참여방식<select name="participationMode" defaultValue="IMMEDIATE"><option value="IMMEDIATE">즉시 참여</option><option value="ADMIN_APPROVAL">관리자 승인</option><option value="ADVERTISER_APPROVAL">광고주 승인</option></select></label>

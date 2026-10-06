@@ -1,3 +1,5 @@
+import "../management.css";
+import {requireAdmin} from "@/lib/auth/guards";
 import DashboardShell from "@/components/DashboardShell";
 
 const nav = [
@@ -11,10 +13,11 @@ const nav = [
   { href: "/admin/settlements", label: "정산" },
 ];
 
-export default function NewCampaignPage() {
+export default async function NewCampaignPage() {
+  await requireAdmin();
   return (
     <DashboardShell title="새 캠페인 만들기" description="광고 목적에 맞는 상품 유형을 선택하세요." nav={nav}>
-      <section className="grid-2">
+      <section className="grid-2 cm-manage">
         <a className="panel card campaign-choice" href="/admin/campaigns/new/cpa">
           <span className="badge">CPA</span>
           <h2>CPA 광고</h2>
