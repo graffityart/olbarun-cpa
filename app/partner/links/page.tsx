@@ -1,15 +1,3 @@
-import DashboardShell from "@/components/DashboardShell";
-import { desc, eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { requirePartner } from "@/lib/auth/guards";
-import { campaigns, trackingLinks } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
-const nav = [{ href: "/partner", label: "대시보드" }, { href: "/partner/campaigns", label: "CPA 캠페인" }, { href: "/partner/links", label: "광고링크" }, { href: "/partner/conversions", label: "전환 실적" }];
-
-export default async function PartnerLinksPage() {
-  const user = await requirePartner();
-  const rows = await getDb().select({ id: trackingLinks.id, code: trackingLinks.trackingCode, subId: trackingLinks.subId, active: trackingLinks.isActive, campaign: campaigns.name, createdAt: trackingLinks.createdAt }).from(trackingLinks).innerJoin(campaigns, eq(trackingLinks.campaignId, campaigns.id)).where(eq(trackingLinks.partnerId, user.partnerId!)).orderBy(desc(trackingLinks.createdAt));
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://olbarun-cpa.vercel.app";
-  return <DashboardShell title="광고링크" description="내 CPA 추적링크와 Sub ID를 관리합니다." nav={nav}><section className="panel card"><div className="table-wrap"><table><thead><tr><th>캠페인</th><th>Sub ID</th><th>광고링크</th><th>상태</th><th>생성일</th></tr></thead><tbody>{rows.length ? rows.map(r=><tr key={r.id}><td>{r.campaign}</td><td>{r.subId ?? "-"}</td><td><a href={`${base}/c/${r.code}`} target="_blank" rel="noreferrer">{base}/c/{r.code}</a></td><td><span className="badge">{r.active ? "ACTIVE" : "PAUSED"}</span></td><td>{new Date(r.createdAt).toLocaleString("ko-KR")}</td></tr>) : <tr><td colSpan={5} className="empty-cell">생성한 광고링크가 없습니다.</td></tr>}</tbody></table></div></section></DashboardShell>;
-}
+import Link from 'next/link';import DashboardShell from '@/components/DashboardShell';import TrackingLinkDisplay from '@/components/TrackingLinkDisplay';import {desc,eq} from 'drizzle-orm';import {getDb} from '@/db';import {requirePartner} from '@/lib/auth/guards';import {campaigns,trackingLinks} from '@/db/schema';import '../campaigns/cpa-market.css';
+export const dynamic='force-dynamic';
+export default async function Page(){const user=await requirePartner();const rows=await getDb().select({id:trackingLinks.id,code:trackingLinks.trackingCode,subId:trackingLinks.subId,active:trackingLinks.isActive,campaign:campaigns.name,campaignId:campaigns.id,createdAt:trackingLinks.createdAt}).from(trackingLinks).innerJoin(campaigns,eq(trackingLinks.campaignId,campaigns.id)).where(eq(trackingLinks.partnerId,user.partnerId!)).orderBy(desc(trackingLinks.createdAt));const base=(process.env.NEXT_PUBLIC_APP_URL||'https://www.mypickup.kr').replace(/\/$/,'');return <DashboardShell title="CPA알바" nav={[]}><main className="cx-market"><header className="cx-hero"><div><h1>내 광고링크</h1><p>복사한 링크를 통해 유입된 CPA 성과를 확인하세요.</p><Link href="/partner/campaigns">캠페인 찾아보기 →</Link></div><strong>{rows.length}개</strong></header>{rows.length?rows.map(r=><article className="cx-card cx-link-record" key={r.id}><div className="cx-heading"><h2>{r.campaign}</h2><span className="cx-state">{r.active?'사용 설정됨':'사용 중지'}</span></div><p>유입 구분값: {r.subId||'미지정'} · 생성 {r.createdAt.toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</p><TrackingLinkDisplay url={base+'/c/'+r.code}/><Link className="cx-back" href={'/partner/campaigns/'+r.campaignId}>캠페인 조건 확인 →</Link></article>):<div className="cx-notice">아직 생성한 광고링크가 없습니다. 캠페인의 승인 조건을 확인하고 링크를 만들어 주세요.</div>}<Link className="cx-back" href="/partner/conversions">CPA 전환 실적 확인 →</Link></main></DashboardShell>}

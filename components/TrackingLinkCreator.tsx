@@ -1,28 +1,4 @@
 "use client";
-import { FormEvent, useState } from "react";
-
-export default function TrackingLinkCreator({ campaignId }: { campaignId: string }) {
-  const [subId, setSubId] = useState("");
-  const [url, setUrl] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setLoading(true); setMessage("");
-    const res = await fetch("/api/partner/links", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ campaignId, subId }) });
-    const data = await res.json(); setLoading(false);
-    if (!data.ok) return setMessage(`생성 실패: ${data.error}`);
-    const absolute = `${window.location.origin}${data.url}`; setUrl(absolute); setMessage("광고링크가 생성되었습니다.");
-  }
-
-  async function copy() { if (!url) return; await navigator.clipboard.writeText(url); setMessage("링크를 복사했습니다."); }
-
-  return <form onSubmit={submit} className="panel card">
-    <h2>내 광고링크 만들기</h2>
-    <p className="muted">Sub ID를 사용하면 블로그, 카페, 배너 등 유입경로별 성과를 구분할 수 있습니다.</p>
-    <div className="form-grid"><label className="full">Sub ID (선택)<input value={subId} onChange={e=>setSubId(e.target.value)} maxLength={120} placeholder="예: blog01" /></label></div>
-    <div className="form-actions"><button disabled={loading}>{loading ? "생성 중..." : "광고링크 생성"}</button></div>
-    {url && <div className="notice-box"><strong>생성된 링크</strong><p style={{wordBreak:"break-all"}}>{url}</p><button type="button" className="secondary" onClick={copy}>링크 복사</button></div>}
-    {message && <p className="form-message">{message}</p>}
-  </form>;
-}
+import {type FormEvent,useState} from 'react';import TrackingLinkDisplay from './TrackingLinkDisplay';
+const errors:Record<string,string>={UNAUTHORIZED:'파트너 로그인 후 이용해 주세요.',CAMPAIGN_NOT_FOUND:'캠페인을 찾을 수 없습니다.',NOT_ACTIVE:'현재 모집 중인 캠페인이 아닙니다.',NOT_STARTED:'아직 모집 시작일이 되지 않았습니다.',ENDED:'모집이 종료되었습니다.',INVALID_INPUT:'입력 내용을 확인해 주세요.',INVALID_ORIGIN:'화면을 새로고침한 뒤 다시 시도해 주세요.',ORIGIN_CHECK_FAILED:'화면을 새로고침한 뒤 다시 시도해 주세요.'};
+export default function TrackingLinkCreator({campaignId}:{campaignId:string}){const[subId,setSubId]=useState(''),[url,setUrl]=useState(''),[message,setMessage]=useState(''),[loading,setLoading]=useState(false);async function submit(e:FormEvent){e.preventDefault();if(loading)return;setLoading(true);setMessage('');try{const res=await fetch('/api/partner/links',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({campaignId,subId})});const data=await res.json().catch(()=>{throw new Error('응답을 확인하지 못했습니다. 내 광고링크에서 생성 여부를 확인해 주세요.');});if(!res.ok||!data.ok)throw new Error(errors[data.error]??'링크를 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.');setUrl(new URL(data.url,window.location.origin).href);setMessage('광고링크가 생성되었습니다.');}catch(e){setMessage(e instanceof TypeError?'연결이 원활하지 않습니다. 내 광고링크에서 생성 여부를 확인해 주세요.':e instanceof Error?e.message:'생성하지 못했습니다.');}finally{setLoading(false);}}return <div className="cx-creator"><form onSubmit={submit}><p>유입 구분값을 입력하면 블로그·카페·배너별 성과를 구분할 수 있습니다.</p><label>유입 구분값 (선택)<input value={subId} onChange={e=>setSubId(e.target.value)} maxLength={120} placeholder="예: blog01" disabled={loading}/></label><button className="cx-button" disabled={loading}>{loading?'생성 중…':'광고링크 생성'}</button></form>{url&&<TrackingLinkDisplay url={url}/>}<a href="/partner/links" className="cx-back">내 광고링크 전체 보기 →</a>{message&&<p role="status" className="cx-notice">{message}</p>}</div>}
