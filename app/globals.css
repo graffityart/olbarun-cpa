@@ -91,3 +91,7 @@
  .mp-mobile-account{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.mp-mobile-account a{padding:12px;text-align:center;border:1px solid #dfe5ee;border-radius:10px;color:#34445d;text-decoration:none;font-size:12px;font-weight:800}.mp-mobile-account a.primary{background:#2468e8;border-color:#2468e8;color:#fff}
  .mp-menu{position:relative;z-index:9999}
 }
+
+/* Marketplace shell cleanup: global header is the single navigation source */
+.dashboard-public{display:block;min-height:auto}.dashboard-public>.content{width:100%;padding:24px max(20px,calc((100vw - 1500px)/2));min-width:0}.dashboard-public .page-inline-nav{display:none}
+@media(max-width:760px){.dashboard-public>.content{padding:14px 14px 28px}.dashboard-public .partner-floating-nav{display:none!important}}
