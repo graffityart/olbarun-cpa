@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const dir=path.dirname(fileURLToPath(import.meta.url)),repo=path.resolve(dir,'../..');
-const originalFetch=globalThis.fetch,OriginalFormData=globalThis.FormData;
+const originalFetch=globalThis.fetch,OriginalFormData=globalThis.FormData,originalWindow=globalThis.window;globalThis.window={location:{origin:'https://test.local'}};
 globalThis.FormData=class{constructor(){}get(name){return name}};
 try{
  for(const name of ['SettlementRequest','PostingActionForm']){
@@ -15,10 +15,11 @@ try{
  const event=()=>({preventDefault(){},currentTarget:{}});
  let submit=fixture(),resolve,calls=0;globalThis.fetch=()=>{calls++;return new Promise(r=>resolve=r)};
  const first=submit(event());await submit(event());assert.equal(calls,1,'rapid duplicate blocked');
- resolve({ok:true,redirected:true,json:async()=>({ok:true,settlementCode:'fixture'})});await first;await submit(event());assert.equal(calls,1,'success blocks retry while navigation pending');assert.ok(globalThis.navigations>0);
+ resolve({ok:true,redirected:true,url:"https://test.local/partner/posting/my?applied=fixture",json:async()=>({ok:true,settlementCode:'fixture'})});await first;await submit(event());assert.equal(calls,1,'success blocks retry while navigation pending');assert.ok(globalThis.navigations>0);
  for(const response of [()=>Promise.reject(new TypeError('network')),()=>Promise.resolve({ok:false,text:async()=>'NOT_ACTIVE',json:async()=>({ok:false,error:'NO_AVAILABLE_EARNINGS'})})]){
- submit=fixture();calls=0;globalThis.fetch=()=>{calls++;return response()};await submit(event());assert.equal(globalThis.navigations,0);assert.equal(calls,1,'no automatic retry');globalThis.fetch=async()=>{calls++;return {ok:true,redirected:true,json:async()=>({ok:true,settlementCode:'fixture'})}};await submit(event());assert.equal(calls,2,'failure releases lock');assert.ok(globalThis.navigations>0);
+ submit=fixture();calls=0;globalThis.fetch=()=>{calls++;return response()};await submit(event());assert.equal(globalThis.navigations,0);assert.equal(calls,1,'no automatic retry');globalThis.fetch=async()=>{calls++;return {ok:true,redirected:true,url:"https://test.local/partner/posting/my?applied=fixture",json:async()=>({ok:true,settlementCode:'fixture'})}};await submit(event());assert.equal(calls,2,'failure releases lock');assert.ok(globalThis.navigations>0);
  }
+ if(name==='PostingActionForm'){submit=fixture();globalThis.fetch=async()=>({ok:true,redirected:true,url:'https://test.local/login'});await submit(event());assert.equal(globalThis.navigations,0,'unrelated redirect is not success');}
  console.log('PASS '+name+': immediate duplicate guard, success lock, failure recovery, no automatic retry');
  }
-}finally{globalThis.fetch=originalFetch;globalThis.FormData=OriginalFormData}
+}finally{globalThis.fetch=originalFetch;globalThis.FormData=OriginalFormData;globalThis.window=originalWindow}
