@@ -1,1 +1,17 @@
-{"private":true,"type":"module","scripts":{"test":"node verify.mjs","test:story":"node story-check.mjs","test:advertiser":"node advertiser-check.mjs","test:members":"node member-check.mjs","test:admin-access":"node admin-access-check.mjs"},"dependencies":{"@electric-sql/pglite":"0.5.8","esbuild":"0.28.2","drizzle-orm":"0.45.3"}}
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node verify.mjs",
+    "test:story": "node story-check.mjs",
+    "test:advertiser": "node advertiser-check.mjs",
+    "test:members": "node member-check.mjs",
+    "test:admin-access": "node admin-access-check.mjs",
+    "test:home": "node home-check.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "esbuild": "0.28.2",
+    "drizzle-orm": "0.45.3"
+  }
+}
