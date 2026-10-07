@@ -4,3 +4,8 @@ export function parseQuickWorkedAt(value:string):Date|null{
  const local=new Date(date.getTime()+9*60*60*1000).toISOString().slice(0,19);
  return local===value.slice(0,19)?date:null;
 }
+
+export function quickWorkedAtInput(value:string|null|undefined):string{
+ if(!value)return '';const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
+ return new Date(date.getTime()+9*60*60*1000).toISOString().slice(0,16);
+}
