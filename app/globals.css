@@ -98,3 +98,12 @@
 
 /* Withdrawal shortcut */
 .mp-withdraw-link{display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border:1px solid #d9e3f5;border-radius:9px;color:#245fc5!important;background:#f7faff;font-weight:850}.mp-withdraw-link:hover{border-color:#b8cdf3;background:#edf4ff}.mp-mobile-panel nav a.mp-mobile-withdraw{margin-top:7px;border:1px solid #d7e4fb;border-radius:10px;background:#f3f7ff;color:#235fc7}.mp-mobile-panel nav a.mp-mobile-withdraw i{color:#3974d8}
+
+/* Comfortable mobile controls and safe-area spacing */
+.mp-menu:focus-visible,.mp-mobile-panel a:focus-visible,.mp-mobile-panel button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+@media(max-width:760px){.mp-menu,.mp-mobile-head button{min-width:44px;min-height:44px}.mp-mobile-panel{padding-bottom:calc(24px + env(safe-area-inset-bottom));overscroll-behavior:contain}.mp-mobile-account>a:only-child{grid-column:1/-1}.mp-header-actions>.mp-withdraw-link{display:none}.mp-header-actions>form{display:none}}
+@media(prefers-reduced-motion:reduce){.mp-mobile-panel,.mp-mobile-backdrop{transition:none}}
+
+.mp-mobile-account form{grid-column:1/-1;margin:0}.mp-mobile-account form button{width:100%;min-height:44px;background:#f1f5f9;color:#34445d;border:1px solid #dfe5ee;border-radius:10px}
+
+@media(min-width:761px){.mp-menu{display:none}}
