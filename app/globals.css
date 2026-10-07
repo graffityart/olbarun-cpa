@@ -114,4 +114,4 @@
 /* Uploaded logo: frame the artwork without its surrounding transparent margins. */
 .mp-global-header .mp-image-logo{position:relative;display:block;width:204px;height:50px;overflow:hidden;flex-shrink:0}.mp-image-logo img{position:absolute;width:270px!important;height:auto!important;max-width:none!important;left:-36px;top:-29px;display:block}@media(max-width:620px){.mp-global-header .mp-image-logo{width:166px;height:42px}.mp-image-logo img{width:220px!important;left:-29px;top:-23px}}
 
-.global-footer .mp-footer-image-logo{position:relative;display:block!important;width:238px;height:58px;overflow:hidden}.mp-footer-image-logo img{position:absolute;width:300px!important;height:auto!important;max-width:none!important;left:-32px;top:-31px;display:block}
+.global-footer .mp-footer-image-logo{position:relative;display:block!important;width:202px;height:50px;overflow:hidden}.mp-footer-image-logo img{position:absolute;width:255px!important;height:auto!important;max-width:none!important;left:-27px;top:-26px;display:block}
