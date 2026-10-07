@@ -1,3 +1,4 @@
+import {createSession} from "@/lib/auth/session";
 import {randomBytes} from "node:crypto";
 import {requireSameOrigin} from "@/lib/security/origin";
 import { eq } from "drizzle-orm";
@@ -27,12 +28,14 @@ export async function POST(request: Request) {
     if (existing.length) return Response.json({ ok: false, error: "EMAIL_ALREADY_EXISTS" }, { status: 409 });
 
     const result = await db.transaction(async (tx) => {
-      const [user] = await tx.insert(users).values({ email, passwordHash: hashPassword(password), role: "PARTNER", status: "PENDING" }).returning();
+      const [user] = await tx.insert(users).values({ email, passwordHash: hashPassword(password), role: "PARTNER", status: "ACTIVE" }).returning();
       const [partner] = await tx.insert(partners).values({ userId: user.id, partnerCode: makePartnerCode(), name, phone: phone || null, memberType, grade: "NEW" }).returning();
       return { user, partner };
     });
 
-    return Response.json({ ok: true, partnerCode: result.partner.partnerCode, status: "PENDING" }, { status: 201 });
+    let sessionEstablished=false;
+    try{await createSession(result.user.id,{userAgent:request.headers.get('user-agent')});sessionEstablished=true;}catch(error){console.error('Signup session failed',error);}
+    return Response.json({ ok: true, partnerCode: result.partner.partnerCode, status: "ACTIVE",sessionEstablished,destination:sessionEstablished?'/partner':'/login' }, { status: 201 });
   } catch (error) {
     const e=error as {code?:string;cause?:{code?:string}};if(e.code==="23505"||e.cause?.code==="23505")return Response.json({ok:false,error:"EMAIL_ALREADY_EXISTS"},{status:409});
     if(error instanceof SyntaxError)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});

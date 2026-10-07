@@ -2,7 +2,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdvertiserAccountManager({ advertiserId }: { advertiserId: string }) {
+export default function AdvertiserAccountManager({ advertiserId,hasAccount=false }: { advertiserId: string;hasAccount?:boolean }) {
   const router = useRouter();
   const [accountMessage, setAccountMessage] = useState("");
   const [depositMessage, setDepositMessage] = useState("");
@@ -27,7 +27,7 @@ export default function AdvertiserAccountManager({ advertiserId }: { advertiserI
   }
 
   return <div className="grid-2">
-    <form className="panel card" onSubmit={createAccount}><h2>광고주 로그인 계정</h2><div className="form-grid"><label className="full">이메일 *<input name="email" type="email" required /></label><label className="full">초기 비밀번호 *<input name="password" type="password" minLength={8} required /></label></div>{accountMessage&&<p className="form-message">{accountMessage}</p>}<div className="form-actions"><button disabled={loading}>계정 생성</button></div></form>
+    {!hasAccount&&<form className="panel card" onSubmit={createAccount}><h2>광고주 로그인 계정</h2><div className="form-grid"><label className="full">이메일 *<input name="email" type="email" required /></label><label className="full">초기 비밀번호 *<input name="password" type="password" minLength={10} required /></label></div>{accountMessage&&<p className="form-message">{accountMessage}</p>}<div className="form-actions"><button disabled={loading}>계정 생성</button></div></form>}
     <form className="panel card" onSubmit={addDeposit}><h2>예치금 충전</h2><div className="form-grid"><label className="full">충전금액 *<input name="amount" type="number" min="1" step="1000" required /></label><label className="full">메모<input name="description" placeholder="예: 9월 광고비 입금" /></label></div>{depositMessage&&<p className="form-message">{depositMessage}</p>}<div className="form-actions"><button disabled={loading}>예치금 충전</button></div></form>
   </div>;
 }
