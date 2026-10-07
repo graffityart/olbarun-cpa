@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 import { getCurrentUser } from "@/lib/auth/session";
 import MobileHeaderMenu from "@/components/MobileHeaderMenu";
@@ -16,7 +17,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const user = await getCurrentUser();
   return <html lang="ko"><body><div className="shell">
     <header className="topbar mp-global-header">
-      <Link href="/" className="brand mp-logo" aria-label="마이픽업 홈"><i>M</i><b>마이<span>픽업</span></b><small>CPA & Posting</small></Link>
+      <Link href="/" className="brand mp-logo mp-image-logo" aria-label="마이픽업 홈"><Image src="/images/logo/logo.png" alt="마이픽업" width={2022} height={778} sizes="(max-width:620px) 220px, 270px" priority /></Link>
       <nav className="nav mp-main-nav" aria-label="주요 메뉴">
         <Link href="/partner/campaigns">CPA알바</Link><Link href="/partner/posting">포스팅알바</Link><Link href="/partner/quick">1초알바</Link><Link href="/about">이용가이드</Link><Link href="/customer">고객센터</Link>
       </nav>
