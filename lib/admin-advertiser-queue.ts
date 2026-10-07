@@ -1,6 +1,6 @@
-import {and,desc,getTableColumns,sql} from 'drizzle-orm';
+import {and,desc,eq,getTableColumns,sql} from 'drizzle-orm';
 import {getDb} from '@/db';
-import {advertisers} from '@/db/schema';
+import {advertisers,auditLogs} from '@/db/schema';
 import {contractStatus} from '@/lib/admin-members';
 
 export const advertiserAccountStatuses:Record<string,string>={PENDING:'가입 승인 대기',ACTIVE:'이용 가능',SUSPENDED:'이용 중지',WITHDRAWN:'탈퇴',NONE:'계정 미생성'};
@@ -19,4 +19,8 @@ export async function listAdminAdvertisers(filters:ReturnType<typeof parseAdvert
 export async function countPendingAdvertisers(){
  const [row]=await getDb().select({n:sql<number>`count(*)::int`}).from(advertisers).where(sql`${accountStatus}='PENDING'`);
  return Number(row?.n??0);
+}
+
+export async function advertiserManagementHistory(id:string){
+ return getDb().select({id:auditLogs.id,action:auditLogs.action,summary:auditLogs.summary,createdAt:auditLogs.createdAt}).from(auditLogs).where(and(eq(auditLogs.targetType,'ADVERTISER'),eq(auditLogs.targetId,id))).orderBy(desc(auditLogs.createdAt)).limit(20);
 }
