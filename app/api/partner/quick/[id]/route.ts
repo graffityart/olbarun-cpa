@@ -1,3 +1,4 @@
+import {parseQuickWorkedAt} from "@/lib/quick-worked-at";
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { quickUser,quickError,uuid } from '@/lib/quick';
@@ -8,9 +9,9 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
  const form=await request.formData();const action=String(form.get('action')??'apply');
  if(!['apply','submit'].includes(action))throw new Error('INVALID_INPUT');
  const account=String(form.get('account')??'').trim(),note=String(form.get('note')??'').trim(),workedRaw=String(form.get('workedAt')??'');
- const workedAt=new Date(workedRaw);const proofs:{type:string;data:string}[]=[];
+ const workedAt=parseQuickWorkedAt(workedRaw);const proofs:{type:string;data:string}[]=[];
  if(action==='submit'){
-  if(!account||account.length>120||!note||note.length>4000||!workedRaw||!workedRaw.endsWith('+09:00')||Number.isNaN(workedAt.getTime())||workedAt.getTime()>Date.now()+60000||form.get('agree')!=='on')throw new Error('INVALID_INPUT');
+  if(!account||account.length>120||!note||note.length>4000||!workedAt||workedAt.getTime()>Date.now()+60000||form.get('agree')!=='on')throw new Error('INVALID_INPUT');
   const files=form.getAll('proofs').filter((x):x is File=>typeof x!=='string'&&x.size>0);
   if(!files.length||files.length>3||files.some(x=>x.size>700000))throw new Error('IMAGE_LIMIT');
   for(const file of files){const b=Buffer.from(await file.arrayBuffer());const type=b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png':b[0]===255&&b[1]===216&&b[2]===255?'image/jpeg':b.subarray(0,4).toString()==='RIFF'&&b.subarray(8,12).toString()==='WEBP'?'image/webp':null;if(!type||type!==file.type)throw new Error('INVALID_IMAGE');proofs.push({type,data:b.toString('base64')});}
