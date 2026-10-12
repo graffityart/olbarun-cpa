@@ -15,5 +15,5 @@ try{const rows=await getDb().execute(sql`UPDATE customer_events SET title=${titl
 
 export async function DELETE(request:Request,context:{params:Promise<{id:string}>}){try{requireSameOrigin(request);}catch{return Response.json({ok:false,error:"INVALID_ORIGIN"},{status:403});}
 const user=await getCurrentUser();if(!user||user.status!=="ACTIVE"||!["ADMIN","SUPER_ADMIN"].includes(user.role))return Response.json({ok:false,error:"FORBIDDEN"},{status:403});
-const {id}=await context.params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return Response.json({ok:false,error:"INVALID_ID"},{status:400});
+const {id}=await context.params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return Response.json({ok:false,error:"INVALID_ID"},{status:400});
 try{const rows=await getDb().execute(sql`DELETE FROM customer_events WHERE id=${id}::uuid RETURNING id`);if(!rows.length)return Response.json({ok:false,error:"NOT_FOUND"},{status:404});return Response.json({ok:true});}catch(e){console.error("Event delete failed",e);return Response.json({ok:false,error:"SERVICE_UNAVAILABLE"},{status:503});}}
