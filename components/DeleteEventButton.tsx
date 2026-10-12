@@ -1,0 +1,4 @@
+"use client";
+import {useState} from "react";
+import {useRouter} from "next/navigation";
+export default function DeleteEventButton({id,title}:{id:string;title:string}){const[busy,setBusy]=useState(false),[error,setError]=useState("");const router=useRouter();async function remove(){if(busy||!window.confirm("이벤트 '"+title+"'을(를) 영구 삭제하시겠습니까? 삭제 후 복구할 수 없습니다."))return;setBusy(true);setError("");try{const r=await fetch("/api/admin/events/"+id,{method:"DELETE"});const j=await r.json();if(!r.ok||!j.ok)throw new Error("삭제에 실패했습니다. 다시 확인해 주세요.");router.push("/admin/events");router.refresh();}catch(e){setError(e instanceof Error?e.message:"삭제 실패");setBusy(false);}}return <div style={{marginTop:20}}><button type="button" disabled={busy} onClick={remove} style={{background:"#fff",color:"#b42318",border:"1px solid #f1b6b1",borderRadius:10,padding:"10px 16px",cursor:"pointer"}}>{busy?"삭제 중…":"이벤트 영구 삭제"}</button>{error&&<p role="alert">{error}</p>}</div>}
