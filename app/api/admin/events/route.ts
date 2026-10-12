@@ -10,7 +10,8 @@ export async function POST(request:Request){
  let body:Record<string,unknown>;try{body=await request.json();}catch{return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});}
  const title=typeof body.title==="string"?body.title.trim():"",content=typeof body.content==="string"?body.content.trim():"",status=typeof body.status==="string"?body.status:"DRAFT";
  if(title.length<2||title.length>160||content.length<5||content.length>20000||!["DRAFT","OPEN","ENDED"].includes(status))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
- let dates:ReturnType<typeof parseEventSchedule>;try{dates=parseEventSchedule(body);}catch{return Response.json({ok:false,error:"INVALID_DATES"},{status:400});}
- try{const rows=await getDb().execute(sql`INSERT INTO customer_events(title,content,status,author_user_id,starts_at,ends_at) VALUES (${title},${content},${status},${user.id}::uuid,${dates.startsAt?.toISOString()??null}::timestamptz,${dates.endsAt?.toISOString()??null}::timestamptz) RETURNING id`);return Response.json({ok:true,id:rows[0]?.id},{status:201});}
+ const viewCount=body.viewCount;if(typeof viewCount!=="number"||!Number.isInteger(viewCount)||viewCount<0||viewCount>2147483647)return Response.json({ok:false,error:"INVALID_VIEWS"},{status:400});
+let dates:ReturnType<typeof parseEventSchedule>;try{dates=parseEventSchedule(body);}catch{return Response.json({ok:false,error:"INVALID_DATES"},{status:400});}
+ try{const rows=await getDb().execute(sql`INSERT INTO customer_events(title,content,status,author_user_id,view_count,starts_at,ends_at) VALUES (${title},${content},${status},${user.id}::uuid,${viewCount},${dates.startsAt?.toISOString()??null}::timestamptz,${dates.endsAt?.toISOString()??null}::timestamptz) RETURNING id`);return Response.json({ok:true,id:rows[0]?.id},{status:201});}
  catch(error){console.error("Event create failed",error);return Response.json({ok:false,error:"SERVICE_UNAVAILABLE"},{status:503});}
 }
