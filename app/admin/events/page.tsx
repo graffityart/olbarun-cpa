@@ -1,7 +1,19 @@
 import DashboardShell from "@/components/DashboardShell";
-import Link from "next/link";
+import EventAdminFilter from "@/components/EventAdminFilter";
 import {sql} from "drizzle-orm";
 import {getDb} from "@/db";
 import {requireAdmin} from "@/lib/auth/guards";
 export const dynamic="force-dynamic";
-export default async function Page(){await requireAdmin();let events:{id:string;title:string;status:string;createdAt:Date}[]=[];let failed=false;try{events=await getDb().execute(sql`SELECT id,title,status,created_at AS "createdAt" FROM customer_events ORDER BY created_at DESC LIMIT 100`) as unknown as typeof events;}catch(e){failed=true;console.error("Event management unavailable",e);}return <DashboardShell title="이벤트 관리" description="등록된 이벤트의 공개 상태와 내용을 관리합니다." nav={[{href:"/admin/events/new",label:"+ 새 이벤트"},{href:"/customer/events",label:"이벤트 게시판"}]}><section className="panel card"><h2>등록된 이벤트</h2>{failed?<p role="alert">이벤트 목록을 불러오지 못했습니다.</p>:events.length===0?<p>아직 등록된 이벤트가 없습니다.</p>:<div style={{display:"grid",gap:12}}>{events.map(e=><div key={e.id} style={{display:"flex",gap:12,alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e5eaf2",padding:"12px 0"}}><div style={{minWidth:0}}><strong style={{overflowWrap:"anywhere"}}>{e.title}</strong><p style={{fontSize:12,margin:"6px 0 0",color:"#66758c"}}>{e.status==="DRAFT"?"비공개":e.status==="OPEN"?"진행중":"종료"} · {new Date(e.createdAt).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}</p></div><Link className="btn" href={"/admin/events/"+e.id+"/edit"}>수정</Link></div>)}</div>}</section></DashboardShell>}
+type EventRow={id:string;title:string;status:string;createdAt:Date;viewCount:number};
+export default async function Page(){
+ await requireAdmin();
+ let events:EventRow[]=[];
+ let failed=false;
+ try{
+ events=await getDb().execute(sql`SELECT id,title,status,created_at AS "createdAt",view_count AS "viewCount" FROM customer_events ORDER BY created_at DESC LIMIT 100`) as unknown as EventRow[];
+ }catch(error){failed=true;console.error("Event management unavailable",error);}
+ return <DashboardShell title="이벤트 관리" description="이벤트 검색, 공개 상태 확인 및 수정" nav={[{href:"/admin/events/new",label:"+ 새 이벤트"},{href:"/customer/events",label:"이벤트 게시판"}]}>
+ <section className="panel card"><h2>등록된 이벤트</h2>
+ {failed?<p role="alert">이벤트 목록을 불러오지 못했습니다.</p>:events.length===0?<p>아직 등록된 이벤트가 없습니다.</p>:<EventAdminFilter events={events.map(e=>({id:String(e.id),title:String(e.title),status:String(e.status),createdAt:new Date(e.createdAt).toISOString(),viewCount:Number(e.viewCount)}))}/>}
+ </section></DashboardShell>;
+}
