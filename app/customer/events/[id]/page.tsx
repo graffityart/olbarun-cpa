@@ -1,3 +1,4 @@
+import {eventDisplayStatus} from "@/lib/event-display-status";
 import type {Metadata} from "next";
 import Link from "next/link";
 import {notFound} from "next/navigation";
@@ -23,7 +24,7 @@ export default async function Page({params}:Props){
  <section className="customer-content container">
  <article className="panel card" style={{padding:"clamp(20px,4vw,40px)",maxWidth:960,margin:"0 auto"}}>
  <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
- <span style={{borderRadius:99,background:event.status==="OPEN"?"#e9f4ff":"#f1f5f9",color:event.status==="OPEN"?"#1453aa":"#475569",padding:"5px 12px",fontSize:13,fontWeight:700}}>{event.status==="OPEN"?"진행중":"종료"}</span>
+ <span style={{borderRadius:99,background:eventDisplayStatus(event)==="진행중"?"#e9f4ff":"#f1f5f9",color:eventDisplayStatus(event)==="진행중"?"#1453aa":"#475569",padding:"5px 12px",fontSize:13,fontWeight:700}}>{eventDisplayStatus(event)}</span>
  <span style={{fontSize:13,color:"#64748b"}}>등록 {format(event.createdAt)} · 조회 {Number(event.viewCount).toLocaleString("ko-KR")}</span>
  </div>
  <h2 style={{fontSize:"clamp(24px,4vw,34px)",lineHeight:1.35,overflowWrap:"anywhere",margin:"0 0 20px"}}>{event.title}</h2>
