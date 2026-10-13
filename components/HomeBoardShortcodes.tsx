@@ -1,3 +1,4 @@
+import {eventDisplayStatus} from "@/lib/event-display-status";
 import Link from "next/link";
 import {desc} from "drizzle-orm";
 import {getDb} from "@/db";
@@ -21,7 +22,7 @@ const faqs:BoardItem[]=[
 ];
 async function getItems(type:BoardType):Promise<BoardItem[]>{
  if(type==="faq")return faqs;
- if(type==="events"){const rows=await listPublicEvents(4);return (rows??[]).map(e=>({title:e.title,href:"/customer/events/"+e.id,meta:new Date(e.createdAt).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}),tag:e.status==="OPEN"?"진행중":"종료"}));}
+ if(type==="events"){const rows=await listPublicEvents(4);return (rows??[]).map(e=>({title:e.title,href:"/customer/events/"+e.id,meta:new Date(e.createdAt).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}),tag:eventDisplayStatus(e)}));}
  try{
   if(type==="notices"){const rows=await getDb().select({id:customerNotices.id,title:customerNotices.title,createdAt:customerNotices.createdAt}).from(customerNotices).orderBy(desc(customerNotices.createdAt)).limit(4);return rows.map(x=>({title:x.title,href:"/customer#notice-"+x.id,meta:x.createdAt.toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}));}
   const rows=await getDb().select({id:customerQna.id,title:customerQna.title,isSecret:customerQna.isSecret,status:customerQna.status,createdAt:customerQna.createdAt}).from(customerQna).orderBy(desc(customerQna.createdAt)).limit(4);
