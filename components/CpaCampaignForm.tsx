@@ -10,8 +10,9 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
   const [error, setError] = useState(false);
   const [savedId, setSavedId] = useState<string|null>(null);
   const [imageData,setImageData]=useState("");
+  const [bannerData,setBannerData]=useState("");
   const [imageError,setImageError]=useState("");
-  async function selectImage(file?:File){setImageError("");if(!file){setImageData("");return;}if(!["image/jpeg","image/png","image/webp"].includes(file.type)){setImageError("JPG, PNG, WebP 이미지만 사용할 수 있습니다.");return;}if(file.size>5*1024*1024){setImageError("원본 이미지는 5MB 이하여야 합니다.");return;}try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,640/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext("2d");if(!ctx)throw Error("IMAGE_PROCESSING_FAILED");ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const encoded=canvas.toDataURL("image/webp",0.7);if(encoded.length>200000)throw Error("IMAGE_TOO_LARGE");setImageData(encoded);}catch{setImageError("이미지 처리에 실패했습니다. 더 작은 이미지를 선택해 주세요.");setImageData("");}}
+  async function selectImage(file?:File,kind:"main"|"banner"="main"){const setData=kind==="main"?setImageData:setBannerData;setImageError("");if(!file){setData("");return;}if(!["image/jpeg","image/png","image/webp"].includes(file.type)){setImageError("JPG, PNG, WebP 이미지만 사용할 수 있습니다.");return;}if(file.size>5*1024*1024){setImageError("원본 이미지는 5MB 이하여야 합니다.");return;}try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,640/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext("2d");if(!ctx)throw Error("IMAGE_PROCESSING_FAILED");ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const encoded=canvas.toDataURL("image/webp",0.7);if(encoded.length>200000)throw Error("IMAGE_TOO_LARGE");setData(encoded);}catch{setImageError("이미지 처리에 실패했습니다. 더 작은 이미지를 선택해 주세요.");setData("");}}
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();if(saving)return;const formElement=event.currentTarget;
@@ -29,13 +30,13 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       dailyBudgetLimit: Number(form.get("dailyBudgetLimit") || 0) || null,
       monthlyBudgetLimit: Number(form.get("monthlyBudgetLimit") || 0) || null,
       settings: {
-        mainImage: imageData || null, landingUrl: form.get("landingUrl"), region: form.get("region"), approvalRules: form.get("approvalRules"), rejectionRules: form.get("rejectionRules"),
+        mainImage: imageData || null, promoBanner: bannerData || null, landingUrl: form.get("landingUrl"), region: form.get("region"), approvalRules: form.get("approvalRules"), rejectionRules: form.get("rejectionRules"),
         allowedMedia: form.get("allowedMedia"), prohibitedMedia: form.get("prohibitedMedia"), operatingHours: form.get("operatingHours"),
       },
     };
     if (!Number.isSafeInteger(payload.advertiserRate) || !Number.isSafeInteger(payload.partnerBaseRate) || payload.advertiserRate < 0 || payload.partnerBaseRate < 0 || payload.partnerBaseRate > payload.advertiserRate || payload.advertiserRate > 999999999 || payload.partnerBaseRate > 999999999) { setMessage("단가를 확인해 주세요. CPA 금액은 원 단위의 정수이며, 파트너 CPA는 광고주 CPA보다 클 수 없습니다."); setError(true); setSaving(false); return; }
     try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_RATE:"광고주·파트너 CPA 금액 또는 마진이 올바르지 않습니다.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_CONVERSION_LIMIT:"일일 DB 한도가 월 DB 한도보다 클 수 없습니다.",INVALID_BUDGET_LIMIT:"일일 광고비 한도가 월 광고비 한도보다 클 수 없습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주가 존재하지 않습니다.",INVALID_LIMIT:"한도는 1 이상의 정수로 입력하거나 비워 주세요.",DATABASE_NOT_READY:"운영 데이터베이스 연결을 확인해 주세요."};throw new Error(reasons[data.error]??`저장 실패 (${data.error??res.status})`);}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 조건을 확인한 뒤 활성화하세요.`);setSavedId(data.campaign.id);formElement.reset();setImageData("");
+    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_RATE:"광고주·파트너 CPA 금액 또는 마진이 올바르지 않습니다.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_CONVERSION_LIMIT:"일일 DB 한도가 월 DB 한도보다 클 수 없습니다.",INVALID_BUDGET_LIMIT:"일일 광고비 한도가 월 광고비 한도보다 클 수 없습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주가 존재하지 않습니다.",INVALID_LIMIT:"한도는 1 이상의 정수로 입력하거나 비워 주세요.",DATABASE_NOT_READY:"운영 데이터베이스 연결을 확인해 주세요."};throw new Error(reasons[data.error]??`저장 실패 (${data.error??res.status})`);}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 조건을 확인한 뒤 활성화하세요.`);setSavedId(data.campaign.id);formElement.reset();setImageData("");setBannerData("");
     }catch(e){setError(true);setMessage((e instanceof Error?e.message:"통신 오류")+" · 저장 여부가 불확실하면 캠페인 목록을 먼저 확인해 주세요.");}finally{setSaving(false);}
 
   }
@@ -49,6 +50,7 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       <label className="full">캠페인명 *<input name="name" maxLength={200} required placeholder="예: 부산 포장이사 무료견적" /></label>
       <label className="full">설명<textarea name="description" rows={4} /></label>
       <label className="full">캠페인 대표 이미지 (선택)<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>void selectImage(e.target.files?.[0])}/><small>JPG·PNG·WebP · 원본 5MB 이하 · 등록 시 자동 축소 (640px)</small>{imageError&&<span role="alert">{imageError}</span>}{imageData&&<img src={imageData} alt="대표 이미지 미리보기" style={{maxWidth:320,width:"100%",height:"auto",borderRadius:12,marginTop:10}}/>}</label>
+      <label className="full">파트너 홍보배너 (선택)<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>void selectImage(e.target.files?.[0],"banner")}/><small>파트너가 다운로드하여 광고에 사용할 이미지입니다. JPG·PNG·WebP 원본 5MB 이하, WebP로 변환·축소됩니다.</small>{bannerData&&<img src={bannerData} alt="홍보배너 미리보기" style={{maxWidth:420,width:"100%",height:"auto",borderRadius:12,marginTop:10}}/>}</label>
       <label className="full">광고 랜딩페이지 URL (선택)<input name="landingUrl" type="url" maxLength={2048} placeholder="https://advertiser.example.com/apply" /><small>등록한 URL이 있으면 파트너 추적링크 클릭 시 해당 광고 랜딩페이지로 이동합니다. 비워두면 마이픽업 기본 신청페이지를 사용합니다.</small></label>
       <label>시작일 (한국 시간 00시)<input name="startAt" type="date" /></label><label>종료일 (한국 시간 00시)<input name="endAt" type="date" /></label>
       <label className="full">광고지역<input name="region" placeholder="예: 부산 전체" /></label>
