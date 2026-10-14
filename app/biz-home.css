@@ -85,3 +85,15 @@
 
 .biz-search input{min-width:0}.biz-search button{flex-shrink:0}.biz-hero-grid>div,.service-grid>div{min-width:0}
 @media(max-width:500px){.biz-section-head{align-items:flex-start;flex-direction:column;gap:12px}.biz-section-head>a{min-height:44px;display:inline-flex;align-items:center}.quick-menu strong{overflow-wrap:anywhere}.join-cta>div:last-child{min-width:0}}
+
+/* Consistent responsive cards for CPA, posting and quick jobs */
+.biz-campaign + .biz-campaign{padding-top:12px}
+.biz-campaign .campaign-row{align-items:stretch}
+.biz-campaign .biz-card{display:flex;flex-direction:column;min-width:0;height:100%;text-decoration:none}
+.biz-campaign .biz-card h3{white-space:normal;overflow:visible;text-overflow:clip;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;min-height:2.8em;line-height:1.4;overflow:hidden;overflow-wrap:anywhere}
+.biz-campaign .biz-card>p{line-height:1.6;min-height:3.2em;overflow-wrap:anywhere}
+.biz-campaign .biz-card>strong{margin-top:auto;padding-top:8px}
+.biz-campaign .biz-thumb{position:relative;overflow:hidden}
+.biz-campaign .biz-thumb small{position:static;opacity:1;display:block;font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px}
+.biz-campaign .biz-card:focus-visible{outline:3px solid #4f7fff;outline-offset:3px}
+@media(max-width:620px){.biz-campaign+.biz-campaign{padding-top:6px}.biz-campaign .biz-card h3{font-size:13px;min-height:2.8em}.biz-campaign .biz-card>p{font-size:11px}.biz-campaign .biz-thumb{height:116px;padding:12px}.biz-campaign .biz-thumb b{font-size:17px}.biz-campaign .biz-card .state{top:13px;left:13px}.biz-campaign .biz-section-head>a{display:inline-flex;align-items:center;min-height:40px}}
