@@ -7,11 +7,11 @@ function hashIp(value: string) { return createHash("sha256").update(value).diges
 
 export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params; const db = getDb();
-  if(!/^[A-Za-z0-9_-]{8,80}$/.test(code))return Response.redirect(new URL("/partner/campaigns",request.url),302);
+  if(!/^[A-Za-z0-9_-]{8,80}$/.test(code))return Response.json({ok:false,error:"INVALID_TRACKING_LINK"},{status:404,headers:{"Cache-Control":"no-store"}});
   try {
   const [row] = await db.select({ linkId: trackingLinks.id, campaignId: trackingLinks.campaignId, partnerId: trackingLinks.partnerId, subId: trackingLinks.subId, linkActive: trackingLinks.isActive, slug: campaigns.slug, settings: campaigns.settings, campaignStatus: campaigns.status, campaignType: campaigns.type, partnerStatus: users.status,partnerRole:users.role })
     .from(trackingLinks).innerJoin(campaigns, eq(trackingLinks.campaignId, campaigns.id)).innerJoin(partners,eq(trackingLinks.partnerId,partners.id)).innerJoin(users,eq(partners.userId,users.id)).where(eq(trackingLinks.trackingCode, code)).limit(1);
-  if (!row || !row.linkActive || row.campaignType!=="CPA" || row.campaignStatus!=="ACTIVE" || row.partnerStatus!=="ACTIVE" || row.partnerRole!=="PARTNER") return Response.redirect(new URL("/partner/campaigns", request.url), 302);
+  if (!row || !row.linkActive || row.campaignType!=="CPA" || row.campaignStatus!=="ACTIVE" || row.partnerStatus!=="ACTIVE" || row.partnerRole!=="PARTNER") return Response.json({ok:false,error:"TRACKING_LINK_NOT_AVAILABLE"},{status:404,headers:{"Cache-Control":"no-store"}});
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const clickCode = `CLK-${randomBytes(7).toString("hex").toUpperCase()}`;
   const settings=(row.settings??{}) as Record<string,unknown>;
