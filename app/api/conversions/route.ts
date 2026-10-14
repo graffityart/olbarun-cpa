@@ -20,8 +20,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     if(!body.privacy||!body.thirdParty)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
 
     const db=getDb();
-    const cookieStore=await cookies();
-    const clickCode=internal?.trustedClickCode??cookieStore.get("olbarun_click")?.value??null;
+    const clickCode=internal?.trustedClickCode??(await cookies()).get("olbarun_click")?.value??null;
     const phoneHash=hash(phone);
     const {now,today,month}=kstBoundaries();
 
@@ -55,6 +54,8 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
 
       let click:{id:string;partnerId:string;trackingLinkId:string}|undefined;
       if(clickCode)[click]=await tx.select({id:clicks.id,partnerId:clicks.partnerId,trackingLinkId:clicks.trackingLinkId}).from(clicks).where(and(eq(clicks.clickCode,clickCode),eq(clicks.campaignId,campaignId))).limit(1);
+      if(internal?.trustedClickCode&&!click)throw new Error("CLICK_NOT_FOUND");
+      if(internal?.trustedClickCode){const[used]=await tx.select({id:conversions.id}).from(conversions).where(eq(conversions.clickId,click!.id)).limit(1);if(used)throw new Error("CLICK_ALREADY_CONVERTED");}
 
       const conversionCode=`CV-${randomBytes(7).toString("hex").toUpperCase()}`;
       const margin=rate.advertiserRate-rate.partnerBaseRate;
@@ -74,7 +75,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     console.error("Conversion create failed",error);
     if(code==="PII_ENCRYPTION_KEY_MISSING"||code==="PII_ENCRYPTION_KEY_INVALID")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
     if(code==="CAMPAIGN_NOT_FOUND")return Response.json({ok:false,error:code},{status:404});
-    if(["CAMPAIGN_NOT_ACTIVE","CAMPAIGN_NOT_STARTED","CAMPAIGN_ENDED","RATE_NOT_CONFIGURED","RATE_CONFIGURATION_INVALID","DAILY_CONVERSION_LIMIT_REACHED","MONTHLY_CONVERSION_LIMIT_REACHED","DAILY_BUDGET_LIMIT_REACHED","MONTHLY_BUDGET_LIMIT_REACHED","DUPLICATE"].includes(code))return Response.json({ok:false,error:code},{status:409});
+    if(["CAMPAIGN_NOT_ACTIVE","CAMPAIGN_NOT_STARTED","CAMPAIGN_ENDED","RATE_NOT_CONFIGURED","RATE_CONFIGURATION_INVALID","DAILY_CONVERSION_LIMIT_REACHED","MONTHLY_CONVERSION_LIMIT_REACHED","DAILY_BUDGET_LIMIT_REACHED","MONTHLY_BUDGET_LIMIT_REACHED","DUPLICATE","CLICK_NOT_FOUND","CLICK_ALREADY_CONVERTED"].includes(code))return Response.json({ok:false,error:code},{status:409});
     return Response.json({ok:false,error:"CREATE_FAILED"},{status:500});
   }
 }
