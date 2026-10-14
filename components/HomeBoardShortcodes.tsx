@@ -1,6 +1,6 @@
 import {eventDisplayStatus} from "@/lib/event-display-status";
 import Link from "next/link";
-import {desc} from "drizzle-orm";
+import {desc,eq} from "drizzle-orm";
 import {getDb} from "@/db";
 import {customerNotices} from "@/db/schema/notices";
 import {customerQna} from "@/db/schema";
@@ -25,8 +25,8 @@ async function getItems(type:BoardType):Promise<BoardItem[]>{
  if(type==="events"){const rows=await listPublicEvents(4);return (rows??[]).map(e=>({title:e.title,href:"/customer/events/"+e.id,meta:new Date(e.createdAt).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}),tag:eventDisplayStatus(e)}));}
  try{
   if(type==="notices"){const rows=await getDb().select({id:customerNotices.id,title:customerNotices.title,createdAt:customerNotices.createdAt}).from(customerNotices).orderBy(desc(customerNotices.createdAt)).limit(4);return rows.map(x=>({title:x.title,href:"/customer#notice-"+x.id,meta:x.createdAt.toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}));}
-  const rows=await getDb().select({id:customerQna.id,title:customerQna.title,isSecret:customerQna.isSecret,status:customerQna.status,createdAt:customerQna.createdAt}).from(customerQna).orderBy(desc(customerQna.createdAt)).limit(4);
-  return rows.map(x=>({title:x.isSecret?"비밀 문의":x.title,href:"/customer/qna/"+x.id,meta:x.createdAt.toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}),tag:x.status==="ANSWERED"?"답변완료":"답변대기"}));
+  const rows=await getDb().select({id:customerQna.id,title:customerQna.title,status:customerQna.status,createdAt:customerQna.createdAt}).from(customerQna).where(eq(customerQna.isSecret,false)).orderBy(desc(customerQna.createdAt)).limit(4);
+  return rows.map(x=>({title:x.title,href:"/customer/qna/"+x.id,meta:x.createdAt.toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}),tag:x.status==="ANSWERED"?"답변완료":"답변대기"}));
  }catch(error){console.error("Home board preview unavailable",type,error);return [];}
 }
 /** Shortcode-like reusable homepage board block; type controls the source and destination. */
