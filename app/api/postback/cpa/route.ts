@@ -6,13 +6,15 @@ import { clicks } from "@/db/schema";
 
 /** Server-to-server CPA postback. Configure CPA_POSTBACK_SECRET on Vercel and give it only to trusted advertisers. */
 export async function POST(request:NextRequest){
+  const length=Number(request.headers.get("content-length")??0);
+  if(length>8192)return Response.json({ok:false,error:"PAYLOAD_TOO_LARGE"},{status:413});
   const configured=process.env.CPA_POSTBACK_SECRET;
   if(!configured||configured.length<32)return Response.json({ok:false,error:"POSTBACK_NOT_CONFIGURED"},{status:503});
   const supplied=request.headers.get("x-cpa-postback-secret")??"";
   const a=Buffer.from(supplied),b=Buffer.from(configured);
   if(a.length!==b.length||!timingSafeEqual(a,b))return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
   let body:Record<string,unknown>;
-  try{body=await request.json();}catch{return Response.json({ok:false,error:"INVALID_JSON"},{status:400});}
+  try{const raw=await request.text();if(raw.length>8192)return Response.json({ok:false,error:"PAYLOAD_TOO_LARGE"},{status:413});body=JSON.parse(raw);if(!body||typeof body!=="object"||Array.isArray(body))throw Error("INVALID_JSON");}catch{return Response.json({ok:false,error:"INVALID_JSON"},{status:400});}
   const click=String(body.click??"");
   const campaignId=String(body.campaignId??"");
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignId))return Response.json({ok:false,error:"INVALID_CAMPAIGN_ID"},{status:400});
