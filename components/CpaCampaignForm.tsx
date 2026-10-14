@@ -8,10 +8,11 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+  const [savedId, setSavedId] = useState<string|null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();if(saving)return;const formElement=event.currentTarget;
-    setSaving(true); setMessage(""); setError(false);
+    setSaving(true); setMessage(""); setError(false); setSavedId(null);
     const form = new FormData(event.currentTarget);
     const payload = {
       type: "CPA",
@@ -28,9 +29,9 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
         allowedMedia: form.get("allowedMedia"), prohibitedMedia: form.get("prohibitedMedia"), operatingHours: form.get("operatingHours"),
       },
     };
-    if (!Number.isSafeInteger(payload.advertiserRate) || !Number.isSafeInteger(payload.partnerBaseRate) || payload.advertiserRate < 0 || payload.partnerBaseRate < 0 || payload.partnerBaseRate > payload.advertiserRate) { setMessage("단가를 확인해 주세요. CPA 금액은 원 단위의 정수이며, 파트너 CPA는 광고주 CPA보다 클 수 없습니다."); setError(true); setSaving(false); return; }
+    if (!Number.isSafeInteger(payload.advertiserRate) || !Number.isSafeInteger(payload.partnerBaseRate) || payload.advertiserRate < 0 || payload.partnerBaseRate < 0 || payload.partnerBaseRate > payload.advertiserRate || payload.advertiserRate > 999999999 || payload.partnerBaseRate > 999999999) { setMessage("단가를 확인해 주세요. CPA 금액은 원 단위의 정수이며, 파트너 CPA는 광고주 CPA보다 클 수 없습니다."); setError(true); setSaving(false); return; }
     try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_RATE:"광고주·파트너 CPA 금액 또는 마진이 올바르지 않습니다.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_CONVERSION_LIMIT:"일일 DB 한도가 월 DB 한도보다 클 수 없습니다.",INVALID_BUDGET_LIMIT:"일일 광고비 한도가 월 광고비 한도보다 클 수 없습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주가 존재하지 않습니다.",INVALID_LIMIT:"한도는 1 이상의 정수로 입력하거나 비워 주세요.",DATABASE_NOT_READY:"운영 데이터베이스 연결을 확인해 주세요."};throw new Error(reasons[data.error]??`저장 실패 (${data.error??res.status})`);}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
+    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_RATE:"광고주·파트너 CPA 금액 또는 마진이 올바르지 않습니다.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_CONVERSION_LIMIT:"일일 DB 한도가 월 DB 한도보다 클 수 없습니다.",INVALID_BUDGET_LIMIT:"일일 광고비 한도가 월 광고비 한도보다 클 수 없습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주가 존재하지 않습니다.",INVALID_LIMIT:"한도는 1 이상의 정수로 입력하거나 비워 주세요.",DATABASE_NOT_READY:"운영 데이터베이스 연결을 확인해 주세요."};throw new Error(reasons[data.error]??`저장 실패 (${data.error??res.status})`);}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 조건을 확인한 뒤 활성화하세요.`);setSavedId(data.campaign.id);formElement.reset();
     }catch(e){setError(true);setMessage((e instanceof Error?e.message:"통신 오류")+" · 저장 여부가 불확실하면 캠페인 목록을 먼저 확인해 주세요.");}finally{setSaving(false);}
 
   }
@@ -56,6 +57,7 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
     </div>
     <p className="muted">단가는 원 단위로 입력합니다. 예: 광고주 30,000원 → 30000 / 파트너 20,000원 → 20000</p>
     {message && <p className="form-message" role={error?"alert":"status"}>{message}</p>}
+    {savedId && <p><a className="btn" href={`/admin/campaigns/${savedId}`}>저장한 캠페인 상세·단가 확인 →</a></p>}
     <div className="form-actions"><a className="btn" href="/admin/campaigns">취소</a><button disabled={saving}>{saving ? "저장 중..." : "임시저장"}</button></div>
   </form>;
 }
