@@ -29,7 +29,7 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       dailyBudgetLimit: Number(form.get("dailyBudgetLimit") || 0) || null,
       monthlyBudgetLimit: Number(form.get("monthlyBudgetLimit") || 0) || null,
       settings: {
-        mainImage: imageData || null, region: form.get("region"), approvalRules: form.get("approvalRules"), rejectionRules: form.get("rejectionRules"),
+        mainImage: imageData || null, landingUrl: form.get("landingUrl"), region: form.get("region"), approvalRules: form.get("approvalRules"), rejectionRules: form.get("rejectionRules"),
         allowedMedia: form.get("allowedMedia"), prohibitedMedia: form.get("prohibitedMedia"), operatingHours: form.get("operatingHours"),
       },
     };
@@ -49,6 +49,7 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       <label className="full">캠페인명 *<input name="name" maxLength={200} required placeholder="예: 부산 포장이사 무료견적" /></label>
       <label className="full">설명<textarea name="description" rows={4} /></label>
       <label className="full">캠페인 대표 이미지 (선택)<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>void selectImage(e.target.files?.[0])}/><small>JPG·PNG·WebP · 원본 5MB 이하 · 등록 시 자동 축소 (640px)</small>{imageError&&<span role="alert">{imageError}</span>}{imageData&&<img src={imageData} alt="대표 이미지 미리보기" style={{maxWidth:320,width:"100%",height:"auto",borderRadius:12,marginTop:10}}/>}</label>
+      <label className="full">광고 랜딩페이지 URL (선택)<input name="landingUrl" type="url" maxLength={2048} placeholder="https://advertiser.example.com/apply" /><small>등록한 URL이 있으면 파트너 추적링크 클릭 시 해당 광고 랜딩페이지로 이동합니다. 비워두면 마이픽업 기본 신청페이지를 사용합니다.</small></label>
       <label>시작일 (한국 시간 00시)<input name="startAt" type="date" /></label><label>종료일 (한국 시간 00시)<input name="endAt" type="date" /></label>
       <label className="full">광고지역<input name="region" placeholder="예: 부산 전체" /></label>
       <label>광고주 CPA *<input name="advertiserRate" type="number" min="0" max="999999999" step="1" required placeholder="예: 30000 (원)" /></label><label>파트너 CPA *<input name="partnerBaseRate" type="number" min="0" max="999999999" step="1" required placeholder="예: 20000 (원)" /></label>
