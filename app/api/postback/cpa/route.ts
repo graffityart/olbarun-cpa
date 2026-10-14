@@ -1,8 +1,8 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { and,eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { clicks, campaigns } from "@/db/schema";
+import { clicks } from "@/db/schema";
 
 /** Server-to-server CPA postback. Configure CPA_POSTBACK_SECRET on Vercel and give it only to trusted advertisers. */
 export async function POST(request:NextRequest){
@@ -16,10 +16,10 @@ export async function POST(request:NextRequest){
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignId))return Response.json({ok:false,error:"INVALID_CAMPAIGN_ID"},{status:400});
   if(!/^CLK-[A-F0-9]{14}$/.test(click))return Response.json({ok:false,error:"INVALID_CLICK"},{status:400});
   if(body.privacy!==true||body.thirdParty!==true)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
-  const [attribution]=await getDb().select({id:clicks.id,settings:campaigns.settings}).from(clicks).innerJoin(campaigns,eq(clicks.campaignId,campaigns.id)).where(and(eq(clicks.clickCode,click),eq(clicks.campaignId,campaignId))).limit(1);
+  const [attribution]=await getDb().select({id:clicks.id}).from(clicks).where(and(eq(clicks.clickCode,click),eq(clicks.campaignId,campaignId))).limit(1);
   if(!attribution)return Response.json({ok:false,error:"CLICK_NOT_FOUND"},{status:404});
-  const settings=(attribution.settings??{}) as Record<string,unknown>;
-  const configured=typeof settings.postbackSecret==="string"?settings.postbackSecret:"";
+  const master=process.env.CPA_POSTBACK_SECRET??"";
+  const configured=master.length>=32?createHmac("sha256",master).update(`cpa-postback:${campaignId.toLowerCase()}`).digest("hex"):"";
   if(configured.length<32)return Response.json({ok:false,error:"POSTBACK_NOT_CONFIGURED"},{status:503});
   const a=Buffer.from(supplied),b=Buffer.from(configured);
   if(a.length!==b.length||!timingSafeEqual(a,b))return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
