@@ -3,7 +3,7 @@ import Link from "next/link";
 import {searchAdminEvents} from "@/lib/admin-event-search";
 import {requireAdmin} from "@/lib/auth/guards";
 export const dynamic="force-dynamic";
-type Props={searchParams:Promise<{q?:string;status?:string;page?:string;created?:string}>};
+type Props={searchParams:Promise<{q?:string;status?:string;page?:string;created?:string;deleted?:string}>};
 export default async function Page({searchParams}:Props){
  await requireAdmin();
  const params=await searchParams;
@@ -18,6 +18,7 @@ export default async function Page({searchParams}:Props){
  return <DashboardShell title="이벤트 관리" description="전체 이벤트 검색, 공개 상태 확인 및 수정" nav={[{href:"/admin/events/new",label:"+ 새 이벤트"},{href:"/customer/events",label:"이벤트 게시판"}]}>
  <section className="panel card"><h2>등록된 이벤트</h2>
  {params.created==="1"&&<p role="status">이벤트가 등록되었습니다.</p>}
+ {params.deleted==="1"&&<p role="status">이벤트가 삭제되었습니다.</p>}
  <form method="get" action="/admin/events" style={{display:"flex",gap:10,flexWrap:"wrap",margin:"16px 0"}}>
  <input name="q" aria-label="이벤트 제목 검색" placeholder="이벤트 제목 검색" maxLength={100} defaultValue={q} style={{flex:"1 1 220px",padding:12,border:"1px solid #cbd5e1",borderRadius:10}}/>
  <select name="status" aria-label="이벤트 상태" defaultValue={status} style={{padding:12,border:"1px solid #cbd5e1",borderRadius:10}}><option value="ALL">전체 상태</option><option value="DRAFT">비공개</option><option value="OPEN">공개</option><option value="ENDED">종료</option></select>
