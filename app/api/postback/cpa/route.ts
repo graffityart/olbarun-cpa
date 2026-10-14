@@ -19,11 +19,11 @@ export async function POST(request:NextRequest){
   const [attribution]=await getDb().select({id:clicks.id}).from(clicks).where(and(eq(clicks.clickCode,click),eq(clicks.campaignId,String(body.campaignId??"")))).limit(1);
   if(!attribution)return Response.json({ok:false,error:"CLICK_NOT_FOUND"},{status:404});
   // Reuse the same budget, duplicate, rate and attribution logic as hosted CPA conversions.
-  const {POST:createConversion}=await import("@/app/api/conversions/route");
+  const {createCpaConversion}=await import("@/app/api/conversions/route");
   const forwarded=new Request(new URL("/api/conversions",request.url),{
     method:"POST",
     headers:{"content-type":"application/json","cookie":`olbarun_click=${encodeURIComponent(click)}`},
     body:JSON.stringify({campaignId:body.campaignId,name:body.name,phone:body.phone,region:body.region,privacy:true,thirdParty:true})
   });
-  return createConversion(forwarded,{trustedClickCode:click});
+  return createCpaConversion(forwarded,{trustedClickCode:click});
 }
