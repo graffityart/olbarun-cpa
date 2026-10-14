@@ -10,7 +10,7 @@ const hash=(v:string)=>createHash("sha256").update(v).digest("hex");
 const normalizePhone=(v:string)=>v.replace(/\D/g,"");
 function kstBoundaries(){const now=new Date();const date=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul",year:"numeric",month:"2-digit",day:"2-digit"}).format(now);const month=date.slice(0,7);return{now,today:new Date(`${date}T00:00:00+09:00`),month:new Date(`${month}-01T00:00:00+09:00`)}};
 
-export async function POST(request:Request){
+export async function POST(request:Request, internal?:{trustedClickCode:string}){
   try{
     const body=await request.json();
     const campaignId=String(body.campaignId??"");
@@ -21,7 +21,7 @@ export async function POST(request:Request){
 
     const db=getDb();
     const cookieStore=await cookies();
-    const clickCode=cookieStore.get("olbarun_click")?.value??null;
+    const clickCode=internal?.trustedClickCode??cookieStore.get("olbarun_click")?.value??null;
     const phoneHash=hash(phone);
     const {now,today,month}=kstBoundaries();
 
