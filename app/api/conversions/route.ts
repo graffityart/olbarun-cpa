@@ -65,10 +65,10 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     });
 
     if(result.kind==="LOW_BALANCE"){
-      await Promise.all([notifyAdvertiser(result.advertiserId,{type:"BALANCE_LOW",title:"예치금 부족으로 캠페인이 중지되었습니다",message:`${result.campaignName} 캠페인의 예치금이 건당 광고비보다 부족해 자동 중지되었습니다.`,href:"/advertiser/ledger"}),notifyAdmins({type:"BALANCE_LOW",title:"광고주 예치금 부족",message:`${result.campaignName} 캠페인이 예치금 부족으로 자동 중지되었습니다.`,href:"/admin/advertisers"})]);
+      await Promise.allSettled([notifyAdvertiser(result.advertiserId,{type:"BALANCE_LOW",title:"예치금 부족으로 캠페인이 중지되었습니다",message:`${result.campaignName} 캠페인의 예치금이 건당 광고비보다 부족해 자동 중지되었습니다.`,href:"/advertiser/ledger"}),notifyAdmins({type:"BALANCE_LOW",title:"광고주 예치금 부족",message:`${result.campaignName} 캠페인이 예치금 부족으로 자동 중지되었습니다.`,href:"/admin/advertisers"})]);
       return Response.json({ok:false,error:"ADVERTISER_BALANCE_INSUFFICIENT"},{status:409});
     }
-    await notifyAdvertiser(result.advertiserId,{type:"NEW_CPA_DB",title:"새 CPA DB가 접수되었습니다",message:`${result.campaignName} 캠페인에 ${result.conversionCode} DB가 새로 접수되었습니다.`,href:"/advertiser/conversions"});
+    try{await notifyAdvertiser(result.advertiserId,{type:"NEW_CPA_DB",title:"새 CPA DB가 접수되었습니다",message:`${result.campaignName} 캠페인에 ${result.conversionCode} DB가 새로 접수되었습니다.`,href:"/advertiser/conversions"});}catch(notificationError){console.error("CPA conversion saved but advertiser notification failed",notificationError);}
     return Response.json({ok:true,conversionCode:result.conversionCode},{status:201});
   }catch(error){
     const code=error instanceof Error?error.message:"CREATE_FAILED";
