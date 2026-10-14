@@ -25,5 +25,5 @@ export async function POST(request:NextRequest){
     headers:{"content-type":"application/json","cookie":`olbarun_click=${encodeURIComponent(click)}`},
     body:JSON.stringify({campaignId:body.campaignId,name:body.name,phone:body.phone,region:body.region,privacy:true,thirdParty:true})
   });
-  return createConversion(forwarded);
+  return createConversion(forwarded,{trustedClickCode:click});
 }
