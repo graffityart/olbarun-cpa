@@ -14,9 +14,11 @@ export async function POST(request:NextRequest){
   let body:Record<string,unknown>;
   try{body=await request.json();}catch{return Response.json({ok:false,error:"INVALID_JSON"},{status:400});}
   const click=String(body.click??"");
+  const campaignId=String(body.campaignId??"");
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignId))return Response.json({ok:false,error:"INVALID_CAMPAIGN_ID"},{status:400});
   if(!/^CLK-[A-F0-9]{14}$/.test(click))return Response.json({ok:false,error:"INVALID_CLICK"},{status:400});
   if(body.privacy!==true||body.thirdParty!==true)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
-  const [attribution]=await getDb().select({id:clicks.id}).from(clicks).where(and(eq(clicks.clickCode,click),eq(clicks.campaignId,String(body.campaignId??"")))).limit(1);
+  const [attribution]=await getDb().select({id:clicks.id}).from(clicks).where(and(eq(clicks.clickCode,click),eq(clicks.campaignId,campaignId))).limit(1);
   if(!attribution)return Response.json({ok:false,error:"CLICK_NOT_FOUND"},{status:404});
   // Reuse the same budget, duplicate, rate and attribution logic as hosted CPA conversions.
   const {createCpaConversion}=await import("@/app/api/conversions/route");
