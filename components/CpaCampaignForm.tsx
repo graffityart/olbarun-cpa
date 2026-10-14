@@ -7,10 +7,11 @@ type Advertiser = { id: string; companyName: string; advertiserCode: string };
 export default function CpaCampaignForm({ advertisers }: { advertisers: Advertiser[] }) {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();if(saving)return;const formElement=event.currentTarget;
-    setSaving(true); setMessage("");
+    setSaving(true); setMessage(""); setError(false);
     const form = new FormData(event.currentTarget);
     const payload = {
       type: "CPA",
@@ -27,9 +28,10 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
         allowedMedia: form.get("allowedMedia"), prohibitedMedia: form.get("prohibitedMedia"), operatingHours: form.get("operatingHours"),
       },
     };
+    if (!Number.isSafeInteger(payload.advertiserRate) || !Number.isSafeInteger(payload.partnerBaseRate) || payload.advertiserRate < 0 || payload.partnerBaseRate < 0 || payload.partnerBaseRate > payload.advertiserRate) { setMessage("단가를 확인해 주세요. CPA 금액은 원 단위의 정수이며, 파트너 CPA는 광고주 CPA보다 클 수 없습니다."); setError(true); setSaving(false); return; }
     try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data=await res.json();if(!res.ok||!data.ok)throw new Error("SAVE_FAILED");setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
-    }catch{setMessage("저장하지 못했습니다. 입력값·운영기간·단가를 확인하고, 통신 오류가 있었다면 목록에서 저장 여부를 먼저 확인해 주세요.");}finally{setSaving(false);}
+    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_RATE:"광고주·파트너 CPA 금액 또는 마진이 올바르지 않습니다.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_CONVERSION_LIMIT:"일일 DB 한도가 월 DB 한도보다 클 수 없습니다.",INVALID_BUDGET_LIMIT:"일일 광고비 한도가 월 광고비 한도보다 클 수 없습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주가 존재하지 않습니다.",INVALID_LIMIT:"한도는 1 이상의 정수로 입력하거나 비워 주세요.",DATABASE_NOT_READY:"운영 데이터베이스 연결을 확인해 주세요."};throw new Error(reasons[data.error]??`저장 실패 (${data.error??res.status})`);}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
+    }catch(e){setError(true);setMessage((e instanceof Error?e.message:"통신 오류")+" · 저장 여부가 불확실하면 캠페인 목록을 먼저 확인해 주세요.");}finally{setSaving(false);}
 
   }
 
@@ -43,7 +45,7 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       <label className="full">설명<textarea name="description" rows={4} /></label>
       <label>시작일 (한국 시간 00시)<input name="startAt" type="date" /></label><label>종료일 (한국 시간 00시)<input name="endAt" type="date" /></label>
       <label className="full">광고지역<input name="region" placeholder="예: 부산 전체" /></label>
-      <label>광고주 CPA *<input name="advertiserRate" type="number" min="0" required /></label><label>파트너 CPA *<input name="partnerBaseRate" type="number" min="0" required /></label>
+      <label>광고주 CPA *<input name="advertiserRate" type="number" min="0" max="999999999" step="1" required placeholder="예: 30000 (원)" /></label><label>파트너 CPA *<input name="partnerBaseRate" type="number" min="0" max="999999999" step="1" required placeholder="예: 20000 (원)" /></label>
       <label>중복기간(일)<input name="duplicateDays" type="number" min="0" defaultValue="30" /></label><label>검수기간(일)<input name="reviewDays" type="number" min="1" defaultValue="7" /></label>
       <label>일일 DB 한도<input name="dailyConversionLimit" type="number" min="0" /></label><label>월 DB 한도<input name="monthlyConversionLimit" type="number" min="0" /></label>
       <label>일일 광고비 한도<input name="dailyBudgetLimit" type="number" min="0" /></label><label>월 광고비 한도<input name="monthlyBudgetLimit" type="number" min="0" /></label>
@@ -52,7 +54,8 @@ export default function CpaCampaignForm({ advertisers }: { advertisers: Advertis
       <label>허용매체<input name="allowedMedia" placeholder="블로그, SNS, 홈페이지" /></label><label>금지매체<input name="prohibitedMedia" placeholder="스팸문자, 리워드 등" /></label>
       <label className="full">운영시간<input name="operatingHours" placeholder="예: 월~금 09:00~18:00" /></label>
     </div>
-    {message && <p className="form-message">{message}</p>}
+    <p className="muted">단가는 원 단위로 입력합니다. 예: 광고주 30,000원 → 30000 / 파트너 20,000원 → 20000</p>
+    {message && <p className="form-message" role={error?"alert":"status"}>{message}</p>}
     <div className="form-actions"><a className="btn" href="/admin/campaigns">취소</a><button disabled={saving}>{saving ? "저장 중..." : "임시저장"}</button></div>
   </form>;
 }
