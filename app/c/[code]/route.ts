@@ -8,6 +8,7 @@ function hashIp(value: string) { return createHash("sha256").update(value).diges
 export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params; const db = getDb();
   if(!/^[A-Za-z0-9_-]{8,80}$/.test(code))return Response.redirect(new URL("/partner/campaigns",request.url),302);
+  try {
   const [row] = await db.select({ linkId: trackingLinks.id, campaignId: trackingLinks.campaignId, partnerId: trackingLinks.partnerId, subId: trackingLinks.subId, linkActive: trackingLinks.isActive, slug: campaigns.slug, settings: campaigns.settings, campaignStatus: campaigns.status, campaignType: campaigns.type, partnerStatus: users.status,partnerRole:users.role })
     .from(trackingLinks).innerJoin(campaigns, eq(trackingLinks.campaignId, campaigns.id)).innerJoin(partners,eq(trackingLinks.partnerId,partners.id)).innerJoin(users,eq(partners.userId,users.id)).where(eq(trackingLinks.trackingCode, code)).limit(1);
   if (!row || !row.linkActive || row.campaignType!=="CPA" || row.campaignStatus!=="ACTIVE" || row.partnerStatus!=="ACTIVE" || row.partnerRole!=="PARTNER") return Response.redirect(new URL("/partner/campaigns", request.url), 302);
@@ -22,4 +23,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   const response = new Response(null, {status:302,headers:{Location:destination.toString(),"Cache-Control":"private, no-store"}});
   response.headers.append("Set-Cookie", `olbarun_click=${encodeURIComponent(clickCode)}; Path=/; Max-Age=2592000; SameSite=Lax; Secure; HttpOnly`);
   return response;
+  }catch(error){console.error("CPA tracking redirect failed",error);return Response.json({ok:false,error:"TRACKING_TEMPORARILY_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});}
 }
