@@ -97,3 +97,25 @@
 .biz-campaign .biz-thumb small{position:static;opacity:1;display:block;font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px}
 .biz-campaign .biz-card:focus-visible{outline:3px solid #4f7fff;outline-offset:3px}
 @media(max-width:620px){.biz-campaign+.biz-campaign{padding-top:6px}.biz-campaign .biz-card h3{font-size:13px;min-height:2.8em}.biz-campaign .biz-card>p{font-size:11px}.biz-campaign .biz-thumb{height:116px;padding:12px}.biz-campaign .biz-thumb b{font-size:17px}.biz-campaign .biz-card .state{top:13px;left:13px}.biz-campaign .biz-section-head>a{display:inline-flex;align-items:center;min-height:40px}}
+
+/* Uploaded CPA banners: edge-to-edge thumbnail, no inner padding */
+.biz-campaign .biz-thumb:has(> img){
+  padding:0;
+  display:block;
+  height:185px;
+  overflow:hidden;
+  background:#eef3f9;
+  border-radius:13px;
+}
+.biz-campaign .biz-thumb>img{
+  display:block;
+  width:100%!important;
+  height:100%!important;
+  max-width:none;
+  object-fit:cover!important;
+  object-position:center;
+  border-radius:0!important;
+}
+@media(max-width:620px){
+  .biz-campaign .biz-thumb:has(> img){height:150px}
+}
