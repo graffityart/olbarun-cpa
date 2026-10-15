@@ -42,8 +42,8 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       if(!Number.isSafeInteger(dailyBudget)||!Number.isSafeInteger(monthlyBudget))throw new Error("INVALID_BUDGET_TOTAL");
       if(campaign.dailyConversionLimit&&dailyCount>=campaign.dailyConversionLimit)throw new Error("DAILY_CONVERSION_LIMIT_REACHED");
       if(campaign.monthlyConversionLimit&&monthlyCount>=campaign.monthlyConversionLimit)throw new Error("MONTHLY_CONVERSION_LIMIT_REACHED");
-      if(campaign.dailyBudgetLimit&&dailyBudget+rate.advertiserRate>campaign.dailyBudgetLimit)throw new Error("DAILY_BUDGET_LIMIT_REACHED");
-      if(campaign.monthlyBudgetLimit&&monthlyBudget+rate.advertiserRate>campaign.monthlyBudgetLimit)throw new Error("MONTHLY_BUDGET_LIMIT_REACHED");
+      if(campaign.dailyBudgetLimit&&dailyBudget>campaign.dailyBudgetLimit-rate.advertiserRate)throw new Error("DAILY_BUDGET_LIMIT_REACHED");
+      if(campaign.monthlyBudgetLimit&&monthlyBudget>campaign.monthlyBudgetLimit-rate.advertiserRate)throw new Error("MONTHLY_BUDGET_LIMIT_REACHED");
 
       const[balanceRow]=await tx.select({balance:sql<number>`coalesce(sum(${advertiserLedger.amount}),0)::bigint`}).from(advertiserLedger).where(eq(advertiserLedger.advertiserId,campaign.advertiserId));
       const balance=Number(balanceRow?.balance??0);if(!Number.isSafeInteger(balance)||balance<0)throw new Error("INVALID_LEDGER_BALANCE");
