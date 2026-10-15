@@ -12,7 +12,7 @@ function kstBoundaries(){const now=new Date();const date=new Intl.DateTimeFormat
 
 export async function createCpaConversion(request:Request, internal?:{trustedClickCode:string}){
   try{
-    const body=await request.json();
+    const body=(await request.json().catch(()=>({})))||{};
     const campaignId=String(body.campaignId??"");
     const name=String(body.name??"").trim();
     const phone=normalizePhone(String(body.phone??""));
