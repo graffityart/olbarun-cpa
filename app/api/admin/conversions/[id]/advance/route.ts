@@ -25,7 +25,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       if(!updated)throw new Error("UPDATE_FAILED");
       return{code:row.code,from:row.status,to:next};
     });
-    await writeAudit({actorUserId:admin.id,action:"CPA_STATUS_ADVANCE",targetType:"CONVERSION",targetId:id,summary:`${result.code} ${result.from} → ${result.to}`,metadata:{from:result.from,to:result.to}});
+    try{await writeAudit({actorUserId:admin.id,action:"CPA_STATUS_ADVANCE",targetType:"CONVERSION",targetId:id,summary:`${result.code} ${result.from} → ${result.to}`,metadata:{from:result.from,to:result.to}});}catch(auditError){console.error("CPA status advanced but audit logging failed",auditError);}
     return Response.json({ok:true,status:result.to});
   }catch(e){const message=e instanceof Error?e.message:"ADVANCE_FAILED";const status=message==="INVALID_ORIGIN"||message==="ORIGIN_CHECK_FAILED"?403:message==="NOT_FOUND"?404:409;return Response.json({ok:false,error:message},{status});}
 }
