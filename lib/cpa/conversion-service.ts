@@ -49,7 +49,9 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       const balance=Number(balanceRow?.balance??0);if(!Number.isSafeInteger(balance)||balance<0)throw new Error("INVALID_LEDGER_BALANCE");
       if(balance<rate.advertiserRate){await tx.update(campaigns).set({status:"PAUSED",updatedAt:new Date()}).where(eq(campaigns.id,campaignId));return{kind:"LOW_BALANCE" as const,advertiserId:campaign.advertiserId,campaignName:campaign.name};}
 
-      const duplicateSince=new Date(now.getTime()-campaign.duplicateDays*86400000);
+      const duplicateDays=Number(campaign.duplicateDays);
+      if(!Number.isSafeInteger(duplicateDays)||duplicateDays<0||duplicateDays>3650)throw new Error("INVALID_DUPLICATE_WINDOW");
+      const duplicateSince=new Date(now.getTime()-duplicateDays*86400000);
       const[duplicate]=await tx.select({id:conversionData.id}).from(conversionData).innerJoin(conversions,eq(conversionData.conversionId,conversions.id)).where(and(eq(conversions.campaignId,campaignId),eq(conversionData.customerPhoneHash,phoneHash),gte(conversions.submittedAt,duplicateSince))).limit(1);
       if(duplicate)throw new Error("DUPLICATE");
 
@@ -75,7 +77,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     const code=error instanceof Error?error.message:"CREATE_FAILED";
     console.error("Conversion create failed",error);
     if(code==="PII_ENCRYPTION_KEY_MISSING"||code==="PII_ENCRYPTION_KEY_INVALID")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
-    if(code==="INVALID_LEDGER_BALANCE"||code==="INVALID_BUDGET_TOTAL")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
+    if(code==="INVALID_LEDGER_BALANCE"||code==="INVALID_BUDGET_TOTAL"||code==="INVALID_DUPLICATE_WINDOW")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
     if(code==="CAMPAIGN_NOT_FOUND")return Response.json({ok:false,error:code},{status:404});
     if(["CAMPAIGN_NOT_ACTIVE","CAMPAIGN_NOT_STARTED","CAMPAIGN_ENDED","RATE_NOT_CONFIGURED","RATE_CONFIGURATION_INVALID","DAILY_CONVERSION_LIMIT_REACHED","MONTHLY_CONVERSION_LIMIT_REACHED","DAILY_BUDGET_LIMIT_REACHED","MONTHLY_BUDGET_LIMIT_REACHED","DUPLICATE","CLICK_NOT_FOUND","CLICK_ALREADY_CONVERTED"].includes(code))return Response.json({ok:false,error:code},{status:409});
     return Response.json({ok:false,error:"CREATE_FAILED"},{status:500});
