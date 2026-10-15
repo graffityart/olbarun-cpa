@@ -75,7 +75,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     const code=error instanceof Error?error.message:"CREATE_FAILED";
     console.error("Conversion create failed",error);
     if(code==="PII_ENCRYPTION_KEY_MISSING"||code==="PII_ENCRYPTION_KEY_INVALID")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
-    if(code==="INVALID_LEDGER_BALANCE")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
+    if(code==="INVALID_LEDGER_BALANCE"||code==="INVALID_BUDGET_TOTAL")return Response.json({ok:false,error:"SERVICE_CONFIGURATION_ERROR"},{status:503});
     if(code==="CAMPAIGN_NOT_FOUND")return Response.json({ok:false,error:code},{status:404});
     if(["CAMPAIGN_NOT_ACTIVE","CAMPAIGN_NOT_STARTED","CAMPAIGN_ENDED","RATE_NOT_CONFIGURED","RATE_CONFIGURATION_INVALID","DAILY_CONVERSION_LIMIT_REACHED","MONTHLY_CONVERSION_LIMIT_REACHED","DAILY_BUDGET_LIMIT_REACHED","MONTHLY_BUDGET_LIMIT_REACHED","DUPLICATE","CLICK_NOT_FOUND","CLICK_ALREADY_CONVERTED"].includes(code))return Response.json({ok:false,error:code},{status:409});
     return Response.json({ok:false,error:"CREATE_FAILED"},{status:500});
