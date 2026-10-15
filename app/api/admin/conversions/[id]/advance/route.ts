@@ -1,4 +1,4 @@
-import { eq,sql } from "drizzle-orm";
+import { and,eq,sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { conversions } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -20,7 +20,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       if(!next)throw new Error("NOT_ADVANCEABLE");
       const now=new Date();
       const values=next==="DELIVERED"?{status:next,deliveredAt:now,updatedAt:now}:{status:next,updatedAt:now};
-      const[updated]=await tx.update(conversions).set(values).where(eq(conversions.id,id)).returning({id:conversions.id});
+      const[updated]=await tx.update(conversions).set(values).where(and(eq(conversions.id,id),eq(conversions.status,row.status))).returning({id:conversions.id});
       if(!updated)throw new Error("UPDATE_FAILED");
       return{code:row.code,from:row.status,to:next};
     });
