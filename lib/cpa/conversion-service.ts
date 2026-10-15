@@ -39,7 +39,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       const[daily]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,today)));
       const[monthly]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,month)));
       const dailyCount=Number(daily?.count??0),monthlyCount=Number(monthly?.count??0),dailyBudget=Number(daily?.budget??0),monthlyBudget=Number(monthly?.budget??0);
-      if(!Number.isSafeInteger(dailyBudget)||!Number.isSafeInteger(monthlyBudget))throw new Error("INVALID_BUDGET_TOTAL");
+      if(!Number.isSafeInteger(dailyBudget)||!Number.isSafeInteger(monthlyBudget)||dailyBudget<0||monthlyBudget<0)throw new Error("INVALID_BUDGET_TOTAL");
       if(campaign.dailyConversionLimit&&dailyCount>=campaign.dailyConversionLimit)throw new Error("DAILY_CONVERSION_LIMIT_REACHED");
       if(campaign.monthlyConversionLimit&&monthlyCount>=campaign.monthlyConversionLimit)throw new Error("MONTHLY_CONVERSION_LIMIT_REACHED");
       if(campaign.dailyBudgetLimit&&dailyBudget>campaign.dailyBudgetLimit-rate.advertiserRate)throw new Error("DAILY_BUDGET_LIMIT_REACHED");
