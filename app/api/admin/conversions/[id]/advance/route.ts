@@ -5,8 +5,6 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/audit";
 import { requireSameOrigin } from "@/lib/security/origin";
 
-const nextStatus:Record<string,"DELIVERED"|"REVIEWING">={RECEIVED:"DELIVERED",DELIVERED:"REVIEWING"};
-
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){
   try{
     requireSameOrigin(request);
