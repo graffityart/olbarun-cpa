@@ -45,7 +45,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       if(campaign.monthlyBudgetLimit&&monthlyBudget+rate.advertiserRate>campaign.monthlyBudgetLimit)throw new Error("MONTHLY_BUDGET_LIMIT_REACHED");
 
       const[balanceRow]=await tx.select({balance:sql<number>`coalesce(sum(${advertiserLedger.amount}),0)::bigint`}).from(advertiserLedger).where(eq(advertiserLedger.advertiserId,campaign.advertiserId));
-      const balance=Number(balanceRow?.balance??0);if(!Number.isSafeInteger(balance))throw new Error("INVALID_LEDGER_BALANCE");
+      const balance=Number(balanceRow?.balance??0);if(!Number.isSafeInteger(balance)||balance<0)throw new Error("INVALID_LEDGER_BALANCE");
       if(balance<rate.advertiserRate){await tx.update(campaigns).set({status:"PAUSED",updatedAt:new Date()}).where(eq(campaigns.id,campaignId));return{kind:"LOW_BALANCE" as const,advertiserId:campaign.advertiserId,campaignName:campaign.name};}
 
       const duplicateSince=new Date(now.getTime()-campaign.duplicateDays*86400000);
