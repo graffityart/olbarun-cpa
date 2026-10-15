@@ -12,6 +12,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     requireSameOrigin(request);
     const admin=await requireAdmin();
     const{id}=await params;
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))return Response.json({ok:false,error:"INVALID_ID"},{status:400});
     const db=getDb();
     const result=await db.transaction(async tx=>{
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`conversion:${id}`}))`);
