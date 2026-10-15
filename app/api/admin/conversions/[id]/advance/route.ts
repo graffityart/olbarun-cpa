@@ -18,7 +18,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`conversion:${id}`}))`);
       const[row]=await tx.select({code:conversions.conversionCode,status:conversions.status}).from(conversions).where(eq(conversions.id,id)).limit(1);
       if(!row)throw new Error("NOT_FOUND");
-      const next=Object.prototype.hasOwnProperty.call(nextStatus,row.status)?nextStatus[row.status]:undefined;
+      const next=row.status==="RECEIVED"?"DELIVERED":row.status==="DELIVERED"?"REVIEWING":undefined;
       if(!next)throw new Error("NOT_ADVANCEABLE");
       const now=new Date();
       const values=next==="DELIVERED"?{status:next,deliveredAt:now,updatedAt:now}:{status:next,updatedAt:now};
