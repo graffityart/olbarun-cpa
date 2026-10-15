@@ -34,7 +34,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
 
       const[rate]=await tx.select().from(campaignRates).where(and(eq(campaignRates.campaignId,campaignId),lte(campaignRates.effectiveFrom,now),or(isNull(campaignRates.effectiveTo),gt(campaignRates.effectiveTo,now)))).orderBy(desc(campaignRates.effectiveFrom)).limit(1);
       if(!rate)throw new Error("RATE_NOT_CONFIGURED");
-      if(!Number.isSafeInteger(rate.advertiserRate)||!Number.isSafeInteger(rate.partnerBaseRate)||!Number.isSafeInteger(rate.minimumMargin)||rate.advertiserRate<=0||rate.partnerBaseRate<0||rate.minimumMargin<0||rate.advertiserRate<rate.partnerBaseRate+rate.minimumMargin)throw new Error("RATE_CONFIGURATION_INVALID");
+      if(!Number.isSafeInteger(rate.advertiserRate)||!Number.isSafeInteger(rate.partnerBaseRate)||!Number.isSafeInteger(rate.minimumMargin)||rate.advertiserRate<=0||rate.partnerBaseRate<0||rate.minimumMargin<0||rate.partnerBaseRate>rate.advertiserRate-rate.minimumMargin)throw new Error("RATE_CONFIGURATION_INVALID");
 
       const[daily]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,today)));
       const[monthly]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,month)));
