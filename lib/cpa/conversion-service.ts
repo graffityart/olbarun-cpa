@@ -36,15 +36,15 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       if(!rate)throw new Error("RATE_NOT_CONFIGURED");
       if(rate.advertiserRate<rate.partnerBaseRate+rate.minimumMargin)throw new Error("RATE_CONFIGURATION_INVALID");
 
-      const[daily]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::int`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,today)));
-      const[monthly]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::int`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,month)));
+      const[daily]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,today)));
+      const[monthly]=await tx.select({count:sql<number>`count(*)::int`,budget:sql<number>`coalesce(sum(${conversions.advertiserRateSnapshot}),0)::bigint`}).from(conversions).where(and(eq(conversions.campaignId,campaignId),gte(conversions.submittedAt,month)));
       const dailyCount=Number(daily?.count??0),monthlyCount=Number(monthly?.count??0),dailyBudget=Number(daily?.budget??0),monthlyBudget=Number(monthly?.budget??0);
       if(campaign.dailyConversionLimit&&dailyCount>=campaign.dailyConversionLimit)throw new Error("DAILY_CONVERSION_LIMIT_REACHED");
       if(campaign.monthlyConversionLimit&&monthlyCount>=campaign.monthlyConversionLimit)throw new Error("MONTHLY_CONVERSION_LIMIT_REACHED");
       if(campaign.dailyBudgetLimit&&dailyBudget+rate.advertiserRate>campaign.dailyBudgetLimit)throw new Error("DAILY_BUDGET_LIMIT_REACHED");
       if(campaign.monthlyBudgetLimit&&monthlyBudget+rate.advertiserRate>campaign.monthlyBudgetLimit)throw new Error("MONTHLY_BUDGET_LIMIT_REACHED");
 
-      const[balanceRow]=await tx.select({balance:sql<number>`coalesce(sum(${advertiserLedger.amount}),0)::int`}).from(advertiserLedger).where(eq(advertiserLedger.advertiserId,campaign.advertiserId));
+      const[balanceRow]=await tx.select({balance:sql<number>`coalesce(sum(${advertiserLedger.amount}),0)::bigint`}).from(advertiserLedger).where(eq(advertiserLedger.advertiserId,campaign.advertiserId));
       const balance=Number(balanceRow?.balance??0);
       if(balance<rate.advertiserRate){await tx.update(campaigns).set({status:"PAUSED",updatedAt:new Date()}).where(eq(campaigns.id,campaignId));return{kind:"LOW_BALANCE" as const,advertiserId:campaign.advertiserId,campaignName:campaign.name};}
 
