@@ -5,6 +5,7 @@ const errors: Record<string,string> = {
   NO_AVAILABLE_EARNINGS: "현재 출금할 수 있는 수익이 없습니다.",
   REQUEST_FULL_AVAILABLE_AMOUNT: "출금 가능 금액이 변경되었습니다. 화면을 새로고침한 뒤 다시 신청해 주세요.",
   INVALID_INPUT: "은행명, 계좌번호, 예금주를 확인해 주세요.",
+  INVALID_EARNINGS_AMOUNT: "수익 금액 확인이 필요합니다. 고객센터에 문의해 주세요.",
   EARNINGS_CHANGED: "출금 가능 금액이 변경되었습니다. 신청 내역을 확인한 뒤 다시 시도해 주세요.",
   UNAUTHORIZED: "로그인 상태를 확인해 주세요.",
   INVALID_ORIGIN: "화면을 새로고침한 뒤 다시 신청해 주세요.",
