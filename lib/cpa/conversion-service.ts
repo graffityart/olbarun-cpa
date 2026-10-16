@@ -12,10 +12,11 @@ function kstBoundaries(){const now=new Date();const date=new Intl.DateTimeFormat
 
 export async function createCpaConversion(request:Request, internal?:{trustedClickCode:string}){
   try{
-    const body=(await request.json().catch(()=>({})))||{};
-    const campaignId=String(body.campaignId??"");
-    const name=String(body.name??"").trim();
-    const phone=normalizePhone(String(body.phone??""));
+    const body=(await request.json().catch(()=>null));
+    if(!body||typeof body!=="object"||Array.isArray(body)||typeof body.campaignId!=="string"||typeof body.name!=="string"||typeof body.phone!=="string")return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
+    const campaignId=body.campaignId;
+    const name=body.name.trim();
+    const phone=normalizePhone(body.phone);
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(campaignId)||!name||name.length>100||!/^01\d{8,9}$/.test(phone))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
     if(!body.privacy||!body.thirdParty)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
 
