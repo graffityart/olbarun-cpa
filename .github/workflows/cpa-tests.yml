@@ -5,6 +5,7 @@ on:
     paths:
       - "lib/cpa/**"
       - "app/api/admin/conversions/**"
+      - "app/api/conversions/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/cpa-tests.yml"
