@@ -1,0 +1,29 @@
+name: CPA checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/cpa/**"
+      - "app/api/admin/conversions/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cpa-tests.yml"
+  pull_request:
+    paths:
+      - "lib/cpa/**"
+      - "app/api/admin/conversions/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cpa-tests.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:cpa
+      - run: npm run typecheck
