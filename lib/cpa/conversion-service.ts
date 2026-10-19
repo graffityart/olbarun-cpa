@@ -60,7 +60,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
       let click:{id:string;partnerId:string;trackingLinkId:string}|undefined;
       if(clickCode)[click]=await tx.select({id:clicks.id,partnerId:clicks.partnerId,trackingLinkId:clicks.trackingLinkId}).from(clicks).where(and(eq(clicks.clickCode,clickCode),eq(clicks.campaignId,campaignId))).limit(1);
       if(internal?.trustedClickCode&&!click)throw new Error("CLICK_NOT_FOUND");
-      if(click){const[used]=await tx.select({id:conversions.id}).from(conversions).where(eq(conversions.clickId,click.id)).limit(1);if(used)throw new Error("CLICK_ALREADY_CONVERTED");}
+      if(click){await tx.execute(sql`select id from ${clicks} where id=${click.id} for update`);const[used]=await tx.select({id:conversions.id}).from(conversions).where(eq(conversions.clickId,click.id)).limit(1);if(used)throw new Error("CLICK_ALREADY_CONVERTED");}
 
       const conversionCode=`CV-${randomBytes(7).toString("hex").toUpperCase()}`;
       const margin=rate.advertiserRate-rate.partnerBaseRate;
