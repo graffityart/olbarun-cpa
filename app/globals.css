@@ -115,3 +115,16 @@
 .mp-global-header .mp-image-logo{position:relative;display:block;width:204px;height:50px;overflow:hidden;flex-shrink:0}.mp-image-logo img{position:absolute;width:270px!important;height:auto!important;max-width:none!important;left:-36px;top:-29px;display:block}@media(max-width:620px){.mp-global-header .mp-image-logo{width:166px;height:42px}.mp-image-logo img{width:220px!important;left:-29px;top:-23px}}
 
 .global-footer .mp-footer-image-logo{position:relative;display:block!important;width:202px;height:50px;overflow:hidden}.mp-footer-image-logo img{position:absolute;width:255px!important;height:auto!important;max-width:none!important;left:-27px;top:-26px;display:block}
+
+/* Footer customer contact cards */
+.global-footer .mp-footer-contact{display:grid;gap:10px;margin:0 0 16px}
+.global-footer .mp-contact-card{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 13px;border:1px solid #34445c;border-radius:14px;background:#1b293e;color:#fff;text-decoration:none;transition:border-color .2s,background .2s}
+.global-footer a.mp-contact-card:hover{background:#233854;border-color:#70a5ff}
+.global-footer a.mp-contact-card:focus-visible{outline:3px solid #80afff;outline-offset:3px}
+.global-footer .mp-contact-icon{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#2e6fe9;color:#fff;font-size:24px;font-weight:900}
+.global-footer .mp-contact-kakao .mp-contact-icon{background:#fee500;color:#352800;font-size:11px;letter-spacing:-.03em}
+.global-footer .mp-contact-details{display:flex;flex-direction:column;gap:3px;min-width:0}
+.global-footer .mp-contact-label{font-size:12px;font-weight:700;color:#b7c5d9}
+.global-footer .mp-contact-details strong{font-size:clamp(17px,1.6vw,21px);font-weight:850;letter-spacing:-.025em;line-height:1.25;color:#fff;overflow-wrap:anywhere}
+.global-footer .mp-contact-details small{font-size:11px;line-height:1.45;color:#a6b5c9}
+@media(max-width:600px){.global-footer .mp-contact-card{padding:14px}.global-footer .mp-contact-details strong{font-size:21px}}
