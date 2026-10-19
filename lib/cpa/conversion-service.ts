@@ -18,7 +18,7 @@ export async function createCpaConversion(request:Request, internal?:{trustedCli
     const name=body.name.trim();
     const phone=normalizePhone(body.phone);
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(campaignId)||!name||name.length>100||!/^01\d{8,9}$/.test(phone))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
-    if(!body.privacy||!body.thirdParty)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
+    if(body.privacy!==true||body.thirdParty!==true)return Response.json({ok:false,error:"CONSENT_REQUIRED"},{status:400});
 
     const db=getDb();
     const clickCode=internal?.trustedClickCode??(await cookies()).get("olbarun_click")?.value??null;
