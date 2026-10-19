@@ -22,6 +22,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
       const values=next==="DELIVERED"?{status:next,deliveredAt:now,updatedAt:now}:{status:next,updatedAt:now};
       const[updated]=await tx.update(conversions).set(values).where(and(eq(conversions.id,id),eq(conversions.status,row.status))).returning({id:conversions.id});
       if(!updated)throw new Error("UPDATE_FAILED");
+      await tx.insert(auditLogs).values({actorUserId:admin.id,action:"CPA_STATUS_ADVANCE",targetType:"CONVERSION",targetId:id,summary:`${row.code} ${row.status} → ${next}`,metadata:{from:row.status,to:next}});
       return{code:row.code,from:row.status,to:next};
     });
     try{await writeAudit({actorUserId:admin.id,action:"CPA_STATUS_ADVANCE",targetType:"CONVERSION",targetId:id,summary:`${result.code} ${result.from} → ${result.to}`,metadata:{from:result.from,to:result.to}});}catch(auditError){console.error("CPA status advanced but audit logging failed",auditError);}
