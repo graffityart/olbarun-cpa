@@ -1,0 +1,29 @@
+name: Settlement tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/settlement-list-filters.ts"
+      - "lib/settlement-list-filters.test.mjs"
+      - "app/admin/settlements/page.tsx"
+      - "package.json"
+      - ".github/workflows/settlement-tests.yml"
+  pull_request:
+    paths:
+      - "lib/settlement-list-filters.ts"
+      - "lib/settlement-list-filters.test.mjs"
+      - "app/admin/settlements/page.tsx"
+      - "package.json"
+      - ".github/workflows/settlement-tests.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:settlements
+      - run: npm run typecheck
