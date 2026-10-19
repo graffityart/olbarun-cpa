@@ -1,6 +1,6 @@
 import { and,eq,sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { conversions } from "@/db/schema";
+import { auditLogs, conversions } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { writeAudit } from "@/lib/audit";
 import { requireSameOrigin } from "@/lib/security/origin";
