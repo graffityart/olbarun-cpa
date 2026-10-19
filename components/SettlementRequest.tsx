@@ -2,6 +2,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 const errors: Record<string,string> = {
+  SETTLEMENT_ALREADY_PENDING: "이미 처리 중인 출금 신청이 있습니다. 기존 신청 내역을 확인해 주세요.",
   NO_AVAILABLE_EARNINGS: "현재 출금할 수 있는 수익이 없습니다.",
   REQUEST_FULL_AVAILABLE_AMOUNT: "출금 가능 금액이 변경되었습니다. 화면을 새로고침한 뒤 다시 신청해 주세요.",
   INVALID_INPUT: "은행명, 계좌번호, 예금주를 확인해 주세요.",
