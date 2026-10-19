@@ -1,10 +1,10 @@
-export type CpaCampaignStatusRow={campaign:string;status:string};
-export type CpaCampaignSummary={campaign:string;total:number;pending:number;approved:number;rejected:number;approvalRate:number};
+export type CpaCampaignStatusRow={campaignId:string;campaign:string;status:string};
+export type CpaCampaignSummary={campaignId:string;campaign:string;total:number;pending:number;approved:number;rejected:number;approvalRate:number};
 export function summarizeCpaCampaigns(rows:readonly CpaCampaignStatusRow[]):CpaCampaignSummary[]{
  const byCampaign=new Map<string,CpaCampaignSummary>();
  for(const row of rows){
-  let summary=byCampaign.get(row.campaign);
-  if(!summary){summary={campaign:row.campaign,total:0,pending:0,approved:0,rejected:0,approvalRate:0};byCampaign.set(row.campaign,summary);}
+  let summary=byCampaign.get(row.campaignId);
+  if(!summary){summary={campaignId:row.campaignId,campaign:row.campaign,total:0,pending:0,approved:0,rejected:0,approvalRate:0};byCampaign.set(row.campaignId,summary);}
   summary.total++;
   if(row.status==="RECEIVED"||row.status==="DELIVERED"||row.status==="REVIEWING")summary.pending++;
   if(row.status==="APPROVED")summary.approved++;
