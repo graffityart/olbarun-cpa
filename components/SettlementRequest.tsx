@@ -12,7 +12,7 @@ const errors: Record<string,string> = {
   INVALID_ORIGIN: "화면을 새로고침한 뒤 다시 신청해 주세요.",
   ORIGIN_CHECK_FAILED: "화면을 새로고침한 뒤 다시 신청해 주세요.",
 };
-export default function SettlementRequest({ available }: { available: number }) {
+export default function SettlementRequest({ available, pending = false }: { available: number; pending?: boolean }) {
   const router = useRouter();
   const inFlight = useRef(false);
   const [message,setMessage] = useState("");
@@ -20,7 +20,7 @@ export default function SettlementRequest({ available }: { available: number }) 
   const [completed,setCompleted] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (inFlight.current || available <= 0) return;
+    if (inFlight.current || available <= 0 || pending) return;
     inFlight.current = true;
     const form = new FormData(e.currentTarget);
     let accepted = false;
@@ -41,7 +41,7 @@ export default function SettlementRequest({ available }: { available: number }) 
   }
   return <section className="pf-panel" id="request"><div className="pf-section-head"><div><h2>출금 신청</h2><p>출금 가능한 금액 전체를 한 번에 신청합니다.</p></div></div>
     {available<=0&&<div className="pf-notice">현재 출금 가능한 금액이 없습니다. 작업 승인 후 수익이 확정되면 신청할 수 있습니다.</div>}
-    <form onSubmit={submit} aria-busy={loading&&!completed}><fieldset disabled={loading||available<=0} className="pf-fieldset"><div className="pf-fields">
+    <form onSubmit={submit} aria-busy={loading&&!completed}><fieldset disabled={loading||available<=0||pending} className="pf-fieldset"><div className="pf-fields">
       <label>신청 금액<input value={`${available.toLocaleString("ko-KR")}원`} readOnly /></label>
       <label>은행명<input name="bankName" required maxLength={50} autoComplete="off" placeholder="예: 국민은행" /></label>
       <label>계좌번호<input name="accountNumber" required maxLength={50} inputMode="numeric" autoComplete="off" placeholder="계좌번호를 입력해 주세요" /></label>
