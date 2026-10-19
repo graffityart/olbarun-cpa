@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "seed:test-users": "node scripts/seed-test-users.mjs",
-    "test:settlements": "node --test lib/settlement-list-filters.test.mjs"
+    "test:settlements": "node --test lib/settlement-list-filters.test.mjs",
+    "test:cpa": "node --test lib/cpa/consent.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "latest",
