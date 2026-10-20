@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - "lib/settlement-list-filters.ts"
+      - "lib/settlement-validation.ts"
+      - "lib/settlement-validation.test.mjs"
       - "lib/settlement-list-filters.test.mjs"
       - "app/admin/settlements/page.tsx"
       - "package.json"
@@ -11,6 +13,8 @@ on:
   pull_request:
     paths:
       - "lib/settlement-list-filters.ts"
+      - "lib/settlement-validation.ts"
+      - "lib/settlement-validation.test.mjs"
       - "lib/settlement-list-filters.test.mjs"
       - "app/admin/settlements/page.tsx"
       - "package.json"
