@@ -19,8 +19,8 @@ export async function searchPublicEvents(query:string,page:number):Promise<{even
  const pageNumber=Math.max(1,Math.min(100000,Math.trunc(page)||1));
  const offset=(pageNumber-1)*10;
  try{
-  const countRows=await getDb().execute(sql`SELECT count(*)::integer AS total FROM customer_events WHERE status IN ('OPEN','ENDED') AND title ILIKE '%' || ${term} || '%'`);
-  const rows=await getDb().execute(sql`SELECT id,title,content,status,view_count AS "viewCount",starts_at AS "startsAt",ends_at AS "endsAt",created_at AS "createdAt" FROM customer_events WHERE status IN ('OPEN','ENDED') AND title ILIKE '%' || ${term} || '%' ORDER BY created_at DESC,id DESC LIMIT 10 OFFSET ${offset}`);
+  const countRows=await getDb().execute(sql`SELECT count(*)::integer AS total FROM customer_events WHERE status IN ('OPEN','ENDED') AND strpos(lower(title), lower(${term})) > 0`);
+  const rows=await getDb().execute(sql`SELECT id,title,content,status,view_count AS "viewCount",starts_at AS "startsAt",ends_at AS "endsAt",created_at AS "createdAt" FROM customer_events WHERE status IN ('OPEN','ENDED') AND strpos(lower(title), lower(${term})) > 0 ORDER BY created_at DESC,id DESC LIMIT 10 OFFSET ${offset}`);
   return {events:rows as unknown as CustomerEvent[],total:Number(countRows[0]?.total??0)};
  }catch(error){console.error("Event search unavailable",error);return null;}
 }
