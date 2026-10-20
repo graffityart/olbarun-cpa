@@ -41,3 +41,11 @@ export function isValidSettlementReviewRequest(value: unknown): value is {action
   if (request.action !== "APPROVE" && request.action !== "PAID" && request.action !== "REJECT") return false;
   return request.action !== "PAID" || request.transferConfirmed === true;
 }
+
+export function isSettlementPending(status: string): boolean {
+  return status === "REQUESTED" || status === "APPROVED";
+}
+
+export function canStartSettlement(statuses: readonly string[]): boolean {
+  return !statuses.some(isSettlementPending);
+}
