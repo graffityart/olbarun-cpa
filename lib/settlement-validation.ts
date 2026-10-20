@@ -34,3 +34,10 @@ export function canReviewSettlement(status: SettlementStatus, action: Settlement
   return (status === "REQUESTED" && (action === "APPROVE" || action === "REJECT")) ||
     (status === "APPROVED" && action === "PAID");
 }
+
+export function isValidSettlementReviewRequest(value: unknown): value is {action: SettlementAction; transferConfirmed?: boolean} {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const request = value as Record<string, unknown>;
+  if (request.action !== "APPROVE" && request.action !== "PAID" && request.action !== "REJECT") return false;
+  return request.action !== "PAID" || request.transferConfirmed === true;
+}
