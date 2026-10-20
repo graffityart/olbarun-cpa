@@ -1,4 +1,4 @@
-name: Settlement tests
+name: CPA and settlement tests
 on:
   push:
     branches: [main]
@@ -8,6 +8,9 @@ on:
       - "lib/settlement-validation.test.mjs"
       - "lib/settlement-concurrency.test.mjs"
       - "lib/cpa/**"
+      - "app/api/**/cpa/**"
+      - "app/api/**/conversions/**"
+      - "app/api/**/leads/**"
       - "lib/settlement-list-filters.test.mjs"
       - "app/admin/settlements/page.tsx"
       - "app/admin/settlements/[id]/page.tsx"
@@ -24,6 +27,9 @@ on:
       - "lib/settlement-validation.test.mjs"
       - "lib/settlement-concurrency.test.mjs"
       - "lib/cpa/**"
+      - "app/api/**/cpa/**"
+      - "app/api/**/conversions/**"
+      - "app/api/**/leads/**"
       - "lib/settlement-list-filters.test.mjs"
       - "app/admin/settlements/page.tsx"
       - "app/admin/settlements/[id]/page.tsx"
