@@ -63,4 +63,5 @@ jobs:
         env:
           SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
           SETTLEMENT_TEST_DB_CONFIRM: disposable
+      - run: npm run test:cpa
       - run: npm run typecheck
