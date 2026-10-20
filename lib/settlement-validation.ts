@@ -6,7 +6,7 @@ export function isValidSettlementAmount(value: unknown): value is number {
 
 export function sumSettlementItems(amounts: readonly number[]): bigint | null {
   if (!amounts.length || amounts.some(amount => !isValidSettlementAmount(amount))) return null;
-  const total = amounts.reduce((sum, amount) => sum + BigInt(amount), 0n);
+  const total = amounts.reduce((sum, amount) => sum + BigInt(amount), BigInt(0));
   return total <= BigInt(MAX_SETTLEMENT_AMOUNT) ? total : null;
 }
 
