@@ -8,6 +8,10 @@ on:
       - "lib/settlement-validation.test.mjs"
       - "lib/settlement-list-filters.test.mjs"
       - "app/admin/settlements/page.tsx"
+      - "app/admin/settlements/[id]/page.tsx"
+      - "app/api/admin/settlements/[id]/review/route.ts"
+      - "app/api/partner/settlements/route.ts"
+      - "components/SettlementReview.tsx"
       - "package.json"
       - ".github/workflows/settlement-tests.yml"
   pull_request:
