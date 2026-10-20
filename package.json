@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "seed:test-users": "node scripts/seed-test-users.mjs",
     "test:settlements": "node --test lib/settlement-list-filters.test.mjs lib/settlement-validation.test.mjs",
-    "test:cpa": "node --test lib/cpa/*.test.mjs"
+    "test:cpa": "node --test lib/cpa/*.test.mjs",
+    "test:settlement-concurrency": "node --test lib/settlement-concurrency.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "latest",
