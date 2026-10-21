@@ -10,3 +10,11 @@ export function validCpaReviewRates(advertiserRate:number,partnerRate:number,pla
 export function canReviewCpaConversion(status:string):boolean {
   return status==="REVIEWING";
 }
+
+export function validCpaCampaignRates(advertiserRate:number,partnerRate:number,minimumMargin:number):boolean {
+  return validCpaReviewRates(advertiserRate,partnerRate,advertiserRate-partnerRate)
+    && Number.isSafeInteger(minimumMargin)
+    && minimumMargin>=0
+    && minimumMargin<=MAX_DB_AMOUNT
+    && advertiserRate-partnerRate>=minimumMargin;
+}
