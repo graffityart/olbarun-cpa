@@ -19,7 +19,7 @@ export default function LedgerReviewForm({ conversionId }: { conversionId: strin
         credentials: "same-origin",
         body: JSON.stringify({ conversionId, status, note }),
       });
-      if (!response.ok) throw new Error("검토 기록을 저장하지 못했습니다.");
+      if (!response.ok) { const result = await response.json().catch(() => null); throw new Error(result?.error === "Resolution note required" ? "검토 완료 시 처리 근거를 입력해 주세요." : "검토 기록을 저장하지 못했습니다."); }
       setMessage("저장되었습니다.");
       setNote("");
       window.location.reload();
