@@ -49,3 +49,8 @@ export function isSettlementPending(status: string): boolean {
 export function canStartSettlement(statuses: readonly string[]): boolean {
   return !statuses.some(isSettlementPending);
 }
+
+/** Verify that the settlement contains unique earnings before money is released. */
+export function hasUniqueSettlementEarnings(ids: readonly string[]): boolean {
+  return ids.length > 0 && new Set(ids).size === ids.length;
+}
