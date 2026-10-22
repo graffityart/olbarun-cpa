@@ -52,5 +52,5 @@ export function canStartSettlement(statuses: readonly string[]): boolean {
 
 /** Verify that the settlement contains unique earnings before money is released. */
 export function hasUniqueSettlementEarnings(ids: readonly string[]): boolean {
-  return ids.length > 0 && new Set(ids).size === ids.length;
+  return ids.length > 0 && ids.every(id => id.length > 0) && new Set(ids).size === ids.length;
 }
