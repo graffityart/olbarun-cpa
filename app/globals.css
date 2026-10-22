@@ -128,3 +128,9 @@
 .global-footer .mp-contact-details strong{font-size:clamp(17px,1.6vw,21px);font-weight:850;letter-spacing:-.025em;line-height:1.25;color:#fff;overflow-wrap:anywhere}
 .global-footer .mp-contact-details small{font-size:11px;line-height:1.45;color:#a6b5c9}
 @media(max-width:600px){.global-footer .mp-contact-card{padding:14px}.global-footer .mp-contact-details strong{font-size:21px}}
+
+/* Settlement review priority */
+.settlement-priority{display:inline-block;font-size:12px;font-weight:800;white-space:nowrap}
+.settlement-priority.is-critical{color:#b42318}
+.settlement-priority.is-warning{color:#946200}
+.settlement-priority.is-normal{color:inherit}
