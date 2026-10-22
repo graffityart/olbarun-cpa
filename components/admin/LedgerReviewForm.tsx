@@ -35,7 +35,7 @@ export default function LedgerReviewForm({ conversionId }: { conversionId: strin
       <option value="RESOLVED">검토 완료</option>
       <option value="REOPENED">재검토</option>
     </select>
-    <input aria-label="검토 메모" placeholder="검토 메모 (선택)" maxLength={1000} value={note} onChange={event=>setNote(event.target.value)}/>
+    <textarea aria-label="검토 메모" placeholder={status==="RESOLVED"?"처리 근거를 입력해 주세요 (필수)":"검토 메모 (선택)"} rows={3} required={status==="RESOLVED"} maxLength={1000} value={note} onChange={event=>setNote(event.target.value)}/>
     <button type="submit" disabled={busy}>{busy?"저장 중":"검토 기록 저장"}</button>
     {message?<small role="status">{message}</small>:null}
   </form>;
