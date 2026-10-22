@@ -36,6 +36,7 @@ export default function LedgerReviewForm({ conversionId }: { conversionId: strin
       <option value="REOPENED">재검토</option>
     </select>
     <textarea aria-label="검토 메모" placeholder={status==="RESOLVED"?"처리 근거를 입력해 주세요 (필수)":"검토 메모 (선택)"} rows={3} required={status==="RESOLVED"} maxLength={1000} value={note} onChange={event=>setNote(event.target.value)}/>
+    <small style={{opacity:.75}}>검토 완료는 정산 장부의 자동 수정이 아닙니다.</small>
     <button type="submit" disabled={busy}>{busy?"저장 중":"검토 기록 저장"}</button>
     {message?<small role="status">{message}</small>:null}
   </form>;
