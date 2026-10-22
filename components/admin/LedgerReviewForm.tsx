@@ -9,6 +9,7 @@ export default function LedgerReviewForm({ conversionId }: { conversionId: strin
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
+    if (status === "RESOLVED" && !note.trim()) { setMessage("검토 완료 시 처리 근거를 입력해 주세요."); return; }
     setBusy(true);
     setMessage("");
     try {
