@@ -1,3 +1,4 @@
+import LedgerReviewHistory from "@/components/admin/LedgerReviewHistory";
 import LedgerReviewForm from "@/components/admin/LedgerReviewForm";
 import DashboardShell from "@/components/DashboardShell";import {and,desc,eq,gte,inArray,lte,sql} from "drizzle-orm";import {getDb} from "@/db";import {advertiserLedger,advertisers,conversions,earnings,partners,cpaLedgerReviews,users} from "@/db/schema";import {requireAdmin} from "@/lib/auth/guards";
 export const dynamic="force-dynamic";const nav=[{href:"/admin",label:"대시보드"},{href:"/admin/advertisers",label:"광고주 관리"},{href:"/admin/conversions",label:"전환 DB"},{href:"/admin/ledger",label:"광고비·수익"},{href:"/admin/settlements",label:"정산"}];const earningStatus:Record<string,string>={AVAILABLE:"정산가능",HOLD:"정산진행",PAID:"지급완료",CANCELLED:"취소"};const ledgerType:Record<string,string>={DEPOSIT:"충전",CPA_APPROVAL:"CPA 승인",POSTING_APPROVAL:"포스팅 승인",REFUND:"환불",ADJUSTMENT:"조정"};
