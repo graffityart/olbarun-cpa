@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.status !== "ACTIVE" || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const origin = request.headers.get("origin");
-  if (origin && origin !== request.nextUrl.origin) return NextResponse.json({ error: "Forbidden origin" }, { status: 403 });
+  if (origin !== request.nextUrl.origin) return NextResponse.json({ error: "Forbidden origin" }, { status: 403 });
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   const { conversionId, status, note } = body as Record<string, unknown>;
