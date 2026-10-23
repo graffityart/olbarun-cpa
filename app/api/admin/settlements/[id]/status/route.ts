@@ -1,13 +1,17 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { settlements } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth/guards";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const user = await getCurrentUser();
+    if (!user) return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    if (user.status !== "ACTIVE" || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+      return Response.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
     const { id } = await params;
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
       return Response.json({ ok: false, error: "INVALID_ID" }, { status: 400 });
