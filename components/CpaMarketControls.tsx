@@ -8,10 +8,13 @@ export default function CpaMarketControls({items}:{items:CpaItem[]}){
  const [category,setCategory]=useState("전체");
  const [sort,setSort]=useState<SortMode>("추천순");
  const [onlyOpen,setOnlyOpen]=useState(false);
+ const [status,setStatus]=useState("전체 상태");
  const categories=useMemo(()=>["전체",...new Set(items.map(x=>x.category||"기타"))], [items]);
- const rows=useMemo(()=>items.filter(x=>(!onlyOpen||x.open)&&(category==="전체"||(x.category||"기타")===category)&&[x.name,x.category,x.description].join(" ").toLocaleLowerCase("ko-KR").includes(q.trim().toLocaleLowerCase("ko-KR"))).sort((a,b)=>sort==="수익순"?(b.partnerRate??-1)-(a.partnerRate??-1)||Number(b.open)-Number(a.open):sort==="추천순"?Number(b.open)-Number(a.open):0),[items,q,category,sort,onlyOpen]);
- const reset=()=>{setQ("");setCategory("전체");setSort("추천순");setOnlyOpen(false)};
+ const statuses=useMemo(()=>["전체 상태",...new Set(items.map(x=>x.state))],[items]);
+ const rows=useMemo(()=>items.filter(x=>(status==="전체 상태"||x.state===status)&&(!onlyOpen||x.open)&&(category==="전체"||(x.category||"기타")===category)&&[x.name,x.category,x.description].join(" ").toLocaleLowerCase("ko-KR").includes(q.trim().toLocaleLowerCase("ko-KR"))).sort((a,b)=>sort==="수익순"?(b.partnerRate??-1)-(a.partnerRate??-1)||Number(b.open)-Number(a.open):sort==="추천순"?Number(b.open)-Number(a.open):0),[items,q,category,sort,onlyOpen,status]);
+ const reset=()=>{setQ("");setCategory("전체");setSort("추천순");setOnlyOpen(false);setStatus("전체 상태")};
  return <><div className="cx-tools"><input aria-label="CPA 캠페인 검색" placeholder="캠페인명·카테고리·내용 검색" value={q} onChange={e=>setQ(e.target.value)}/><select aria-label="CPA 캠페인 정렬" value={sort} onChange={e=>setSort(e.target.value as SortMode)}><option>추천순</option><option>최신순</option><option>수익순</option></select></div>
+ <div className="cx-tools"><select aria-label="CPA 모집 상태 필터" value={status} onChange={e=>setStatus(e.target.value)}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select><button type="button" onClick={reset}>필터 초기화</button></div>
  <nav className="cx-filters" aria-label="CPA 카테고리">{categories.map(x=><button type="button" key={x} aria-pressed={category===x} onClick={()=>setCategory(x)}>{x}</button>)}</nav>
  <div className="cx-heading"><h2>CPA 캠페인</h2><span aria-live="polite">{rows.length}개</span></div>
  <label style={{display:"inline-flex",alignItems:"center",gap:8,marginBottom:16}}><input type="checkbox" checked={onlyOpen} onChange={e=>setOnlyOpen(e.target.checked)}/>현재 모집 중만 보기</label>
