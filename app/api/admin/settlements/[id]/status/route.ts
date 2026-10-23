@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { settlements } from "@/db/schema";
+import { auditLogs, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       paidAt: settlements.paidAt,
     }).from(settlements).where(eq(settlements.id, id)).limit(1);
     if (!row) return Response.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
-    return Response.json({ ok: true, ...row }, { headers: { "Cache-Control": "no-store" } });
+    const expectedAction = row.status === "APPROVED" ? "SETTLEMENT_APPROVE" : row.status === "PAID" ? "SETTLEMENT_PAID" : row.status === "REJECTED" ? "SETTLEMENT_REJECT" : null;
+    const audit = expectedAction ? await getDb().select({ id: auditLogs.id }).from(auditLogs).where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id), eq(auditLogs.action, expectedAction))).limit(1) : [];
+    return Response.json({ ok: true, ...row, auditVerified: expectedAction ? audit.length > 0 : null }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
