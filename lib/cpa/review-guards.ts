@@ -18,3 +18,11 @@ export function validCpaCampaignRates(advertiserRate:number,partnerRate:number,m
     && minimumMargin<=MAX_DB_AMOUNT
     && advertiserRate-partnerRate>=minimumMargin;
 }
+
+/** Validate review input on the server, regardless of client-side controls. */
+export function validCpaReviewReason(decision:string, reason:unknown):boolean {
+  if (decision!=="APPROVED" && decision!=="REJECTED") return false;
+  if (reason!==undefined && typeof reason!=="string") return false;
+  const normalized=typeof reason==="string"?reason.trim():"";
+  return normalized.length<=500 && (decision!=="REJECTED" || normalized.length>0);
+}
