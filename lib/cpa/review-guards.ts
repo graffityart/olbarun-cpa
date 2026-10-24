@@ -26,3 +26,11 @@ export function validCpaReviewReason(decision:string, reason:unknown):boolean {
   const normalized=typeof reason==="string"?reason.trim():"";
   return normalized.length<=500 && (decision!=="REJECTED" || normalized.length>0);
 }
+
+/** Only permit debits that fit the ledger's integer balanceAfter column. */
+export function validCpaDebitBalance(balance:number, advertiserRate:number):boolean {
+  return Number.isSafeInteger(balance) && balance>=0
+    && Number.isSafeInteger(advertiserRate) && advertiserRate>0 && advertiserRate<=MAX_DB_AMOUNT
+    && balance>=advertiserRate
+    && balance-advertiserRate<=MAX_DB_AMOUNT;
+}
