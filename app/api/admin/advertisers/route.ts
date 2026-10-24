@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     if (!companyName) return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
     const businessNumber = optionalText(body.businessNumber, 30);
+    if (businessNumber && !/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     const representativeName = optionalText(body.representativeName, 100);
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
