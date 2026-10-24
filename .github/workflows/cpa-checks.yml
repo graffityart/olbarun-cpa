@@ -58,3 +58,10 @@ jobs:
         run: npm install --no-package-lock --no-audit --no-fund
       - name: Run isolated PostgreSQL concurrency and rollback tests
         run: npm run test:settlement-concurrency
+      - name: Summarize disposable database test result
+        if: always()
+        run: |
+          echo "### CPA settlement database tests" >> "$GITHUB_STEP_SUMMARY"
+          echo "- PostgreSQL: isolated Postgres 16 service" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Suite: npm run test:settlement-concurrency" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Outcome: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
