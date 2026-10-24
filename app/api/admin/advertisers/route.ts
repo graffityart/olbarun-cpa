@@ -11,8 +11,9 @@ function makeAdvertiserCode() { return `ADV-${crypto.randomUUID().replace(/-/g, 
 function optionalText(value: unknown, maxLength: number): string | null | undefined {
   if (value == null) return null;
   if (typeof value !== "string") return undefined;
+  if (/[\u0000-\u001F\u007F]/.test(value)) return undefined;
   const normalized = value.trim();
-  if (normalized.length > maxLength || /[\u0000-\u001F\u007F]/.test(normalized)) return undefined;
+  if (normalized.length > maxLength) return undefined;
   return normalized || null;
 }
 
@@ -34,10 +35,10 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (typeof body.companyName !== "string") return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
+    if (/[\u0000-\u001F\u007F]/.test(body.companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
     const companyName = body.companyName.trim();
     if (!companyName) return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
-    if (/[\u0000-\u001F\u007F]/.test(companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
     const businessNumber = optionalText(body.businessNumber, 30);
     const representativeName = optionalText(body.representativeName, 100);
     const websiteUrl = optionalText(body.websiteUrl, 2048);
