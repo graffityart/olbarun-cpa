@@ -39,10 +39,10 @@ export async function POST(request: Request) {
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
     if (/[\u0000-\u001F\u007F]/.test(companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
     const businessNumber = optionalText(body.businessNumber, 30);
-    if (businessNumber && !validBusinessNumber(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     const representativeName = optionalText(body.representativeName, 100);
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
+    if (businessNumber && !validBusinessNumber(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     if (websiteUrl && !validAdvertiserWebsiteUrl(websiteUrl)) return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 });
     const contractStatus = body.contractStatus ?? "LEAD";
     const paymentType = body.paymentType ?? "PREPAID";
