@@ -14,7 +14,7 @@ export async function listAdminAdvertisers(filters:ReturnType<typeof parseAdvert
  status==='ALL'?undefined:sql`${advertisers.contractStatus}=${status}`,
  account==='ALL'?undefined:account==='NONE'?sql`${accountStatus} is null`:sql`${accountStatus}=${account}`,
  q?sql`position(lower(${q}) in lower(${advertisers.companyName} || ' ' || ${advertisers.advertiserCode} || ' ' || coalesce(${advertisers.representativeName},'')))>0`:undefined
- )).orderBy(desc(advertisers.createdAt)).limit(100);
+ )).orderBy(desc(advertisers.createdAt),desc(advertisers.id)).limit(100);
 }
 export async function countPendingAdvertisers(){
  const [row]=await getDb().select({n:sql<number>`count(*)::int`}).from(advertisers).where(sql`${accountStatus}='PENDING'`);
