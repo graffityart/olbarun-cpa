@@ -13,6 +13,16 @@ if (!url) {
     ];
     let duplicates = 0;
     for (const table of tables) {
+      const [summary] = await sql`
+        select count(*)::integer as duplicate_groups
+        from (
+          select conversion_id
+          from ${sql(table.name)}
+          where conversion_id is not null
+          group by conversion_id
+          having count(*) > 1
+        ) duplicate_ids
+      `;
       const rows = await sql`
         select conversion_id, count(*)::integer as entries
         from ${sql(table.name)}
@@ -22,8 +32,8 @@ if (!url) {
         order by entries desc, conversion_id
         limit 100
       `;
-      duplicates += rows.length;
-      console.log(JSON.stringify({ table: table.name, duplicates: rows, truncated: rows.length === 100 }, null, 2));
+      duplicates += summary.duplicate_groups;
+      console.log(JSON.stringify({ table: table.name, duplicateGroups: summary.duplicate_groups, sample: rows, sampleLimited: summary.duplicate_groups > rows.length }, null, 2));
     }
     if (duplicates > 0) {
       console.error("Duplicate CPA conversion accounting records found. Do not apply unique indexes before reconciliation.");
