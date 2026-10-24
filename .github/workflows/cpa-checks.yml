@@ -1,0 +1,26 @@
+name: CPA checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpa-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: CPA guard tests
+        run: npm run test:cpa
+      - name: TypeScript validation
+        run: npm run typecheck
