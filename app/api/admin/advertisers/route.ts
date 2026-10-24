@@ -7,7 +7,7 @@ import { requireSameOrigin } from "@/lib/security/origin";
 export const dynamic = "force-dynamic";
 function makeAdvertiserCode() { return `ADV-${crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`; }
 function optionalText(value: unknown, maxLength: number): string | null | undefined {
-  if (value == null || value === "") return null;
+  if (value == null) return null;
   if (typeof value !== "string") return undefined;
   const normalized = value.trim();
   return normalized.length <= maxLength ? normalized || null : undefined;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (websiteUrl) {
-      try { const parsed = new URL(websiteUrl); if (!["https:", "http:"].includes(parsed.protocol)) throw new Error("INVALID_URL"); }
+      try { const parsed = new URL(websiteUrl); if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password) throw new Error("INVALID_URL"); }
       catch { return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 }); }
     }
     const contractStatus = body.contractStatus ?? "LEAD";
