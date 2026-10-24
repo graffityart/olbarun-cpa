@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (websiteUrl) {
-      try { const parsed = new URL(websiteUrl); if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password) throw new Error("INVALID_URL"); }
+      try { const parsed = new URL(websiteUrl); if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password || parsed.hash || parsed.hostname === "localhost" || parsed.hostname.endsWith(".localhost")) throw new Error("INVALID_URL"); }
       catch { return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 }); }
     }
     const contractStatus = body.contractStatus ?? "LEAD";
