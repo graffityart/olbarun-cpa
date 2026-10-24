@@ -12,7 +12,8 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
   if (value == null) return null;
   if (typeof value !== "string") return undefined;
   const normalized = value.trim();
-  return normalized.length <= maxLength ? normalized || null : undefined;
+  if (normalized.length > maxLength || /[\u0000-\u001F\u007F]/.test(normalized)) return undefined;
+  return normalized || null;
 }
 
 export async function GET() {
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
     const companyName = body.companyName.trim();
     if (!companyName) return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
+    if (/[\u0000-\u001F\u007F]/.test(companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
     const businessNumber = optionalText(body.businessNumber, 30);
     if (businessNumber && !validBusinessNumber(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     const representativeName = optionalText(body.representativeName, 100);
