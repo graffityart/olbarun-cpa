@@ -1,5 +1,6 @@
 import { desc } from "drizzle-orm";
 import { validBusinessNumber } from "@/lib/cpa/business-number";
+import { validAdvertiserWebsiteUrl } from "@/lib/cpa/advertiser-website";
 import { getDb } from "@/db";
 import { advertisers } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -40,10 +41,7 @@ export async function POST(request: Request) {
     const representativeName = optionalText(body.representativeName, 100);
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
-    if (websiteUrl) {
-      try { const parsed = new URL(websiteUrl); if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password || parsed.hash || parsed.hostname === "localhost" || parsed.hostname.endsWith(".localhost") || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]" || parsed.hostname === "0.0.0.0") throw new Error("INVALID_URL"); }
-      catch { return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 }); }
-    }
+    if (websiteUrl && !validAdvertiserWebsiteUrl(websiteUrl)) return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 });
     const contractStatus = body.contractStatus ?? "LEAD";
     const paymentType = body.paymentType ?? "PREPAID";
     if (!["LEAD","REVIEW","ACTIVE","PAUSED","TERMINATED"].includes(contractStatus)) return Response.json({ ok:false,error:"INVALID_CONTRACT_STATUS"},{status:400});
