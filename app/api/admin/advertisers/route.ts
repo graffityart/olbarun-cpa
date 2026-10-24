@@ -14,21 +14,20 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
 }
 
 export async function GET() {
+  await requireAdmin();
   try {
-    await requireAdmin();
     const rows = await getDb().select().from(advertisers).orderBy(desc(advertisers.createdAt));
     return Response.json({ ok: true, advertisers: rows });
   } catch (error) {
-    if (error instanceof Error && ["UNAUTHORIZED", "FORBIDDEN"].includes(error.message)) throw error;
     console.error("Failed to list advertisers", error);
     return Response.json({ ok: false, advertisers: [], error: "DATABASE_NOT_READY" }, { status: 503 });
   }
 }
 
 export async function POST(request: Request) {
+  await requireAdmin();
   try {
     requireSameOrigin(request);
-    await requireAdmin();
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (typeof body.companyName !== "string") return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
