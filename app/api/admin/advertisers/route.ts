@@ -1,4 +1,5 @@
 import { desc } from "drizzle-orm";
+import { validBusinessNumber } from "@/lib/cpa/business-number";
 import { getDb } from "@/db";
 import { advertisers } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -11,15 +12,6 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
   if (typeof value !== "string") return undefined;
   const normalized = value.trim();
   return normalized.length <= maxLength ? normalized || null : undefined;
-}
-
-function validBusinessNumber(value: string): boolean {
-  if (!/^[0-9]{3}-?[0-9]{2}-?[0-9]{5}$/.test(value)) return false;
-  const digits = value.replace(/-/g, "").split("").map(Number);
-  const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
-  const sum = weights.reduce((total, weight, index) => total + digits[index] * weight, 0);
-  const check = (10 - ((sum + Math.floor(digits[8] * 5 / 10)) % 10)) % 10;
-  return check === digits[9];
 }
 
 export async function GET() {
