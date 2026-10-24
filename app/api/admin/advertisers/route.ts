@@ -1,6 +1,7 @@
 import { desc } from "drizzle-orm";
 import { validBusinessNumber } from "@/lib/cpa/business-number";
 import { validAdvertiserWebsiteUrl } from "@/lib/cpa/advertiser-website";
+import { hasControlCharacters, optionalAdvertiserText } from "@/lib/cpa/advertiser-text";
 import { getDb } from "@/db";
 import { advertisers } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -8,15 +9,6 @@ import { requireSameOrigin } from "@/lib/security/origin";
 
 export const dynamic = "force-dynamic";
 function makeAdvertiserCode() { return `ADV-${crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`; }
-function optionalText(value: unknown, maxLength: number): string | null | undefined {
-  if (value == null) return null;
-  if (typeof value !== "string") return undefined;
-  if (/[\u0000-\u001F\u007F]/.test(value)) return undefined;
-  const normalized = value.trim();
-  if (normalized.length > maxLength) return undefined;
-  return normalized || null;
-}
-
 export async function GET() {
   await requireAdmin();
   try {
@@ -35,13 +27,13 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (typeof body.companyName !== "string") return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
-    if (/[\u0000-\u001F\u007F]/.test(body.companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
+    if (hasControlCharacters(body.companyName)) return Response.json({ ok: false, error: "INVALID_COMPANY_NAME" }, { status: 400 });
     const companyName = body.companyName.trim();
     if (!companyName) return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
-    const businessNumber = optionalText(body.businessNumber, 30);
-    const representativeName = optionalText(body.representativeName, 100);
-    const websiteUrl = optionalText(body.websiteUrl, 2048);
+    const businessNumber = optionalAdvertiserText(body.businessNumber, 30);
+    const representativeName = optionalAdvertiserText(body.representativeName, 100);
+    const websiteUrl = optionalAdvertiserText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     if (businessNumber && !validBusinessNumber(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     if (websiteUrl && !validAdvertiserWebsiteUrl(websiteUrl)) return Response.json({ ok: false, error: "INVALID_WEBSITE_URL" }, { status: 400 });
