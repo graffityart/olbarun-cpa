@@ -22,5 +22,7 @@ jobs:
         run: npm install --no-package-lock --no-audit --no-fund
       - name: CPA guard tests
         run: npm run test:cpa
+      - name: Settlement validation tests
+        run: npm run test:settlements
       - name: TypeScript validation
         run: npm run typecheck
