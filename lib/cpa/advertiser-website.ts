@@ -4,6 +4,7 @@ export function validAdvertiserWebsiteUrl(value: string): boolean {
     const url = new URL(value);
     if (url.protocol !== "https:" && url.protocol !== "http:") return false;
     if (url.username || url.password || url.hash) return false;
+    if (url.port && !/^[0-9]+$/.test(url.port)) return false;
     const host = url.hostname.toLowerCase().replace(/\.$/, "");
     if (!host || host === "localhost" || host.endsWith(".localhost")) return false;
     // Advertiser websites must not use IPv6 literal hosts, including private and mapped forms.
@@ -17,6 +18,7 @@ export function validAdvertiserWebsiteUrl(value: string): boolean {
     }
     // Reject single-label intranet hosts; require a domain or an IPv4 address.
     if (ipv4.length !== 4 && !host.includes(".")) return false;
+    if (host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".test") || host.endsWith(".invalid")) return false;
     return true;
   } catch {
     return false;
