@@ -14,7 +14,7 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
 }
 
 function validBusinessNumber(value: string): boolean {
-  if (!/^\\d{3}-?\\d{2}-?\\d{5}$/.test(value)) return false;
+  if (!/^[0-9]{3}-?[0-9]{2}-?[0-9]{5}$/.test(value)) return false;
   const digits = value.replace(/-/g, "").split("").map(Number);
   const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
   const sum = weights.reduce((total, weight, index) => total + digits[index] * weight, 0);
