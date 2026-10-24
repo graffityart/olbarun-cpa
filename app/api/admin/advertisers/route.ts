@@ -13,6 +13,15 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
   return normalized.length <= maxLength ? normalized || null : undefined;
 }
 
+function validBusinessNumber(value: string): boolean {
+  if (!/^\\d{3}-?\\d{2}-?\\d{5}$/.test(value)) return false;
+  const digits = value.replace(/-/g, "").split("").map(Number);
+  const weights = [1, 3, 7, 1, 3, 7, 1, 3, 5];
+  const sum = weights.reduce((total, weight, index) => total + digits[index] * weight, 0);
+  const check = (10 - ((sum + Math.floor(digits[8] * 5 / 10)) % 10)) % 10;
+  return check === digits[9];
+}
+
 export async function GET() {
   await requireAdmin();
   try {
@@ -35,7 +44,7 @@ export async function POST(request: Request) {
     if (!companyName) return Response.json({ ok: false, error: "COMPANY_NAME_REQUIRED" }, { status: 400 });
     if (companyName.length > 200) return Response.json({ ok: false, error: "COMPANY_NAME_TOO_LONG" }, { status: 400 });
     const businessNumber = optionalText(body.businessNumber, 30);
-    if (businessNumber && !/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
+    if (businessNumber && !validBusinessNumber(businessNumber)) return Response.json({ ok: false, error: "INVALID_BUSINESS_NUMBER" }, { status: 400 });
     const representativeName = optionalText(body.representativeName, 100);
     const websiteUrl = optionalText(body.websiteUrl, 2048);
     if (businessNumber === undefined || representativeName === undefined || websiteUrl === undefined) return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
