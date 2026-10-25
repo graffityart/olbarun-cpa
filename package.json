@@ -28,6 +28,6 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "drizzle-kit": "latest",
-    "typescript": "latest"
+    "typescript": "5.9.3"
   }
 }
