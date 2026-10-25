@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const data = input as Record<string, any>;
     if (typeof data.advertiserId !== "string" || typeof data.name !== "string") return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
     const advertiserId = data.advertiserId.trim(); const name = data.name.trim();
+    if (Array.from(name).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) return Response.json({ok:false,error:"INVALID_CAMPAIGN_NAME"},{status:400});
     if (!advertiserId || !name || name.length>200) return Response.json({ ok: false, error: "ADVERTISER_AND_NAME_REQUIRED" }, { status: 400 });
     const advertiserRate = Number(data.advertiserRate ?? 0); const partnerBaseRate = Number(data.partnerBaseRate ?? 0); const minimumMargin=Number(data.minimumMargin??Math.max(0,advertiserRate-partnerBaseRate));
     const duplicateDays = Number(data.duplicateDays ?? 30); const reviewDays = Number(data.reviewDays ?? 7);
