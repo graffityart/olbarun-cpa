@@ -63,8 +63,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-      - run: npm ci
+      - name: Install dependencies without lockfile
+        run: npm install --no-package-lock --no-audit --no-fund
       - run: npm run test:settlements
       - name: PostgreSQL concurrency and rollback tests
         run: node --test lib/settlement-concurrency.test.mjs lib/cpa/review-concurrency.test.mjs
