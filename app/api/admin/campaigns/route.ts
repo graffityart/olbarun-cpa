@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     const advertiserId = data.advertiserId.trim(); const name = data.name.trim();
     if (Array.from(name).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) return Response.json({ok:false,error:"INVALID_CAMPAIGN_NAME"},{status:400});
     if (!advertiserId || !name || name.length>200) return Response.json({ ok: false, error: "ADVERTISER_AND_NAME_REQUIRED" }, { status: 400 });
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(advertiserId)) return Response.json({ok:false,error:"INVALID_ADVERTISER_ID"},{status:400});
     const advertiserRate = Number(data.advertiserRate ?? 0); const partnerBaseRate = Number(data.partnerBaseRate ?? 0); const minimumMargin=Number(data.minimumMargin??Math.max(0,advertiserRate-partnerBaseRate));
     const duplicateDays = Number(data.duplicateDays ?? 30); const reviewDays = Number(data.reviewDays ?? 7);
     if (!Number.isSafeInteger(advertiserRate)||!Number.isSafeInteger(partnerBaseRate)||!Number.isSafeInteger(minimumMargin)||advertiserRate<0||partnerBaseRate<0||minimumMargin<0||partnerBaseRate+minimumMargin>advertiserRate)return Response.json({ok:false,error:"INVALID_RATE"},{status:400});
