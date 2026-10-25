@@ -32,8 +32,8 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
     };
 
     try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data=await res.json();if(!res.ok||!data.ok)throw new Error("SAVE_FAILED");setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
-    }catch{setMessage("저장하지 못했습니다. 입력값·운영기간·단가를 확인하고, 통신 오류가 있었다면 목록에서 저장 여부를 먼저 확인해 주세요.");}finally{setSaving(false);}
+    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_INPUT:"요청 형식이 올바르지 않습니다.",INVALID_CAMPAIGN_TYPE:"캠페인 유형을 확인해 주세요.",INVALID_ADVERTISER_ID:"광고주 선택값이 올바르지 않습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주를 찾을 수 없습니다.",ADVERTISER_AND_NAME_REQUIRED:"광고주와 캠페인명을 입력해 주세요.",INVALID_CAMPAIGN_NAME:"캠페인명에 사용할 수 없는 문자가 있습니다.",INVALID_RATE:"광고주 단가와 파트너 단가를 확인해 주세요.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_LIMIT:"모집 한도는 1 이상의 정수로 입력해 주세요.",INVALID_DATE:"운영기간 날짜 형식을 확인해 주세요."};throw new Error(reasons[data.error]??"저장에 실패했습니다. 입력값을 확인해 주세요.");}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);formElement.reset();
+    }catch(e){setMessage((e instanceof Error?e.message:"통신 오류")+" 저장 여부가 불확실하다면 캠페인 목록을 먼저 확인해 주세요.");}finally{setSaving(false);}
 
   }
 
