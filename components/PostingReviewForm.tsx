@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 const errorMessages: Record<string, string> = {
   INVALID_ID: "잘못된 제출 번호입니다.",
+  INVALID_JSON: "요청 형식이 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.",
+  REASON_TOO_LONG: "검수 사유는 2,000자 이내로 입력해 주세요.",
   INVALID_DECISION: "검수 판정을 다시 선택해 주세요.",
   REASON_REQUIRED: "수정 요청 또는 거절 사유를 입력해 주세요.",
   NOT_REVIEWABLE: "이미 검수가 완료되었거나 검수할 수 없는 상태입니다. 화면을 새로고침해 주세요.",
@@ -33,6 +35,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       setMessage(approvalDisabledReason || "현재 승인할 수 없습니다.");
       return;
     }
+    if (reason.length > 2000) { setMessage(errorMessages.REASON_TOO_LONG); return; }
     if (decision !== "APPROVED" && !reason) {
       setMessage(errorMessages.REASON_REQUIRED);
       return;
@@ -64,7 +67,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
     <h3>검수 결과</h3>
     <div className="form-grid">
       <label>판정<select name="decision" defaultValue={approvalEnabled ? "APPROVED" : "REVISION_REQUESTED"} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED">수정요청</option><option value="REJECTED">거절</option></select></label>
-      <label className="full">검수내용<textarea name="reason" rows={5} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
+      <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
     </div>
     {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} 수정 요청이나 거절은 가능합니다.</p>}
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
