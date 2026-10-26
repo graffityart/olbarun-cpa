@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const errorMessages: Record<string, string> = {
@@ -25,10 +25,11 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
+  const inFlight = useRef(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (saving || success) return;
+    if (inFlight.current || success) return;
     const form = new FormData(event.currentTarget);
     const decision = String(form.get("decision") || "");
     const reason = String(form.get("reason") || "").trim();
@@ -42,6 +43,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       setMessage(errorMessages.REASON_REQUIRED);
       return;
     }
+    inFlight.current = true;
     setSaving(true);
     setMessage("");
     try {
@@ -61,6 +63,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
     } catch {
       setMessage("네트워크 오류가 발생했습니다. 처리 상태를 확인한 뒤 다시 시도해 주세요.");
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   }
