@@ -1,4 +1,5 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
+import { settlementAuditMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
 import { auditLogs, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -22,9 +23,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       paidAt: settlements.paidAt,
     }).from(settlements).where(eq(settlements.id, id)).limit(1);
     if (!row) return Response.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
-    const expectedAction = row.status === "APPROVED" ? "SETTLEMENT_APPROVE" : row.status === "PAID" ? "SETTLEMENT_PAID" : row.status === "REJECTED" ? "SETTLEMENT_REJECT" : null;
-    const audit = expectedAction ? await getDb().select({ id: auditLogs.id }).from(auditLogs).where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id), eq(auditLogs.action, expectedAction))).limit(1) : [];
-    return Response.json({ ok: true, ...row, auditVerified: expectedAction ? audit.length > 0 : null }, { headers: { "Cache-Control": "no-store" } });
+    const audit = await getDb().select({ action: auditLogs.action }).from(auditLogs)
+      .where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id),
+        inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
+      .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
+    const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action));
+    return Response.json({ ok: true, ...row, auditVerified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
