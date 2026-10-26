@@ -44,6 +44,18 @@ export async function POST(request: Request) {
     const promoBanners=data.settings?.promoBanners;if(promoBanners!==undefined&&(!Array.isArray(promoBanners)||promoBanners.length>20||promoBanners.some((v:unknown)=>typeof v!=="string"||v.length>200000||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(v))))return Response.json({ok:false,error:"INVALID_PROMO_BANNERS"},{status:400});
     const promoBanner=data.settings?.promoBanner;if(promoBanner!=null&&(typeof promoBanner!=="string"||promoBanner.length>200000||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(promoBanner)))return Response.json({ok:false,error:"INVALID_PROMO_BANNER"},{status:400});
     const mainImage=data.settings?.mainImage;if(mainImage!=null&&(typeof mainImage!=="string"||mainImage.length>200000||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(mainImage)))return Response.json({ok:false,error:"INVALID_CAMPAIGN_IMAGE"},{status:400});
+    if (type === "POSTING") {
+      const mediaType = data.mediaType ?? "BLOG";
+      if (!["BLOG", "CAFE", "SNS", "OTHER"].includes(mediaType)) return Response.json({ok:false,error:"INVALID_POSTING_MEDIA_TYPE"},{status:400});
+      const perPartnerLimit = Number(data.perPartnerLimit ?? 1);
+      const postingReviewDays = Number(data.postingReviewDays ?? 3);
+      const revisionLimit = Number(data.revisionLimit ?? 2);
+      if (!Number.isSafeInteger(perPartnerLimit) || perPartnerLimit < 1 || !Number.isSafeInteger(postingReviewDays) || postingReviewDays < 1 || !Number.isSafeInteger(revisionLimit) || revisionLimit < 0) return Response.json({ok:false,error:"INVALID_POSTING_SETTINGS"},{status:400});
+      const participantLimit = optionalPositiveInteger(data.participantLimit);
+      const totalSubmissionLimit = optionalPositiveInteger(data.totalSubmissionLimit);
+      if (totalSubmissionLimit !== null && perPartnerLimit > totalSubmissionLimit) return Response.json({ok:false,error:"INVALID_POSTING_LIMITS"},{status:400});
+      if (participantLimit !== null && totalSubmissionLimit !== null && participantLimit > totalSubmissionLimit) return Response.json({ok:false,error:"INVALID_POSTING_LIMITS"},{status:400});
+    }
     const db = getDb(); const [adv] = await db.select({id:advertisers.id}).from(advertisers).where(eq(advertisers.id, advertiserId)).limit(1);if(!adv)return Response.json({ok:false,error:"ADVERTISER_NOT_FOUND"},{status:404});
     const campaign = await db.transaction(async (tx) => {
     const [campaign] = await tx.insert(campaigns).values({campaignCode:makeCampaignCode(type),advertiserId,type,name,slug:makeSlug(name),category:String(data.category??"").trim().slice(0,80)||null,description:String(data.description??"").trim()||null,status:"DRAFT",startAt,endAt,dailyConversionLimit,monthlyConversionLimit,dailyBudgetLimit,monthlyBudgetLimit,duplicateDays,reviewDays,settings:data.settings??{}}).returning();
