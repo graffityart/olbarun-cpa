@@ -20,7 +20,7 @@ const errorMessages: Record<string, string> = {
   REVIEW_FAILED: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
-export default function PostingReviewForm({ submissionId, approvalEnabled = true, approvalDisabledReason = "", revisionEnabled = true }: { submissionId: string; approvalEnabled?: boolean; approvalDisabledReason?: string; revisionEnabled?: boolean }) {
+export default function PostingReviewForm({ submissionId, approvalEnabled = true, approvalDisabledReason = "", revisionEnabled = true, advertiserRate = 0, partnerRate = 0, advertiserBalance = 0 }: { submissionId: string; approvalEnabled?: boolean; approvalDisabledReason?: string; revisionEnabled?: boolean; advertiserRate?: number; partnerRate?: number; advertiserBalance?: number }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -88,7 +88,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
     {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} {revisionEnabled ? "수정 요청이나 거절은 가능합니다." : "수정 요청 횟수가 소진되어 거절만 가능합니다."}</p>}
     {success && <p className="form-message" role="status">최종 검수 결과: <strong>{completedDecision === "APPROVED" ? "승인" : completedDecision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p>}
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
-    {pendingReview && !success && <section className="notice-box" role="region" aria-label="검수 최종 확인"><strong>최종 확인</strong><p>판정: <strong>{pendingReview.decision === "APPROVED" ? "승인" : pendingReview.decision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>사유·메모: {pendingReview.reason || "없음"}</p><p>확정하면 검수 결과가 저장되며, 승인 시 광고주 비용과 파트너 수익이 반영됩니다.</p><button type="button" className="btn" disabled={saving} onClick={() => {setPendingReview(null);setMessage("");}}>취소하고 수정</button></section>}
+    {pendingReview && !success && <section className="notice-box" role="region" aria-label="검수 최종 확인"><strong>최종 확인</strong><p>판정: <strong>{pendingReview.decision === "APPROVED" ? "승인" : pendingReview.decision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>사유·메모: {pendingReview.reason || "없음"}</p>{pendingReview.decision === "APPROVED" ? <div className="posting-review-finance"><p><strong>광고주 차감 예정:</strong> {advertiserRate.toLocaleString("ko-KR")}원</p><p><strong>파트너 수익 예정:</strong> {partnerRate.toLocaleString("ko-KR")}원</p><p><strong>광고주 예상 잔액:</strong> {(advertiserBalance-advertiserRate).toLocaleString("ko-KR")}원</p><p className="muted">현재 조회된 금액 기준이며, 최종 승인 시 서버에서 잔액과 정산 중복 여부를 다시 확인합니다.</p></div> : <p>확정하면 검수 상태와 사유가 저장됩니다. 승인 정산은 발생하지 않습니다.</p>}<button type="button" className="btn" disabled={saving} onClick={() => {setPendingReview(null);setMessage("");}}>취소하고 수정</button></section>}
     <div className="form-actions posting-review-actions"><button type="submit" className="btn primary posting-review-submit" disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : pendingReview ? "검수 결과 최종 확정" : "검수 결과 확인"}</button></div>
     <style>{`@media(max-width:700px){.posting-review-actions{display:flex;width:100%}.posting-review-submit{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;font-weight:700}.form-card select,.form-card textarea{max-width:100%;min-width:0}}`}</style>
   </form>;
