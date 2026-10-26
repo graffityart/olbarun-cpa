@@ -27,6 +27,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   const [completedDecision, setCompletedDecision] = useState("");
   const [saving, setSaving] = useState(false);
   const [decision, setDecision] = useState(approvalEnabled ? "APPROVED" : revisionEnabled ? "REVISION_REQUESTED" : "REJECTED");
+  const [pendingReview, setPendingReview] = useState<{decision:string;reason:string}|null>(null);
   const inFlight = useRef(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -43,6 +44,11 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
     if (reason.length > 2000) { setMessage(errorMessages.REASON_TOO_LONG); return; }
     if (selectedDecision !== "APPROVED" && !reason) {
       setMessage(errorMessages.REASON_REQUIRED);
+      return;
+    }
+    if (!pendingReview || pendingReview.decision !== selectedDecision || pendingReview.reason !== reason) {
+      setPendingReview({ decision: selectedDecision, reason });
+      setMessage("아래 최종 확인 내용을 검토한 뒤 확정 버튼을 눌러 주세요.");
       return;
     }
     inFlight.current = true;
@@ -75,14 +81,15 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   return <form onSubmit={submit} className="panel card form-card">
     <h3>검수 결과</h3>
     <div className="form-grid">
-      <label>판정<select name="decision" value={decision} onChange={event => { setDecision(event.target.value); setMessage(""); }} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED" disabled={!revisionEnabled}>수정요청</option><option value="REJECTED">거절</option></select></label>
+      <label>판정<select name="decision" value={decision} onChange={event => { setDecision(event.target.value); setPendingReview(null); setMessage(""); }} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED" disabled={!revisionEnabled}>수정요청</option><option value="REJECTED">거절</option></select></label>
       <p className="full form-message" role="status" aria-live="polite">{decision === "APPROVED" ? "승인하면 광고주 비용과 파트너 수익이 정산 내역에 반영됩니다. 승인 전 게시물과 금액을 확인해 주세요." : decision === "REVISION_REQUESTED" ? "수정 요청 시 파트너에게 사유가 전달됩니다. 수정할 내용을 구체적으로 입력해 주세요." : "거절하면 제출 건이 거절 처리됩니다. 파트너가 이해할 수 있도록 사유를 입력해 주세요."}</p>
-      <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder={decision === "APPROVED" ? "승인 메모 (선택)" : decision === "REVISION_REQUESTED" ? "수정해야 할 내용을 구체적으로 입력하세요." : "거절 사유를 입력하세요."} /></label>
+      <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} onChange={() => { setPendingReview(null); setMessage(""); }} placeholder={decision === "APPROVED" ? "승인 메모 (선택)" : decision === "REVISION_REQUESTED" ? "수정해야 할 내용을 구체적으로 입력하세요." : "거절 사유를 입력하세요."} /></label>
     </div>
     {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} {revisionEnabled ? "수정 요청이나 거절은 가능합니다." : "수정 요청 횟수가 소진되어 거절만 가능합니다."}</p>}
     {success && <p className="form-message" role="status">최종 검수 결과: <strong>{completedDecision === "APPROVED" ? "승인" : completedDecision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p>}
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
-    <div className="form-actions posting-review-actions"><button type="submit" className="btn primary posting-review-submit" disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : "검수 결과 저장"}</button></div>
+    {pendingReview && !success && <section className="notice-box" role="region" aria-label="검수 최종 확인"><strong>최종 확인</strong><p>판정: <strong>{pendingReview.decision === "APPROVED" ? "승인" : pendingReview.decision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>사유·메모: {pendingReview.reason || "없음"}</p><p>확정하면 검수 결과가 저장되며, 승인 시 광고주 비용과 파트너 수익이 반영됩니다.</p><button type="button" className="btn" disabled={saving} onClick={() => {setPendingReview(null);setMessage("");}}>취소하고 수정</button></section>}
+    <div className="form-actions posting-review-actions"><button type="submit" className="btn primary posting-review-submit" disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : pendingReview ? "검수 결과 최종 확정" : "검수 결과 확인"}</button></div>
     <style>{`@media(max-width:700px){.posting-review-actions{display:flex;width:100%}.posting-review-submit{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;font-weight:700}.form-card select,.form-card textarea{max-width:100%;min-width:0}}`}</style>
   </form>;
 }
