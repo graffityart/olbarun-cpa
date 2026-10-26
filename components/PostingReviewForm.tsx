@@ -45,13 +45,13 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ decision, reason }),
       });
-      const data: { ok?: boolean; error?: string } = await res.json();
+      const data: { ok?: boolean; error?: string; alreadyProcessed?: boolean } = await res.json();
       if (!res.ok || !data.ok) {
         setMessage(errorMessages[data.error ?? ""] ?? "검수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         return;
       }
       setSuccess(true);
-      setMessage("검수 결과가 저장되었습니다. 화면 정보를 갱신합니다.");
+      setMessage(data.alreadyProcessed ? "이미 동일한 검수 결과가 처리되어 있습니다. 중복 정산 없이 화면을 갱신합니다." : "검수 결과가 저장되었습니다. 화면 정보를 갱신합니다.");
       router.refresh();
     } catch {
       setMessage("네트워크 오류가 발생했습니다. 처리 상태를 확인한 뒤 다시 시도해 주세요.");
