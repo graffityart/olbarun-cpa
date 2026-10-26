@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 type Settings = { mediaType: string; participantLimit: number | null; totalSubmissionLimit: number | null; perPartnerLimit: number; minimumCharacters: number | null; minimumImages: number | null; maintenanceDays: number | null; postingReviewDays: number; revisionLimit: number };
-const errors: Record<string, string> = { INVALID_LIMIT: "선택 입력값은 1 이상의 정수로 입력하거나 비워 주세요.", INVALID_POSTING_LIMITS: "총 작업수량은 모집 인원과 1인 최대 작업수보다 작을 수 없습니다.", INVALID_POSTING_SETTINGS: "1인 최대 작업과 검수기간은 1 이상, 수정 가능 횟수는 0 이상이어야 합니다.", INVALID_POSTING_MEDIA_TYPE: "광고매체를 다시 선택해 주세요.", NOT_FOUND: "포스팅 캠페인 설정을 찾을 수 없습니다." };
+const errors: Record<string, string> = { INVALID_LIMIT: "선택 입력값은 1 이상의 정수로 입력하거나 비워 주세요.", INVALID_POSTING_LIMITS: "총 작업수량은 모집 인원과 1인 최대 작업수보다 작을 수 없습니다.", INVALID_POSTING_SETTINGS: "1인 최대 작업과 검수기간은 1 이상, 수정 가능 횟수는 0 이상이어야 합니다.", INVALID_POSTING_MEDIA_TYPE: "광고매체를 다시 선택해 주세요.", NOT_FOUND: "포스팅 캠페인 설정을 찾을 수 없습니다.", LIMIT_BELOW_USAGE: "이미 신청하거나 제출한 작업 수보다 모집 한도를 낮출 수 없습니다." };
 export default function PostingCampaignSettingsForm({ id, initial }: { id: string; initial: Settings }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
