@@ -66,7 +66,8 @@ export function settlementAuditMatches(status: SettlementStatus, actions: readon
   if (status === "APPROVED") return approvals === 1 && payments === 0 && rejections === 0;
   if (status === "PAID") return approvals === 1 && payments === 1 && rejections === 0 &&
     reviews.indexOf("SETTLEMENT_APPROVE") < reviews.indexOf("SETTLEMENT_PAID");
-  return approvals === 0 && payments === 0 && rejections === 1;
+  if (status === "REJECTED") return approvals === 0 && payments === 0 && rejections === 1;
+  return false;
 }
 
 /** Classify the reason an audit history cannot justify its settlement status. */
@@ -85,5 +86,6 @@ export function settlementAuditIssue(status: SettlementStatus, actions: readonly
   if (status === "REQUESTED") return "검토대기 상태에 승인·지급·반려 기록이 존재합니다.";
   if (status === "APPROVED") return payments ? "지급대기 상태에 지급완료 기록이 존재합니다." : "승인 처리 기록이 없거나 일치하지 않습니다.";
   if (status === "PAID") return approvals === 0 ? "지급완료 상태의 승인 기록이 없습니다." : "지급완료 처리 기록이 없거나 일치하지 않습니다.";
-  return "반려 처리 기록이 없거나 일치하지 않습니다.";
+  if (status === "REJECTED") return "반려 처리 기록이 없거나 일치하지 않습니다.";
+  return "알 수 없는 정산 상태입니다.";
 }
