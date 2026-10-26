@@ -16,6 +16,7 @@ const errorMessages: Record<string, string> = {
   FINANCE_ALREADY_POSTED: "이미 정산 처리된 제출 건입니다. 화면을 새로고침해 주세요.",
   SUBMISSION_NOT_FOUND: "제출 내역을 찾을 수 없습니다.",
   INVALID_ORIGIN: "요청 출처를 확인할 수 없습니다. 페이지를 새로고침해 주세요.",
+  ORIGIN_CHECK_FAILED: "요청 출처 검증에 실패했습니다. 페이지를 새로고침해 주세요.",
   REVIEW_FAILED: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
@@ -49,9 +50,9 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ decision, reason }),
       });
-      const data: { ok?: boolean; error?: string; alreadyProcessed?: boolean } = await res.json();
+      const data: { ok?: boolean; error?: string; alreadyProcessed?: boolean } = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
-        setMessage(errorMessages[data.error ?? ""] ?? "검수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setMessage(errorMessages[data.error ?? ""] ?? (res.status === 401 || res.status === 403 ? "로그인 상태 또는 접근 권한을 확인한 뒤 다시 시도해 주세요." : res.status === 429 ? "요청이 많습니다. 잠시 후 다시 시도해 주세요." : res.status >= 500 ? "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." : "검수 처리에 실패했습니다. 화면을 새로고침한 뒤 다시 시도해 주세요."));
         return;
       }
       setSuccess(true);
