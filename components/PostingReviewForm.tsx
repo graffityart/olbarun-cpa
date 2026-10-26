@@ -66,7 +66,8 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       <label>판정<select name="decision" defaultValue={approvalEnabled ? "APPROVED" : "REVISION_REQUESTED"} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED">수정요청</option><option value="REJECTED">거절</option></select></label>
       <label className="full">검수내용<textarea name="reason" rows={5} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
     </div>
-    {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} 수정 요청이나 거절은 가능합니다.</p>}\n    {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
+    {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} 수정 요청이나 거절은 가능합니다.</p>}
+    {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
     <div className="form-actions"><button disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : "검수 결과 저장"}</button></div>
   </form>;
 }
