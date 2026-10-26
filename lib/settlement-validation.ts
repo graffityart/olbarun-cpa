@@ -54,3 +54,13 @@ export function canStartSettlement(statuses: readonly string[]): boolean {
 export function hasUniqueSettlementEarnings(ids: readonly string[]): boolean {
   return ids.length > 0 && ids.every(id => id.length > 0) && new Set(ids).size === ids.length;
 }
+
+/** Compare the current settlement state with persisted review audit actions. */
+export function settlementAuditMatches(status: SettlementStatus, actions: readonly string[]): boolean {
+  const reviews = actions.filter(action =>
+    action === "SETTLEMENT_APPROVE" || action === "SETTLEMENT_PAID" || action === "SETTLEMENT_REJECT");
+  if (status === "REQUESTED") return reviews.length === 0;
+  const expected = status === "APPROVED" ? "SETTLEMENT_APPROVE" :
+    status === "PAID" ? "SETTLEMENT_PAID" : "SETTLEMENT_REJECT";
+  return reviews.includes(expected);
+}
