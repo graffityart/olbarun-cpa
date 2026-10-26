@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { advertisers, campaignRates, campaigns, postingCampaigns } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/guards";
 import { requireSameOrigin } from "@/lib/security/origin";
+import { validatePostingLimits } from "@/lib/cpa/posting-limits.mjs";
 
 export const dynamic = "force-dynamic";
 function makeCampaignCode(type: "CPA" | "POSTING") { return `${type}-${Date.now().toString(36).toUpperCase()}`; }
@@ -45,16 +46,8 @@ export async function POST(request: Request) {
     const promoBanner=data.settings?.promoBanner;if(promoBanner!=null&&(typeof promoBanner!=="string"||promoBanner.length>200000||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(promoBanner)))return Response.json({ok:false,error:"INVALID_PROMO_BANNER"},{status:400});
     const mainImage=data.settings?.mainImage;if(mainImage!=null&&(typeof mainImage!=="string"||mainImage.length>200000||!/^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(mainImage)))return Response.json({ok:false,error:"INVALID_CAMPAIGN_IMAGE"},{status:400});
     if (type === "POSTING") {
-      const mediaType = data.mediaType ?? "BLOG";
-      if (!["BLOG", "CAFE", "SNS", "OTHER"].includes(mediaType)) return Response.json({ok:false,error:"INVALID_POSTING_MEDIA_TYPE"},{status:400});
-      const perPartnerLimit = Number(data.perPartnerLimit ?? 1);
-      const postingReviewDays = Number(data.postingReviewDays ?? 3);
-      const revisionLimit = Number(data.revisionLimit ?? 2);
-      if (!Number.isSafeInteger(perPartnerLimit) || perPartnerLimit < 1 || !Number.isSafeInteger(postingReviewDays) || postingReviewDays < 1 || !Number.isSafeInteger(revisionLimit) || revisionLimit < 0) return Response.json({ok:false,error:"INVALID_POSTING_SETTINGS"},{status:400});
-      const participantLimit = optionalPositiveInteger(data.participantLimit);
-      const totalSubmissionLimit = optionalPositiveInteger(data.totalSubmissionLimit);
-      if (totalSubmissionLimit !== null && perPartnerLimit > totalSubmissionLimit) return Response.json({ok:false,error:"INVALID_POSTING_LIMITS"},{status:400});
-      if (participantLimit !== null && totalSubmissionLimit !== null && participantLimit > totalSubmissionLimit) return Response.json({ok:false,error:"INVALID_POSTING_LIMITS"},{status:400});
+      const postingError = validatePostingLimits(data);
+      if (postingError) return Response.json({ok:false,error:postingError},{status:400});
     }
     const db = getDb(); const [adv] = await db.select({id:advertisers.id}).from(advertisers).where(eq(advertisers.id, advertiserId)).limit(1);if(!adv)return Response.json({ok:false,error:"ADVERTISER_NOT_FOUND"},{status:404});
     const campaign = await db.transaction(async (tx) => {
