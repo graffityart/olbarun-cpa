@@ -59,8 +59,12 @@ export function hasUniqueSettlementEarnings(ids: readonly string[]): boolean {
 export function settlementAuditMatches(status: SettlementStatus, actions: readonly string[]): boolean {
   const reviews = actions.filter(action =>
     action === "SETTLEMENT_APPROVE" || action === "SETTLEMENT_PAID" || action === "SETTLEMENT_REJECT");
+  const approvals = reviews.filter(action => action === "SETTLEMENT_APPROVE").length;
+  const payments = reviews.filter(action => action === "SETTLEMENT_PAID").length;
+  const rejections = reviews.filter(action => action === "SETTLEMENT_REJECT").length;
   if (status === "REQUESTED") return reviews.length === 0;
-  const expected = status === "APPROVED" ? "SETTLEMENT_APPROVE" :
-    status === "PAID" ? "SETTLEMENT_PAID" : "SETTLEMENT_REJECT";
-  return reviews.includes(expected);
+  if (status === "APPROVED") return approvals === 1 && payments === 0 && rejections === 0;
+  if (status === "PAID") return approvals === 1 && payments === 1 && rejections === 0 &&
+    reviews.indexOf("SETTLEMENT_APPROVE") < reviews.indexOf("SETTLEMENT_PAID");
+  return approvals === 0 && payments === 0 && rejections === 1;
 }
