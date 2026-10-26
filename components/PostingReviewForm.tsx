@@ -26,21 +26,22 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   const [success, setSuccess] = useState(false);
   const [completedDecision, setCompletedDecision] = useState("");
   const [saving, setSaving] = useState(false);
+  const [decision, setDecision] = useState(approvalEnabled ? "APPROVED" : revisionEnabled ? "REVISION_REQUESTED" : "REJECTED");
   const inFlight = useRef(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inFlight.current || success) return;
     const form = new FormData(event.currentTarget);
-    const decision = String(form.get("decision") || "");
+    const selectedDecision = String(form.get("decision") || "");
     const reason = String(form.get("reason") || "").trim();
-    if (decision === "APPROVED" && !approvalEnabled) {
+    if (selectedDecision === "APPROVED" && !approvalEnabled) {
       setMessage(approvalDisabledReason || "현재 승인할 수 없습니다.");
       return;
     }
-    if (decision === "REVISION_REQUESTED" && !revisionEnabled) { setMessage(errorMessages.REVISION_LIMIT); return; }
+    if (selectedDecision === "REVISION_REQUESTED" && !revisionEnabled) { setMessage(errorMessages.REVISION_LIMIT); return; }
     if (reason.length > 2000) { setMessage(errorMessages.REASON_TOO_LONG); return; }
-    if (decision !== "APPROVED" && !reason) {
+    if (selectedDecision !== "APPROVED" && !reason) {
       setMessage(errorMessages.REASON_REQUIRED);
       return;
     }
@@ -51,7 +52,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       const res = await fetch(`/api/admin/posting/${submissionId}/review`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ decision, reason }),
+        body: JSON.stringify({ decision: selectedDecision, reason }),
       });
       const data: { ok?: boolean; error?: string; alreadyProcessed?: boolean } = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
@@ -59,8 +60,8 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
         return;
       }
       setSuccess(true);
-      setCompletedDecision(decision);
-      const resultLabel = decision === "APPROVED" ? "승인" : decision === "REVISION_REQUESTED" ? "수정 요청" : "거절";
+      setCompletedDecision(selectedDecision);
+      const resultLabel = selectedDecision === "APPROVED" ? "승인" : selectedDecision === "REVISION_REQUESTED" ? "수정 요청" : "거절";
       setMessage(data.alreadyProcessed ? `이미 ${resultLabel} 처리된 제출 건입니다. 중복 처리 없이 화면을 갱신합니다.` : `${resultLabel} 처리가 완료되었습니다. 화면 정보를 갱신합니다.`);
       router.refresh();
     } catch {
@@ -74,8 +75,9 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   return <form onSubmit={submit} className="panel card form-card">
     <h3>검수 결과</h3>
     <div className="form-grid">
-      <label>판정<select name="decision" defaultValue={approvalEnabled ? "APPROVED" : revisionEnabled ? "REVISION_REQUESTED" : "REJECTED"} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED" disabled={!revisionEnabled}>수정요청</option><option value="REJECTED">거절</option></select></label>
-      <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
+      <label>판정<select name="decision" value={decision} onChange={event => { setDecision(event.target.value); setMessage(""); }} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED" disabled={!revisionEnabled}>수정요청</option><option value="REJECTED">거절</option></select></label>
+      <p className="full form-message" role="status" aria-live="polite">{decision === "APPROVED" ? "승인하면 광고주 비용과 파트너 수익이 정산 내역에 반영됩니다. 승인 전 게시물과 금액을 확인해 주세요." : decision === "REVISION_REQUESTED" ? "수정 요청 시 파트너에게 사유가 전달됩니다. 수정할 내용을 구체적으로 입력해 주세요." : "거절하면 제출 건이 거절 처리됩니다. 파트너가 이해할 수 있도록 사유를 입력해 주세요."}</p>
+      <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder={decision === "APPROVED" ? "승인 메모 (선택)" : decision === "REVISION_REQUESTED" ? "수정해야 할 내용을 구체적으로 입력하세요." : "거절 사유를 입력하세요."} /></label>
     </div>
     {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} {revisionEnabled ? "수정 요청이나 거절은 가능합니다." : "수정 요청 횟수가 소진되어 거절만 가능합니다."}</p>}
     {success && <p className="form-message" role="status">최종 검수 결과: <strong>{completedDecision === "APPROVED" ? "승인" : completedDecision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p>}
