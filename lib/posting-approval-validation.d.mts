@@ -1,0 +1,1 @@
+export function validatePostingApproval(input: {advertiserRate: number | null | undefined; partnerRate: number | null | undefined; balance: number}): {advertiserRate: number; partnerRate: number; balanceAfter: number} | "RATE_NOT_READY" | "ADVERTISER_BALANCE_INSUFFICIENT";
