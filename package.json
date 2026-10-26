@@ -14,7 +14,7 @@
     "test:cpa": "node --test lib/cpa/*.test.mjs",
     "test:settlement-concurrency": "node --test lib/settlement-concurrency.test.mjs",
     "db:check-cpa-duplicates": "node scripts/check-cpa-accounting-duplicates.mjs",
-    "test:posting-review": "node --test lib/posting-review-validation.test.mjs"
+    "test:posting-review": "node --test lib/posting-review-validation.test.mjs lib/posting-approval-validation.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "latest",
