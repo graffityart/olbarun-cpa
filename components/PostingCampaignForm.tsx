@@ -7,7 +7,7 @@ type Advertiser = { id: string; companyName: string; advertiserCode: string };
 export default function PostingCampaignForm({ advertisers }: { advertisers: Advertiser[] }) {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [createdCampaign, setCreatedCampaign] = useState<string | null>(null);
+  const [createdCampaign, setCreatedCampaign] = useState<{ id: string; code: string } | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();if(saving)return;const formElement=event.currentTarget;
@@ -38,7 +38,7 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
     if (!Number.isSafeInteger(payload.perPartnerLimit) || payload.perPartnerLimit < 1 || !Number.isSafeInteger(payload.postingReviewDays) || payload.postingReviewDays < 1 || !Number.isSafeInteger(payload.revisionLimit) || payload.revisionLimit < 0) { setMessage("1인 최대 작업 수는 1 이상, 검수기간은 1일 이상, 수정 가능 횟수는 0 이상의 정수로 입력해 주세요."); setSaving(false); return; }
     for (const limit of [payload.participantLimit, payload.totalSubmissionLimit, payload.minimumCharacters, payload.minimumImages, payload.maintenanceDays]) { if (limit !== null && (!Number.isSafeInteger(limit) || limit < 1)) { setMessage("모집 수량과 선택 입력값은 1 이상의 정수로 입력해 주세요."); setSaving(false); return; } }
     try{const res = await fetch("/api/admin/campaigns", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_INPUT:"요청 형식이 올바르지 않습니다.",INVALID_CAMPAIGN_TYPE:"캠페인 유형을 확인해 주세요.",INVALID_ADVERTISER_ID:"광고주 선택값이 올바르지 않습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주를 찾을 수 없습니다.",ADVERTISER_AND_NAME_REQUIRED:"광고주와 캠페인명을 입력해 주세요.",INVALID_CAMPAIGN_NAME:"캠페인명에 사용할 수 없는 문자가 있습니다.",INVALID_RATE:"광고주 단가와 파트너 단가를 확인해 주세요.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_LIMIT:"모집 한도는 1 이상의 정수로 입력해 주세요.",INVALID_DATE:"운영기간 날짜 형식을 확인해 주세요.",INVALID_POSTING_MEDIA_TYPE:"광고매체를 다시 선택해 주세요.",INVALID_POSTING_SETTINGS:"1인 최대 작업·검수기간·수정 횟수를 확인해 주세요.",INVALID_POSTING_LIMITS:"총 작업수량은 모집 파트너 수와 1인 최대 작업수보다 작을 수 없습니다."};throw new Error(reasons[data.error]??"저장에 실패했습니다. 입력값을 확인해 주세요.");}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);setCreatedCampaign(data.campaign.campaignCode);formElement.reset();
+    const data=await res.json();if(!res.ok||!data.ok){const reasons:Record<string,string>={INVALID_INPUT:"요청 형식이 올바르지 않습니다.",INVALID_CAMPAIGN_TYPE:"캠페인 유형을 확인해 주세요.",INVALID_ADVERTISER_ID:"광고주 선택값이 올바르지 않습니다.",ADVERTISER_NOT_FOUND:"선택한 광고주를 찾을 수 없습니다.",ADVERTISER_AND_NAME_REQUIRED:"광고주와 캠페인명을 입력해 주세요.",INVALID_CAMPAIGN_NAME:"캠페인명에 사용할 수 없는 문자가 있습니다.",INVALID_RATE:"광고주 단가와 파트너 단가를 확인해 주세요.",INVALID_CAMPAIGN_PERIOD:"종료일은 시작일보다 뒤여야 합니다.",INVALID_LIMIT:"모집 한도는 1 이상의 정수로 입력해 주세요.",INVALID_DATE:"운영기간 날짜 형식을 확인해 주세요.",INVALID_POSTING_MEDIA_TYPE:"광고매체를 다시 선택해 주세요.",INVALID_POSTING_SETTINGS:"1인 최대 작업·검수기간·수정 횟수를 확인해 주세요.",INVALID_POSTING_LIMITS:"총 작업수량은 모집 파트너 수와 1인 최대 작업수보다 작을 수 없습니다."};throw new Error(reasons[data.error]??"저장에 실패했습니다. 입력값을 확인해 주세요.");}setMessage(`초안 저장 완료: ${data.campaign.campaignCode} · 캠페인 목록에서 검토와 활성화를 진행하세요.`);setCreatedCampaign({ id: data.campaign.id, code: data.campaign.campaignCode });formElement.reset();
     }catch(e){setMessage((e instanceof Error?e.message:"통신 오류")+" 저장 여부가 불확실하다면 캠페인 목록을 먼저 확인해 주세요.");}finally{setSaving(false);}
 
   }
@@ -65,7 +65,7 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
       <label className="full">작성 가이드<textarea name="guide" rows={5} placeholder="이미지, 링크, 문구, 주의사항 등을 입력하세요." /></label>
     </div>
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
-    {createdCampaign && <p><a className="btn" href="/admin/campaigns">저장한 캠페인 목록에서 확인하기</a></p>}
+    {createdCampaign && <p><a className="btn" href={`/admin/campaigns/${createdCampaign.id}`}>저장한 캠페인 상세·검토하기 ({createdCampaign.code})</a> <a className="btn" href="/admin/campaigns">전체 목록 보기</a></p>}
     <div className="form-actions"><a className="btn" href="/admin/campaigns">취소</a><button disabled={saving}>{saving ? "저장 중..." : "임시저장"}</button></div>
   </form>;
 }
