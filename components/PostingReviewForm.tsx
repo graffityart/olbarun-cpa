@@ -24,6 +24,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [completedDecision, setCompletedDecision] = useState("");
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
 
@@ -58,7 +59,9 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
         return;
       }
       setSuccess(true);
-      setMessage(data.alreadyProcessed ? "이미 동일한 검수 결과가 처리되어 있습니다. 중복 정산 없이 화면을 갱신합니다." : "검수 결과가 저장되었습니다. 화면 정보를 갱신합니다.");
+      setCompletedDecision(decision);
+      const resultLabel = decision === "APPROVED" ? "승인" : decision === "REVISION_REQUESTED" ? "수정 요청" : "거절";
+      setMessage(data.alreadyProcessed ? `이미 ${resultLabel} 처리된 제출 건입니다. 중복 처리 없이 화면을 갱신합니다.` : `${resultLabel} 처리가 완료되었습니다. 화면 정보를 갱신합니다.`);
       router.refresh();
     } catch {
       setMessage("네트워크 오류가 발생했습니다. 처리 상태를 확인한 뒤 다시 시도해 주세요.");
@@ -75,6 +78,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
     </div>
     {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} {revisionEnabled ? "수정 요청이나 거절은 가능합니다." : "수정 요청 횟수가 소진되어 거절만 가능합니다."}</p>}
+    {success && <p className="form-message" role="status">최종 검수 결과: <strong>{completedDecision === "APPROVED" ? "승인" : completedDecision === "REVISION_REQUESTED" ? "수정 요청" : "거절"}</strong></p>}
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
     <div className="form-actions"><button disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : "검수 결과 저장"}</button></div>
   </form>;
