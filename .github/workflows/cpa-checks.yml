@@ -24,6 +24,8 @@ jobs:
         run: npm run test:cpa
       - name: Settlement validation tests
         run: npm run test:settlements
+      - name: Posting review input validation tests
+        run: npm run test:posting-review
       - name: TypeScript validation
         run: npm run typecheck
 
