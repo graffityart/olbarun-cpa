@@ -68,3 +68,22 @@ export function settlementAuditMatches(status: SettlementStatus, actions: readon
     reviews.indexOf("SETTLEMENT_APPROVE") < reviews.indexOf("SETTLEMENT_PAID");
   return approvals === 0 && payments === 0 && rejections === 1;
 }
+
+/** Classify the reason an audit history cannot justify its settlement status. */
+export function settlementAuditIssue(status: SettlementStatus, actions: readonly string[]): string | null {
+  const reviews = actions.filter(action =>
+    action === "SETTLEMENT_APPROVE" || action === "SETTLEMENT_PAID" || action === "SETTLEMENT_REJECT");
+  if (settlementAuditMatches(status, reviews)) return null;
+  const approvals = reviews.filter(action => action === "SETTLEMENT_APPROVE").length;
+  const payments = reviews.filter(action => action === "SETTLEMENT_PAID").length;
+  const rejections = reviews.filter(action => action === "SETTLEMENT_REJECT").length;
+  if (approvals > 1 || payments > 1 || rejections > 1) return "동일한 처리 기록이 중복되었습니다.";
+  if (rejections && (approvals || payments)) return "승인·지급 기록과 반려 기록이 충돌합니다.";
+  if (payments && approvals && reviews.indexOf("SETTLEMENT_PAID") < reviews.indexOf("SETTLEMENT_APPROVE")) {
+    return "지급완료 기록이 승인 기록보다 먼저 작성되었습니다.";
+  }
+  if (status === "REQUESTED") return "검토대기 상태에 승인·지급·반려 기록이 존재합니다.";
+  if (status === "APPROVED") return payments ? "지급대기 상태에 지급완료 기록이 존재합니다." : "승인 처리 기록이 없거나 일치하지 않습니다.";
+  if (status === "PAID") return approvals === 0 ? "지급완료 상태의 승인 기록이 없습니다." : "지급완료 처리 기록이 없거나 일치하지 않습니다.";
+  return "반려 처리 기록이 없거나 일치하지 않습니다.";
+}
