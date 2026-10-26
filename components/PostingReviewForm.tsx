@@ -19,7 +19,7 @@ const errorMessages: Record<string, string> = {
   REVIEW_FAILED: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
-export default function PostingReviewForm({ submissionId, approvalEnabled = true, approvalDisabledReason = "" }: { submissionId: string; approvalEnabled?: boolean; approvalDisabledReason?: string }) {
+export default function PostingReviewForm({ submissionId, approvalEnabled = true, approvalDisabledReason = "", revisionEnabled = true }: { submissionId: string; approvalEnabled?: boolean; approvalDisabledReason?: string; revisionEnabled?: boolean }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -35,6 +35,7 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
       setMessage(approvalDisabledReason || "현재 승인할 수 없습니다.");
       return;
     }
+    if (decision === "REVISION_REQUESTED" && !revisionEnabled) { setMessage(errorMessages.REVISION_LIMIT); return; }
     if (reason.length > 2000) { setMessage(errorMessages.REASON_TOO_LONG); return; }
     if (decision !== "APPROVED" && !reason) {
       setMessage(errorMessages.REASON_REQUIRED);
@@ -66,10 +67,10 @@ export default function PostingReviewForm({ submissionId, approvalEnabled = true
   return <form onSubmit={submit} className="panel card form-card">
     <h3>검수 결과</h3>
     <div className="form-grid">
-      <label>판정<select name="decision" defaultValue={approvalEnabled ? "APPROVED" : "REVISION_REQUESTED"} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED">수정요청</option><option value="REJECTED">거절</option></select></label>
+      <label>판정<select name="decision" defaultValue={approvalEnabled ? "APPROVED" : revisionEnabled ? "REVISION_REQUESTED" : "REJECTED"} disabled={saving || success}><option value="APPROVED" disabled={!approvalEnabled}>승인</option><option value="REVISION_REQUESTED" disabled={!revisionEnabled}>수정요청</option><option value="REJECTED">거절</option></select></label>
       <label className="full">검수내용<textarea name="reason" rows={5} maxLength={2000} disabled={saving || success} placeholder="수정요청 또는 거절 사유를 입력하세요." /></label>
     </div>
-    {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} 수정 요청이나 거절은 가능합니다.</p>}
+    {!approvalEnabled && <p className="form-message" role="status">승인 불가: {approvalDisabledReason} {revisionEnabled ? "수정 요청이나 거절은 가능합니다." : "수정 요청 횟수가 소진되어 거절만 가능합니다."}</p>}
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
     <div className="form-actions"><button disabled={saving || success}>{saving ? "처리 중..." : success ? "처리 완료" : "검수 결과 저장"}</button></div>
   </form>;
