@@ -49,7 +49,11 @@ export default function SettlementRequest({ available, pending = false }: { avai
         if (!data.error || !Object.hasOwn(errors,data.error)) setOutcomeUnknown(true);
         throw new Error(errors[data.error] ?? "처리 결과가 불확실합니다. 신청 내역을 확인한 뒤 다시 시도해 주세요.");
       }
-      if (typeof data.settlementCode !== "string" || !/^SET-[0-9A-F]{12}$/.test(data.settlementCode)) {\n        setOutcomeUnknown(true);\n        throw new Error("신청 접수번호를 확인할 수 없습니다. 중복 신청 방지를 위해 신청 내역을 먼저 확인해 주세요.");\n      }\n      accepted = true; setCompleted(true);
+      if (typeof data.settlementCode !== "string" || !/^SET-[0-9A-F]{12}$/.test(data.settlementCode)) {
+        setOutcomeUnknown(true);
+        throw new Error("신청 접수번호를 확인할 수 없습니다. 중복 신청 방지를 위해 신청 내역을 먼저 확인해 주세요.");
+      }
+      accepted = true; setCompleted(true);
       setMessage(`출금 신청이 접수되었습니다. 신청번호: ${data.settlementCode}`);
       router.refresh();
     } catch (error) {
