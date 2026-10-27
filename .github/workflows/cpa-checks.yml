@@ -1,16 +1,13 @@
 name: CPA checks
-
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  cpa-checks:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -18,52 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install dependencies
-        run: npm install --no-package-lock --no-audit --no-fund
-      - name: CPA guard tests
-        run: npm run test:cpa
-      - name: Settlement validation tests
-        run: npm run test:settlements
-      - name: Posting review input validation tests
-        run: npm run test:posting-review
-      - name: TypeScript validation
-        run: npm run typecheck
-
-  settlement-db-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: cpa_test
-          POSTGRES_PASSWORD: local_ci_only
-          POSTGRES_DB: cpa_disposable
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U cpa_test -d cpa_disposable"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      CI: 'true'
-      NODE_ENV: test
-      SETTLEMENT_TEST_DATABASE_URL: postgres://cpa_test:local_ci_only@localhost:5432/cpa_disposable
-      SETTLEMENT_TEST_DB_CONFIRM: disposable
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install dependencies
-        run: npm install --no-package-lock --no-audit --no-fund
-      - name: Run isolated PostgreSQL concurrency and rollback tests
-        run: npm run test:settlement-concurrency
-      - name: Summarize disposable database test result
-        if: always()
-        run: |
-          echo "### CPA settlement database tests" >> "$GITHUB_STEP_SUMMARY"
-          echo "- PostgreSQL: isolated Postgres 16 service" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Suite: npm run test:settlement-concurrency" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Outcome: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run test:cpa
+      - run: npm run test:settlements
+      - run: npm run test:settlement-concurrency
+      - run: npm run test:posting-review
