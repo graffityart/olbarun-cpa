@@ -16,7 +16,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
    if(!row)throw new Error("NOT_FOUND");if(!allowed[row.status].includes(next))throw new Error("INVALID_TRANSITION");
    if(next==="ACTIVE"){
     const[rate]=await tx.select({advertiserRate:campaignRates.advertiserRate,partnerBaseRate:campaignRates.partnerBaseRate,minimumMargin:campaignRates.minimumMargin}).from(campaignRates).where(and(eq(campaignRates.campaignId,id),sql`${campaignRates.effectiveFrom}<=now() and (${campaignRates.effectiveTo} is null or ${campaignRates.effectiveTo}>now())`)).orderBy(desc(campaignRates.effectiveFrom)).limit(1);
-    if(!rate||rate.advertiserRate<=0||rate.partnerBaseRate<0||rate.partnerBaseRate+rate.minimumMargin>rate.advertiserRate)throw new Error("RATE_NOT_READY");
+    if(!rate||![rate.advertiserRate,rate.partnerBaseRate,rate.minimumMargin].every(Number.isSafeInteger)||rate.advertiserRate<=0||rate.partnerBaseRate<0||rate.minimumMargin<0||rate.partnerBaseRate+rate.minimumMargin>rate.advertiserRate)throw new Error("RATE_NOT_READY");
     const now=new Date();if(row.endAt&&row.endAt<=now)throw new Error("CAMPAIGN_ENDED");
    }
    const[updated]=await tx.update(campaigns).set({status:next,updatedAt:new Date()}).where(and(eq(campaigns.id,id),eq(campaigns.status,row.status))).returning({id:campaigns.id,status:campaigns.status});if(!updated)throw new Error("CONCURRENT_UPDATE");return updated;
