@@ -46,7 +46,7 @@ export default function SettlementRequest({ available, pending = false }: { avai
         throw new Error("서버 응답을 확인할 수 없습니다. 중복 신청 방지를 위해 신청 내역을 확인하기 전에는 다시 신청할 수 없습니다.");
       }
       if (!res.ok || !data.ok) {
-        if (!data.error || !Object.hasOwn(errors,data.error)) setOutcomeUnknown(true);
+        if (res.ok || res.status >= 500 || typeof data.error !== "string" || !Object.hasOwn(errors,data.error)) setOutcomeUnknown(true);
         throw new Error(errors[data.error] ?? "처리 결과가 불확실합니다. 신청 내역을 확인한 뒤 다시 시도해 주세요.");
       }
       if (res.status !== 201) {
