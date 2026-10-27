@@ -42,7 +42,7 @@ export default async function PostingAdminPage({searchParams}:{searchParams:Prom
       .innerJoin(campaigns,eq(postingCampaigns.campaignId,campaigns.id))
       .innerJoin(partners,eq(postingApplications.partnerId,partners.id))
       .where(condition),
-    db.select({overSix:sql<number>`count(*) filter (where ${postingSubmissions.submittedAt} <= ${new Date(now-6*3600000)})`,overDay:sql<number>`count(*) filter (where ${postingSubmissions.submittedAt} <= ${new Date(now-24*3600000)})`}).from(postingSubmissions).where(eq(postingSubmissions.status,"SUBMITTED")),
+    db.select({overSix:sql<number>`count(*) filter (where ${postingSubmissions.submittedAt} <= ${new Date(now-6*3600000).toISOString()})`,overDay:sql<number>`count(*) filter (where ${postingSubmissions.submittedAt} <= ${new Date(now-24*3600000)})`}).from(postingSubmissions).where(eq(postingSubmissions.status,"SUBMITTED")),
   ]);
   const counts=Object.fromEntries(statusRows.map(r=>[r.status,Number(r.total)])) as Record<string,number>;
   const delayed=delayedRows[0];
