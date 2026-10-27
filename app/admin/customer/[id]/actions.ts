@@ -8,7 +8,9 @@ import {requireAdmin} from "@/lib/auth/guards";
 type State={message:string;answer?:string};
 export async function saveAnswer(id:string,_state:State,formData:FormData):Promise<State>{
   const admin=await requireAdmin();
-  const answer=String(formData.get("answer")||"").trim();
+  const rawAnswer=formData.get("answer");
+  if(typeof rawAnswer!=="string")return {message:"답변 입력 형식이 올바르지 않습니다."};
+  const answer=rawAnswer.trim();
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return {message:"문의글을 찾을 수 없습니다.",answer};
   if(answer.length<2||answer.length>5000)return {message:"답변은 2자 이상 5,000자 이하로 입력해 주세요.",answer};
   try{
