@@ -30,7 +30,7 @@ export default function SettlementRequest({ available, pending = false }: { avai
       const data = await res.json().catch(() => null);
       if (!res.ok || data?.ok !== true || !Array.isArray(data.settlements)) throw new Error("최근 출금 내역을 확인할 수 없습니다. 잠시 후 다시 확인해 주세요.");
       const rows = data.settlements as Array<{settlementCode:string;status:string;requestedAmount:number}>;
-      const matches = rows.filter(row => typeof row.settlementCode === "string" && typeof row.requestedAmount === "number" && row.requestedAmount === available);
+      const matches = rows.filter(row => row !== null && typeof row === "object" && typeof row.settlementCode === "string" && /^SET-[0-9A-F]{12}$/.test(row.settlementCode) && typeof row.requestedAmount === "number" && Number.isSafeInteger(row.requestedAmount) && row.requestedAmount === available && ["REQUESTED","APPROVED","PAID","REJECTED"].includes(row.status));
       setHistoryMessage(matches.length ? `동일 금액 신청 내역 ${matches.length}건이 확인됐습니다. 출금 신청 내역에서 상태와 신청 시각을 확인해 주세요.` : "최근 10건에서 동일 금액 신청을 찾지 못했습니다. 이전 신청의 처리 결과를 확정할 수 없으므로 출금 신청 내역을 확인해 주세요.");
       router.refresh();
     } catch(error) {setHistoryMessage(error instanceof Error ? error.message : "출금 내역을 조회할 수 없습니다.");}
