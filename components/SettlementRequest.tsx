@@ -57,9 +57,9 @@ export default function SettlementRequest({ available, pending = false }: { avai
       setMessage(`출금 신청이 접수되었습니다. 신청번호: ${data.settlementCode}`);
       router.refresh();
     } catch (error) {
-      if (error instanceof TypeError) setOutcomeUnknown(true);
+      if (error instanceof TypeError || (error instanceof Error && error.name === "AbortError")) setOutcomeUnknown(true);
       setConfirmation(null);
-      setMessage(error instanceof TypeError ? "연결이 원활하지 않습니다. 신청 내역을 확인한 뒤 다시 시도해 주세요." : error instanceof Error ? error.message : "신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      setMessage(error instanceof TypeError || (error instanceof Error && error.name === "AbortError") ? "연결이 중단되어 신청 결과가 불확실합니다. 신청 내역을 확인한 뒤 다시 시도해 주세요." : error instanceof Error ? error.message : "신청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally { if (!accepted) { inFlight.current = false; setLoading(false); } }
   }
   return <section className="pf-panel" id="request"><div className="pf-section-head"><div><h2>출금 신청</h2><p>출금 가능한 금액 전체를 한 번에 신청합니다.</p></div></div>
