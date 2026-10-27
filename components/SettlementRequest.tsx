@@ -49,6 +49,10 @@ export default function SettlementRequest({ available, pending = false }: { avai
         if (!data.error || !Object.hasOwn(errors,data.error)) setOutcomeUnknown(true);
         throw new Error(errors[data.error] ?? "처리 결과가 불확실합니다. 신청 내역을 확인한 뒤 다시 시도해 주세요.");
       }
+      if (res.status !== 201) {
+        setOutcomeUnknown(true);
+        throw new Error("서버에서 출금 신청 접수 상태를 확인할 수 없습니다. 신청 내역을 먼저 확인해 주세요.");
+      }
       if (typeof data.settlementCode !== "string" || !/^SET-[0-9A-F]{12}$/.test(data.settlementCode)) {
         setOutcomeUnknown(true);
         throw new Error("신청 접수번호를 확인할 수 없습니다. 중복 신청 방지를 위해 신청 내역을 먼저 확인해 주세요.");
