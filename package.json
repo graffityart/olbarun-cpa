@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run test:all && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
@@ -14,7 +14,8 @@
     "test:cpa": "node --test lib/cpa/*.test.mjs",
     "test:settlement-concurrency": "node --test lib/settlement-concurrency.test.mjs",
     "db:check-cpa-duplicates": "node scripts/check-cpa-accounting-duplicates.mjs",
-    "test:posting-review": "node --test lib/posting-review-validation.test.mjs lib/posting-approval-validation.test.mjs"
+    "test:posting-review": "node --test lib/posting-review-validation.test.mjs lib/posting-approval-validation.test.mjs",
+    "test:all": "npm run test:cpa && npm run test:settlements && npm run test:settlement-concurrency && npm run test:posting-review"
   },
   "dependencies": {
     "drizzle-orm": "latest",
