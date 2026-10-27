@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { settlementAmountsMatch } from "@/lib/settlement-validation";
+import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
 import { settlementAuditMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
 import { auditLogs, settlementItems, settlements } from "@/db/schema";
@@ -32,9 +32,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
       .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
     const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action));
-    const items = await getDb().select({ amount: settlementItems.amount }).from(settlementItems)
+    const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId }).from(settlementItems)
       .where(eq(settlementItems.settlementId, id));
-    const amountVerified = settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
+    const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
