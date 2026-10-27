@@ -11,19 +11,23 @@ export async function saveAnswer(id:string,_state:State,formData:FormData):Promi
   const rawAnswer=formData.get("answer");
   if(typeof rawAnswer!=="string")return {message:"답변 입력 형식이 올바르지 않습니다."};
   const answer=rawAnswer.trim();
+  const answerVersion=formData.get("answerVersion");
+  if(typeof answerVersion!=="string"||!Number.isFinite(Date.parse(answerVersion)))return {message:"문의 화면을 새로고침한 뒤 다시 시도해 주세요.",answer};
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return {message:"문의글을 찾을 수 없습니다.",answer};
   if(answer.length<2||answer.length>5000)return {message:"답변은 2자 이상 5,000자 이하로 입력해 주세요.",answer};
   try{
     const now=new Date();
     const saved=await getDb().transaction(async tx=>{
-      const [current]=await tx.select({answer:customerQna.answer}).from(customerQna).where(eq(customerQna.id,id)).for("update").limit(1);
+      const [current]=await tx.select({answer:customerQna.answer,updatedAt:customerQna.updatedAt}).from(customerQna).where(eq(customerQna.id,id)).for("update").limit(1);
       if(!current)return false;
+      if(current.updatedAt.toISOString()!==answerVersion)return "CONFLICT";
       if(current.answer?.trim()===answer)return "UNCHANGED";
       await tx.update(customerQna).set({answer,status:"ANSWERED",answeredAt:now,updatedAt:now}).where(eq(customerQna.id,id));
       await tx.insert(auditLogs).values({actorUserId:admin.id,action:current.answer?"CUSTOMER_ANSWER_UPDATED":"CUSTOMER_ANSWER_CREATED",targetType:"CUSTOMER_QNA",targetId:id,summary:current.answer?"고객 문의 답변 수정":"고객 문의 답변 등록",metadata:{previousAnswerLength:current.answer?.length??0,answerLength:answer.length}});
       return true;
     });
     if(!saved)return {message:"문의글을 찾을 수 없습니다. 목록에서 다시 확인해 주세요.",answer};
+    if(saved==="CONFLICT")return {message:"다른 관리자가 먼저 문의를 수정했습니다. 화면을 새로고침하고 최신 답변을 확인한 뒤 다시 작성해 주세요.",answer};
     if(saved==="UNCHANGED")return {message:"기존 답변과 동일합니다. 변경한 내용을 입력해 주세요.",answer};
   }catch(error){console.error("Customer answer save failed",error);return {message:"답변을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",answer};}
   revalidatePath("/admin/customer");revalidatePath(`/admin/customer/${id}`);revalidatePath("/customer/qna");revalidatePath(`/customer/qna/${id}`);
