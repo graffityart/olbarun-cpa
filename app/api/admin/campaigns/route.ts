@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { advertisers, campaignRates, campaigns, postingCampaigns } from "@/db/schema";
@@ -6,8 +7,8 @@ import { requireSameOrigin } from "@/lib/security/origin";
 import { validatePostingLimits } from "@/lib/cpa/posting-limits.mjs";
 
 export const dynamic = "force-dynamic";
-function makeCampaignCode(type: "CPA" | "POSTING") { return `${type}-${Date.now().toString(36).toUpperCase()}`; }
-function makeSlug(name: string) { return `${name.toLowerCase().trim().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-|-$/g, "")}-${Date.now().toString(36)}`; }
+function makeCampaignCode(type: "CPA" | "POSTING") { return `${type}-${Date.now().toString(36).toUpperCase()}-${randomBytes(4).toString("hex").toUpperCase()}`; }
+function makeSlug(name: string) { return `${name.toLowerCase().trim().replace(/[^a-z0-9가-힣]+/g, "-").replace(/^-|-$/g, "")}-${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`; }
 const optionalPositiveInteger=(value:unknown)=>{if(value===null||value===undefined||value==="")return null;const n=Number(value);if(!Number.isSafeInteger(n)||n<=0)throw new Error("INVALID_LIMIT");return n;};
 const parseDate=(value:unknown)=>{if(!value)return null;const d=new Date(String(value));if(Number.isNaN(d.getTime()))throw new Error("INVALID_DATE");return d;};
 
