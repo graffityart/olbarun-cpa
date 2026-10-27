@@ -19,7 +19,23 @@ export default function SettlementRequest({ available, pending = false }: { avai
   const [loading,setLoading] = useState(false);
   const [completed,setCompleted] = useState(false);
   const [outcomeUnknown,setOutcomeUnknown] = useState(false);
+  const [historyMessage,setHistoryMessage] = useState("");
+  const [historyLoading,setHistoryLoading] = useState(false);
   const [confirmation,setConfirmation] = useState<{bankName:string;accountNumber:string;accountHolder:string}|null>(null);
+  async function checkRecentRequests() {
+    if (historyLoading) return;
+    setHistoryLoading(true); setHistoryMessage("");
+    try {
+      const res = await fetch("/api/partner/settlements", {cache:"no-store"});
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.ok !== true || !Array.isArray(data.settlements)) throw new Error("최근 출금 내역을 확인할 수 없습니다. 잠시 후 다시 확인해 주세요.");
+      const rows = data.settlements as Array<{settlementCode:string;status:string;requestedAmount:number}>;
+      const matches = rows.filter(row => typeof row.settlementCode === "string" && typeof row.requestedAmount === "number" && row.requestedAmount === available);
+      setHistoryMessage(matches.length ? `동일 금액 신청 내역 ${matches.length}건이 확인됐습니다. 출금 신청 내역에서 상태와 신청 시각을 확인해 주세요.` : "최근 10건에서 동일 금액 신청을 찾지 못했습니다. 이전 신청의 처리 결과를 확정할 수 없으므로 출금 신청 내역을 확인해 주세요.");
+      router.refresh();
+    } catch(error) {setHistoryMessage(error instanceof Error ? error.message : "출금 내역을 조회할 수 없습니다.");}
+    finally {setHistoryLoading(false);}
+  }
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (inFlight.current || completed || outcomeUnknown || available <= 0 || pending) return;
@@ -77,5 +93,5 @@ export default function SettlementRequest({ available, pending = false }: { avai
     </div><p className="pf-help">입력한 계좌로 지급되므로 은행명·계좌번호·예금주를 정확히 확인해 주세요. 신청한 금액은 처리 중 금액으로 이동합니다.</p>
     {confirmation&&!completed&&<div className="pf-notice" role="region" aria-label="출금 신청 최종 확인"><strong>출금 신청 최종 확인</strong><p>신청 금액: <strong>{available.toLocaleString("ko-KR")}원</strong></p><p>은행: {confirmation.bankName}</p><p>계좌번호: {confirmation.accountNumber.length>4?`${"*".repeat(Math.min(8,confirmation.accountNumber.length-4))}${confirmation.accountNumber.slice(-4)}`:"****"}</p><p>예금주: {confirmation.accountHolder}</p><p>확정하면 출금 가능 수익 전체가 지급 처리 대기 상태로 전환됩니다.</p><button type="button" className="pf-primary" onClick={() => {setConfirmation(null);setMessage("");}}>계좌정보 수정</button></div>}
     <button className="pf-primary" type="submit">{completed?"신청 접수 완료":loading?"신청 중…":confirmation?"출금 신청 최종 확정":`${available.toLocaleString("ko-KR")}원 출금 신청 확인`}</button></fieldset>
-    {message&&<p className="pf-notice" role="status">{message}</p>}{outcomeUnknown&&<div className="pf-notice" role="alert"><strong>신청 결과 확인 필요</strong><p>신청이 이미 접수되었을 수 있습니다. 신청 내역을 새로 확인한 후 처리해 주세요.</p><button type="button" className="pf-primary" onClick={() => window.location.reload()}>신청 내역 새로고침</button></div>}</form></section>;
+    {message&&<p className="pf-notice" role="status">{message}</p>}{outcomeUnknown&&<div className="pf-notice" role="alert"><strong>신청 결과 확인 필요</strong><p>신청이 이미 접수되었을 수 있습니다. 신청 내역을 새로 확인한 후 처리해 주세요.</p><button type="button" className="pf-primary" disabled={historyLoading} onClick={checkRecentRequests}>{historyLoading?"내역 확인 중…":"최근 신청 내역 확인"}</button>{historyMessage&&<p role="status">{historyMessage}</p>}<a href="/partner/settlements#request">출금 신청 내역으로 이동</a></div>}</form></section>;
 }
