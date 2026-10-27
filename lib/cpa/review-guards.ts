@@ -37,7 +37,7 @@ export function validCpaDebitBalance(balance:number, advertiserRate:number):bool
 
 /** Positive CPA earnings must have a linked partner and its user account. */
 export function validCpaEarningRecipient(partnerRate: number, partnerId: string | null, partnerUserId: string | null): boolean {
-  if (!Number.isSafeInteger(partnerRate) || partnerRate < 0) return false;
+  if (!Number.isSafeInteger(partnerRate) || partnerRate < 0 || partnerRate > MAX_DB_AMOUNT) return false;
   if (partnerRate === 0) return true;
   return typeof partnerId === "string" && partnerId.length > 0
     && typeof partnerUserId === "string" && partnerUserId.length > 0;
