@@ -8,7 +8,7 @@ export function validCpaReviewRates(advertiserRate:number,partnerRate:number,pla
     && platformMargin===advertiserRate-partnerRate;
 }
 export function canReviewCpaConversion(status:string):boolean {
-  return status==="REVIEWING";
+  return status==="REVIEWING" || status==="REJECTION_REQUESTED";
 }
 
 export function validCpaCampaignRates(advertiserRate:number,partnerRate:number,minimumMargin:number):boolean {
