@@ -20,7 +20,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
     if(!rate||!validCpaCampaignRates(rate.advertiserRate,rate.partnerBaseRate,rate.minimumMargin))throw new Error("RATE_NOT_READY");
     const now=new Date();if(row.endAt&&row.endAt<=now)throw new Error("CAMPAIGN_ENDED");
    }
-   const[updated]=await tx.update(campaigns).set({status:next,updatedAt:new Date()}).where(and(eq(campaigns.id,id),eq(campaigns.status,row.status))).returning({id:campaigns.id,status:campaigns.status});if(!updated)throw new Error("CONCURRENT_UPDATE");await tx.insert(auditLogs).values({actorUserId:admin.id,action:"CAMPAIGN_STATUS_CHANGED",targetType:"CAMPAIGN",targetId:id,summary:"캠페인 상태 변경",metadata:{previousStatus:row.status,nextStatus:next}});return updated;
+   const[updated]=await tx.update(campaigns).set({status:next,updatedAt:new Date()}).where(and(eq(campaigns.id,id),eq(campaigns.status,row.status))).returning({id:campaigns.id,status:campaigns.status});if(!updated)throw new Error("CONCURRENT_UPDATE");await tx.insert(auditLogs).values({actorUserId:admin.id,action:"CAMPAIGN_STATUS_CHANGED",targetType:"CAMPAIGN",targetId:id,summary:`캠페인 상태 ${row.status} → ${next}`,metadata:{previousStatus:row.status,nextStatus:next}});return updated;
   });
   return Response.json({ok:true,campaign:result});
  }catch(error){const code=error instanceof Error?error.message:"UPDATE_FAILED";const status=code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED"?403:code==="NOT_FOUND"?404:code==="INVALID_STATUS"?400:409;return Response.json({ok:false,error:code},{status});}
