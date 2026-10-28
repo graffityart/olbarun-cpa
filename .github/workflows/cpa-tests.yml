@@ -21,6 +21,16 @@ jobs:
       - name: Install dependencies without lockfile
         run: npm install --no-package-lock --no-audit --no-fund
       - name: Run regression tests
+        id: tests
         run: npm run test:all
       - name: Check TypeScript
+        id: types
+        if: always()
         run: npm run typecheck
+      - name: Publish check summary
+        if: always()
+        run: |
+          echo "## CPA automated checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Regression suite: ${{ steps.tests.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- TypeScript: ${{ steps.types.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Note: database concurrency tests require a disposable test database." >> "$GITHUB_STEP_SUMMARY"
