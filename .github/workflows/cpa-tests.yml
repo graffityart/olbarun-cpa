@@ -22,7 +22,7 @@ jobs:
         run: npm install --no-package-lock --no-audit --no-fund
       - name: Run regression tests
         id: tests
-        run: npm run test:all
+        run: npm run test:all 2>&1 | tee cpa-test-results.log
       - name: Check TypeScript
         id: types
         if: always()
@@ -33,4 +33,13 @@ jobs:
           echo "## CPA automated checks" >> "$GITHUB_STEP_SUMMARY"
           echo "- Regression suite: ${{ steps.tests.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- TypeScript: ${{ steps.types.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f cpa-test-results.log ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Test suite summary | Count |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|---|---:|" >> "$GITHUB_STEP_SUMMARY"
+            for metric in tests pass fail skipped cancelled todo; do
+              total=$(awk -v metric="$metric" '$1=="#" && $2==metric && $3 ~ /^[0-9]+$/ {sum+=$3;found=1} END {if(found) print sum; else print "not reported"}' cpa-test-results.log)
+              echo "| $metric | $total |" >> "$GITHUB_STEP_SUMMARY"
+            done
+          fi
           echo "- Note: database concurrency tests require a disposable test database." >> "$GITHUB_STEP_SUMMARY"
