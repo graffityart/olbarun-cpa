@@ -45,7 +45,7 @@ export default function SettlementRequest({ available, pending = false }: { avai
     const bankName = String(form.get("bankName") ?? "").trim();
     const accountNumber = String(form.get("accountNumber") ?? "").replace(/\s/g,"");
     const accountHolder = String(form.get("accountHolder") ?? "").trim();
-    if (!bankName || !accountNumber || !accountHolder || bankName.length>50 || accountNumber.length>50 || accountHolder.length>50) {setMessage("은행명, 계좌번호, 예금주를 정확히 입력해 주세요.");setConfirmation(null);return;}
+    if (!bankName || !accountNumber || !accountHolder || bankName.length>50 || accountNumber.length>50 || accountHolder.length>50 || !/^[0-9]+(?:-[0-9]+)*$/.test(accountNumber) || accountNumber.replace(/-/g,"").length<6 || /[\u0000-\u001f\u007f]/.test(bankName) || /[\u0000-\u001f\u007f]/.test(accountHolder)) {setMessage("은행명, 계좌번호, 예금주를 정확히 입력해 주세요.");setConfirmation(null);return;}
     if (!confirmation || confirmation.bankName !== bankName || confirmation.accountNumber !== accountNumber || confirmation.accountHolder !== accountHolder) {
       setConfirmation({bankName,accountNumber,accountHolder});
       setMessage("신청 금액과 입금 계좌를 확인한 뒤 최종 신청 버튼을 눌러 주세요.");
