@@ -1,7 +1,7 @@
 name: CPA and settlement tests
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "lib/settlement-list-filters.ts"
       - "lib/settlement-validation.ts"
