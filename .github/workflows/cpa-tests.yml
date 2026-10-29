@@ -1,4 +1,4 @@
-name: CPA checks
+name: CPA regression and TypeScript
 on:
   push:
     branches: [main, develop]
@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: cpa-checks-${{ github.workflow }}-${{ github.ref }}
+  group: cpa-regression-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   test:
