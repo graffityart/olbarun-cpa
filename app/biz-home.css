@@ -134,3 +134,31 @@
 @media(max-width:650px){.beginner-link-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.beginner-link-row>a{display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:68px;padding:11px 7px;text-align:center;font-size:clamp(12px,3.2vw,14px)}.beginner-link-row>a span{font-size:18px;line-height:1}}
 @media(max-width:360px){.beginner-link-row{gap:5px}.beginner-link-row>a{padding:10px 4px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.beginner-link-row>a{transition:none}}
+
+/* Glossy beginner guide cards: responsive HTML links, not image-only buttons */
+.biz-home .beginner-link-row{gap:16px;margin-top:18px;margin-bottom:36px}
+.biz-home .beginner-link-row>a.beginner-guide-card{
+  position:relative;isolation:isolate;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+  min-width:0;min-height:112px;gap:13px;padding:18px 16px;overflow:hidden;text-align:left;
+  border:2px solid rgba(255,255,255,.7);border-radius:22px;color:#fff;
+  background:linear-gradient(132deg,#76b9ff 0%,#1674e8 46%,#0757c5 100%);
+  box-shadow:0 10px 22px rgba(20,91,205,.2),inset 0 1px 1px rgba(255,255,255,.8);
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.biz-home .beginner-link-row>a.beginner-guide-card:nth-child(2){color:#fff;border-color:rgba(255,255,255,.75);background:linear-gradient(130deg,#ff99c6 0%,#f23d8c 50%,#c71e70 100%);box-shadow:0 10px 22px rgba(210,40,111,.2),inset 0 1px 1px rgba(255,255,255,.8)}
+.biz-home .beginner-link-row>a.beginner-guide-card:nth-child(3){color:#fff;border-color:rgba(255,255,255,.75);background:linear-gradient(130deg,#bd93ff 0%,#844ce6 48%,#5623b8 100%);box-shadow:0 10px 22px rgba(102,57,190,.2),inset 0 1px 1px rgba(255,255,255,.8)}
+.biz-home .beginner-guide-card::before{content:"";position:absolute;inset:0 0 auto;height:48%;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0));pointer-events:none;z-index:-1}
+.biz-home .beginner-guide-card::after{content:"";position:absolute;right:-12%;bottom:-65%;width:100%;height:90%;border-radius:50%;background:rgba(255,255,255,.14);transform:rotate(-15deg);pointer-events:none;z-index:-1}
+.biz-home .beginner-guide-icon{flex:0 0 64px;width:64px;height:64px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(150deg,rgba(255,255,255,.96),rgba(255,255,255,.72));box-shadow:0 5px 10px rgba(20,35,90,.16)}
+.biz-home .beginner-guide-icon img{width:54px;height:54px;object-fit:contain}
+.biz-home .beginner-guide-copy{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:7px}
+.biz-home .beginner-guide-copy strong{font-size:clamp(16px,1.7vw,21px);font-weight:900;line-height:1.2;letter-spacing:-.04em;text-shadow:0 2px 3px rgba(0,0,0,.13)}
+.biz-home .beginner-guide-copy small{font-size:clamp(11px,1.1vw,13px);line-height:1.35;font-weight:650;color:rgba(255,255,255,.94);word-break:keep-all}
+.biz-home .beginner-link-row>a .beginner-guide-arrow{flex:0 0 30px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#fff;color:#1661c6;font-size:21px;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.13)}
+.biz-home .beginner-link-row>a:nth-child(2) .beginner-guide-arrow{color:#cc236f}
+.biz-home .beginner-link-row>a:nth-child(3) .beginner-guide-arrow{color:#6534c7}
+.biz-home .beginner-link-row>a.beginner-guide-card:hover{transform:translateY(-4px);box-shadow:0 16px 28px rgba(34,56,100,.23)}
+.biz-home .beginner-link-row>a.beginner-guide-card:focus-visible{outline:3px solid #111f51;outline-offset:4px}
+@media(max-width:1050px){.biz-home .beginner-link-row{gap:10px}.biz-home .beginner-link-row>a.beginner-guide-card{padding:14px 10px;gap:9px}.biz-home .beginner-guide-icon{flex-basis:48px;width:48px;height:48px;border-radius:13px}.biz-home .beginner-guide-icon img{width:42px;height:42px}.biz-home .beginner-link-row>a .beginner-guide-arrow{flex-basis:26px;width:26px;height:26px;font-size:18px}}
+@media(max-width:720px){.biz-home .beginner-link-row{grid-template-columns:1fr;gap:11px;margin-top:14px;margin-bottom:28px}.biz-home .beginner-link-row>a.beginner-guide-card{flex-direction:row;justify-content:flex-start;min-height:86px;padding:13px 16px;text-align:left;border-radius:17px;gap:13px}.biz-home .beginner-guide-copy strong{font-size:18px}.biz-home .beginner-guide-copy small{font-size:12px}.biz-home .beginner-guide-icon{flex-basis:54px;width:54px;height:54px}.biz-home .beginner-guide-icon img{width:48px;height:48px}.biz-home .beginner-link-row>a .beginner-guide-arrow{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.biz-home .beginner-link-row>a.beginner-guide-card{transition:none}.biz-home .beginner-link-row>a.beginner-guide-card:hover{transform:none}}
