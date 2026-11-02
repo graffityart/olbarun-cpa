@@ -149,3 +149,12 @@
 /* Indicate the current page in the mobile header menu. */
 .mp-mobile-panel nav a[aria-current="page"],.mp-mobile-account a[aria-current="page"]{background:#eaf2ff;color:#174bb8;font-weight:850;box-shadow:inset 3px 0 #2864dc}
 .mp-mobile-panel nav a[aria-current="page"] i{color:#174bb8}
+
+/* Mobile drawer: narrow screens, safe areas, and readable touch targets. */
+@media(max-width:760px){
+ .mp-mobile-panel{box-sizing:border-box;width:min(360px,calc(100vw - 24px));max-width:100%;padding-top:calc(18px + env(safe-area-inset-top));padding-right:calc(18px + env(safe-area-inset-right));}
+ .mp-mobile-panel nav a{min-height:48px;box-sizing:border-box;gap:12px;line-height:1.45;overflow-wrap:anywhere}
+ .mp-mobile-account a,.mp-mobile-account button{min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;line-height:1.4}
+}
+@media(max-width:360px){.mp-mobile-panel{padding-left:14px;padding-right:14px}.mp-mobile-account{grid-template-columns:1fr}}
+@media(max-height:480px) and (max-width:760px){.mp-mobile-panel nav{padding:4px 0}.mp-mobile-panel nav a{padding-top:9px;padding-bottom:9px}.mp-mobile-account{margin-top:8px}}
