@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function MobileHeaderMenu({loggedIn=false,accountHref="/login"}:{loggedIn?:boolean;accountHref?:string}){
  const [open,setOpen]=useState(false);
+ const pathname=usePathname();
+ const current=(href:string)=>pathname===href||pathname.startsWith(href+"/")?"page" as const:undefined;
  const triggerRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   const desktop=window.matchMedia("(min-width:761px)");
@@ -35,15 +38,15 @@ export default function MobileHeaderMenu({loggedIn=false,accountHref="/login"}:{
   <div ref={panelRef} className="mp-mobile-panel" role="dialog" aria-modal="true" aria-labelledby="mp-mobile-title">
    <div className="mp-mobile-head"><b id="mp-mobile-title">전체 메뉴</b><button type="button" aria-label="전체 메뉴 닫기" onClick={close}>×</button></div>
    <nav>
-    <Link onClick={close} href="/partner/campaigns"><span>CPA알바</span><i>→</i></Link>
-    <Link onClick={close} href="/partner/posting"><span>포스팅알바</span><i>→</i></Link>
-    <Link onClick={close} href="/partner/quick"><span>1초알바</span><i>→</i></Link>
-    <Link onClick={close} href="/about"><span>이용가이드</span><i>→</i></Link>
+    <Link onClick={close} href="/partner/campaigns" aria-current={current("/partner/campaigns")}><span>CPA알바</span><i>→</i></Link>
+    <Link onClick={close} href="/partner/posting" aria-current={current("/partner/posting")}><span>포스팅알바</span><i>→</i></Link>
+    <Link onClick={close} href="/partner/quick" aria-current={current("/partner/quick")}><span>1초알바</span><i>→</i></Link>
+    <Link onClick={close} href="/about" aria-current={current("/about")}><span>이용가이드</span><i>→</i></Link>
 
-    <Link onClick={close} href="/customer"><span>고객센터</span><i>→</i></Link>
-    {loggedIn&&accountHref==="/partner"&&<Link onClick={close} className="mp-mobile-withdraw" href="/partner/settlements"><span>출금신청</span><i>→</i></Link>}
+    <Link onClick={close} href="/customer" aria-current={current("/customer")}><span>고객센터</span><i>→</i></Link>
+    {loggedIn&&accountHref==="/partner"&&<Link onClick={close} className="mp-mobile-withdraw" href="/partner/settlements" aria-current={current("/partner/settlements")}><span>출금신청</span><i>→</i></Link>}
    </nav>
-   <div className="mp-mobile-account"><Link onClick={close} href={accountHref}>{loggedIn?"마이페이지":"로그인"}</Link>{!loggedIn&&<Link onClick={close} className="primary" href="/partner/signup">회원가입</Link>}{loggedIn&&<form action="/api/auth/logout" method="post"><button type="submit">로그아웃</button></form>}</div>
+   <div className="mp-mobile-account"><Link onClick={close} href={accountHref} aria-current={current(accountHref)}>{loggedIn?"마이페이지":"로그인"}</Link>{!loggedIn&&<Link onClick={close} className="primary" href="/partner/signup">회원가입</Link>}{loggedIn&&<form action="/api/auth/logout" method="post"><button type="submit">로그아웃</button></form>}</div>
   </div>
  </div></>
 }
