@@ -145,3 +145,7 @@
 .partner-floating-nav a.is-active .float-icon{background:#dbe8ff;box-shadow:inset 0 0 0 1px #8fb1f6}
 .partner-floating-nav a.is-active .float-icon svg{color:#174bb8}
 .page-inline-nav a[aria-current="page"]{color:#174bb8;font-weight:800;text-decoration:underline;text-underline-offset:4px}
+
+/* Indicate the current page in the mobile header menu. */
+.mp-mobile-panel nav a[aria-current="page"],.mp-mobile-account a[aria-current="page"]{background:#eaf2ff;color:#174bb8;font-weight:850;box-shadow:inset 3px 0 #2864dc}
+.mp-mobile-panel nav a[aria-current="page"] i{color:#174bb8}
