@@ -90,3 +90,14 @@
  .cx-premium-detail .cx-creator .cx-button{width:100%}
 }
 @media(max-width:360px){.cx-premium-detail .detail-metrics{grid-template-columns:1fr}.cx-premium-detail .cx-detail-jumps a{flex-basis:100%}}
+
+/* Tracking link actions: consistent touch targets and readable status. */
+.cx-link{min-width:0;align-items:stretch}
+.cx-link input{box-sizing:border-box;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cx-link button,.cx-link>a{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:800;line-height:1.4;text-align:center}
+.cx-link button{border:1px solid #245ce5;background:#245ce5;color:#fff;cursor:pointer}
+.cx-link button:hover{background:#1746b8}
+.cx-link>a{border:1px solid #c8d8f4;background:#f3f7ff;text-decoration:none}
+.cx-link p[role="status"]{margin:0;padding:9px 0;color:#365479;overflow-wrap:anywhere}
+@media(max-width:600px){.cx-link button,.cx-link>a{flex:1 1 130px;min-width:0}}
+@media(max-width:360px){.cx-link button,.cx-link>a{flex-basis:100%}}
