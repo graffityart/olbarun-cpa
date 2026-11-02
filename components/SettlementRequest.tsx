@@ -88,7 +88,7 @@ export default function SettlementRequest({ available, pending = false }: { avai
   }
   return <section className="pf-panel" id="request"><div className="pf-section-head"><div><h2>출금 신청</h2><p>출금 가능한 금액 전체를 한 번에 신청합니다.</p></div></div>
     {pending&&<div className="pf-notice" role="status">이미 처리 중인 출금 신청이 있습니다. 기존 신청이 완료된 후 다시 신청할 수 있습니다.</div>}
-    {!pending&&available<=0&&<div className="pf-notice">현재 출금 가능한 금액이 없습니다. 작업 승인 후 수익이 확정되면 신청할 수 있습니다.</div>}
+    {!pending&&available<=0&&<div className="pf-notice">현재 출금 가능한 금액이 없습니다. 작업 승인 후 수익이 확정되면 신청할 수 있습니다. <a href="/partner/earnings">수익 내역 확인 →</a></div>}
     <form onSubmit={submit} onChange={() => { if (confirmation) { setConfirmation(null); setMessage(""); } }} aria-busy={loading&&!completed}><fieldset disabled={loading||completed||outcomeUnknown||available<=0||pending} className="pf-fieldset"><div className="pf-fields">
       <label>신청 금액<input value={`${available.toLocaleString("ko-KR")}원`} readOnly /></label>
       <label>은행명<input name="bankName" required maxLength={50} autoComplete="off" placeholder="예: 국민은행" /></label>
