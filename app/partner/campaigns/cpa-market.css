@@ -40,3 +40,5 @@
 .cx-guide-link{margin-top:14px}.cx-guide-link a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border:1px solid #b9d0f6;border-radius:12px;background:#fff;color:#1754c5;font-weight:800;text-decoration:none}.cx-guide-link a:hover{background:#edf5ff}.cx-guide-link a:focus-visible{outline:3px solid #6f9cff;outline-offset:3px}@media(max-width:600px){.cx-guide-link a{width:100%;text-align:center}}
 
 .cx-detail-help{margin-top:16px;padding:15px;border:1px solid #d5e4ff;border-radius:14px;background:#f4f8ff}.cx-detail-help p{margin:0 0 10px;color:#405778;font-size:14px;line-height:1.7}.cx-detail-help a{display:inline-flex;align-items:center;min-height:44px;color:#1553c3;font-weight:800;text-decoration:underline;text-underline-offset:3px}.cx-detail-help a:focus-visible{outline:3px solid #7aa8ff;outline-offset:3px}
+
+.cx-source-examples{font-size:13px;line-height:1.8;color:#4c6382}.cx-source-examples code{display:inline-block;padding:2px 6px;border-radius:6px;background:#edf4ff;color:#1d55b8;font-size:12px;overflow-wrap:anywhere}
