@@ -67,3 +67,26 @@
  .cx-market .cx-card dl>div{min-width:0}.cx-market .cx-card dd{text-align:right;overflow-wrap:anywhere}
 }
 @media(max-width:360px){.cx-market .cx-card{padding:16px}.cx-market .cx-card .cx-rate strong{font-size:19px}}
+
+/* CPA detail: make approval rules and link creation readable on phones. */
+.cx-premium-detail .policy-row{min-width:0}
+.cx-premium-detail .policy-row p{overflow-wrap:anywhere;word-break:break-word}
+.cx-premium-detail .detail-pay strong{overflow-wrap:anywhere;line-height:1.3}
+.cx-premium-detail .cx-creator input{box-sizing:border-box;max-width:100%}
+.cx-premium-detail .cx-creator .cx-button{box-sizing:border-box;min-height:52px;white-space:normal;line-height:1.45}
+.cx-premium-detail .cx-creator .cx-notice{overflow-wrap:anywhere}
+.cx-premium-detail .cx-detail-jumps a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;box-sizing:border-box}
+@media(max-width:600px){
+ .cx-premium-detail{min-width:0}
+ .cx-premium-detail .detail-hero,.cx-premium-detail .detail-section,.cx-premium-detail .detail-sticky{min-width:0;box-sizing:border-box}
+ .cx-premium-detail .detail-hero h2{overflow-wrap:anywhere}
+ .cx-premium-detail .detail-pay{box-sizing:border-box;padding:20px}
+ .cx-premium-detail .detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cx-premium-detail .detail-metrics div{min-width:0}
+ .cx-premium-detail .detail-metrics b{overflow-wrap:anywhere;line-height:1.5}
+ .cx-premium-detail .cx-detail-jumps{gap:7px;padding:8px}
+ .cx-premium-detail .cx-detail-jumps a{flex:1 1 135px;text-align:center;line-height:1.35}
+ .cx-premium-detail .detail-sticky{padding:20px}
+ .cx-premium-detail .cx-creator .cx-button{width:100%}
+}
+@media(max-width:360px){.cx-premium-detail .detail-metrics{grid-template-columns:1fr}.cx-premium-detail .cx-detail-jumps a{flex-basis:100%}}
