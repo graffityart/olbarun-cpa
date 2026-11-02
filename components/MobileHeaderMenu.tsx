@@ -8,6 +8,10 @@ export default function MobileHeaderMenu({loggedIn=false,accountHref="/login"}:{
  const pathname=usePathname();
  const current=(href:string)=>pathname===href||pathname.startsWith(href+"/")?"page" as const:undefined;
  const triggerRef=useRef<HTMLButtonElement>(null),panelRef=useRef<HTMLDivElement>(null);
+ const restoreFocusRef=useRef(true);
+ const close=()=>{restoreFocusRef.current=true;setOpen(false)};
+ const navigate=()=>{restoreFocusRef.current=false;setOpen(false)};
+ useEffect(()=>{restoreFocusRef.current=false;setOpen(false)},[pathname]);
  useEffect(()=>{
   const desktop=window.matchMedia("(min-width:761px)");
   const resize=()=>{if(desktop.matches)setOpen(false)};
@@ -29,24 +33,23 @@ export default function MobileHeaderMenu({loggedIn=false,accountHref="/login"}:{
    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
   };
   document.addEventListener("keydown",keydown);
-  return()=>{document.body.classList.remove("mp-menu-open");document.removeEventListener("keydown",keydown);triggerRef.current?.focus()};
+  return()=>{document.body.classList.remove("mp-menu-open");document.removeEventListener("keydown",keydown);if(restoreFocusRef.current)triggerRef.current?.focus()};
  },[open]);
- const close=()=>setOpen(false);
- return <><button ref={triggerRef} className="mp-menu" type="button" aria-label="전체 메뉴" aria-expanded={open} aria-controls="mp-mobile-menu" onClick={()=>setOpen(v=>!v)}>{open?"×":"☰"}</button>
+ return <><button ref={triggerRef} className="mp-menu" type="button" aria-label="전체 메뉴" aria-expanded={open} aria-controls="mp-mobile-menu" onClick={()=>{restoreFocusRef.current=true;setOpen(v=>!v)}}>{open?"×":"☰"}</button>
  <div id="mp-mobile-menu" className={"mp-mobile-menu "+(open?"is-open":"")} aria-hidden={!open}>
   <button tabIndex={-1} className="mp-mobile-backdrop" aria-label="메뉴 닫기" onClick={close}/>
   <div ref={panelRef} className="mp-mobile-panel" role="dialog" aria-modal="true" aria-labelledby="mp-mobile-title">
    <div className="mp-mobile-head"><b id="mp-mobile-title">전체 메뉴</b><button type="button" aria-label="전체 메뉴 닫기" onClick={close}>×</button></div>
    <nav>
-    <Link onClick={close} href="/partner/campaigns" aria-current={current("/partner/campaigns")}><span>CPA알바</span><i>→</i></Link>
-    <Link onClick={close} href="/partner/posting" aria-current={current("/partner/posting")}><span>포스팅알바</span><i>→</i></Link>
-    <Link onClick={close} href="/partner/quick" aria-current={current("/partner/quick")}><span>1초알바</span><i>→</i></Link>
-    <Link onClick={close} href="/about" aria-current={current("/about")}><span>이용가이드</span><i>→</i></Link>
+    <Link onClick={navigate} href="/partner/campaigns" aria-current={current("/partner/campaigns")}><span>CPA알바</span><i>→</i></Link>
+    <Link onClick={navigate} href="/partner/posting" aria-current={current("/partner/posting")}><span>포스팅알바</span><i>→</i></Link>
+    <Link onClick={navigate} href="/partner/quick" aria-current={current("/partner/quick")}><span>1초알바</span><i>→</i></Link>
+    <Link onClick={navigate} href="/about" aria-current={current("/about")}><span>이용가이드</span><i>→</i></Link>
 
-    <Link onClick={close} href="/customer" aria-current={current("/customer")}><span>고객센터</span><i>→</i></Link>
-    {loggedIn&&accountHref==="/partner"&&<Link onClick={close} className="mp-mobile-withdraw" href="/partner/settlements" aria-current={current("/partner/settlements")}><span>출금신청</span><i>→</i></Link>}
+    <Link onClick={navigate} href="/customer" aria-current={current("/customer")}><span>고객센터</span><i>→</i></Link>
+    {loggedIn&&accountHref==="/partner"&&<Link onClick={navigate} className="mp-mobile-withdraw" href="/partner/settlements" aria-current={current("/partner/settlements")}><span>출금신청</span><i>→</i></Link>}
    </nav>
-   <div className="mp-mobile-account"><Link onClick={close} href={accountHref} aria-current={current(accountHref)}>{loggedIn?"마이페이지":"로그인"}</Link>{!loggedIn&&<Link onClick={close} className="primary" href="/partner/signup">회원가입</Link>}{loggedIn&&<form action="/api/auth/logout" method="post"><button type="submit">로그아웃</button></form>}</div>
+   <div className="mp-mobile-account"><Link onClick={navigate} href={accountHref} aria-current={current(accountHref)}>{loggedIn?"마이페이지":"로그인"}</Link>{!loggedIn&&<Link onClick={navigate} className="primary" href="/partner/signup">회원가입</Link>}{loggedIn&&<form action="/api/auth/logout" method="post"><button type="submit">로그아웃</button></form>}</div>
   </div>
  </div></>
 }
