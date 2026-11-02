@@ -44,3 +44,26 @@
 .cx-source-examples{font-size:13px;line-height:1.8;color:#4c6382}.cx-source-examples code{display:inline-block;padding:2px 6px;border-radius:6px;background:#edf4ff;color:#1d55b8;font-size:12px;overflow-wrap:anywhere}
 
 .cx-link-record+.cx-link-record{margin-top:14px}.cx-notice .cx-guide-link{display:flex;flex-wrap:wrap;gap:10px}.cx-notice .cx-guide-link a{flex:1 1 190px}@media(max-width:600px){.cx-notice .cx-guide-link{flex-direction:column}.cx-notice .cx-guide-link a{flex:auto;width:100%}}
+
+/* CPA listing: readable filters and full-width mobile participation actions. */
+.cx-market .cx-tools>*{min-width:0}
+.cx-market .cx-tools button{min-height:48px;border:1px solid #cbd7e7;border-radius:10px;padding:10px 16px;background:#fff;color:#365479;font-size:14px;font-weight:750;cursor:pointer}
+.cx-market .cx-tools button:focus-visible{outline:3px solid #8caaff;outline-offset:3px}
+.cx-market .cx-card .cx-button{text-decoration:none;text-align:center;line-height:1.45;overflow-wrap:anywhere}
+.cx-market .cx-card .cx-rate strong{overflow-wrap:anywhere;text-align:right}
+@media(max-width:600px){
+ .cx-market{min-width:0}
+ .cx-market .cx-hero{gap:12px;margin-bottom:18px}
+ .cx-market .cx-hero>div{min-width:0;max-width:100%}
+ .cx-market .cx-hero strong{font-size:28px}
+ .cx-market .cx-tools{gap:9px;margin-bottom:10px}
+ .cx-market .cx-filters{gap:7px;margin:12px 0 20px}
+ .cx-market .cx-filters button{padding:10px 13px;line-height:1.35}
+ .cx-market .cx-card{gap:0;min-width:0;padding:18px}
+ .cx-market .cx-card h3{font-size:18px;line-height:1.45}
+ .cx-market .cx-card .cx-rate{gap:8px;flex-wrap:wrap}
+ .cx-market .cx-card .cx-rate strong{font-size:21px}
+ .cx-market .cx-card .cx-button{width:100%;box-sizing:border-box;min-height:50px;padding:13px 12px}
+ .cx-market .cx-card dl>div{min-width:0}.cx-market .cx-card dd{text-align:right;overflow-wrap:anywhere}
+}
+@media(max-width:360px){.cx-market .cx-card{padding:16px}.cx-market .cx-card .cx-rate strong{font-size:19px}}
