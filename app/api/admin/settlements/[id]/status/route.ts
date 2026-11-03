@@ -20,6 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
     const [row] = await getDb().select({
       status: settlements.status,
+      partnerId: settlements.partnerId,
       requestedAmount: settlements.requestedAmount,
       paymentAmount: settlements.paymentAmount,
       deductionAmount: settlements.deductionAmount,
@@ -37,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .where(eq(settlementItems.settlementId, id));
     const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
     const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : "HOLD";
-    const earningsVerified = items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningStatus === expectedEarningStatus);
+    const earningsVerified = items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningPartnerId === row.partnerId && item.earningStatus === expectedEarningStatus);
     const verified = amountVerified && earningsVerified;
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
