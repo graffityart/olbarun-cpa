@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
 import { settlementAuditMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
@@ -36,7 +36,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
       .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
-    const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
+    const otherActiveReservation = items.length ? await getDb().select({ earningId: settlementItems.earningId }).from(settlementItems)
+      .innerJoin(settlements, eq(settlementItems.settlementId, settlements.id))
+      .where(and(ne(settlements.id, id), inArray(settlements.status, ["REQUESTED", "APPROVED"]), inArray(settlementItems.earningId, items.map(item => item.earningId)))).limit(1) : [];
+    const amountVerified = otherActiveReservation.length === 0 && hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
     const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : ["REQUESTED", "APPROVED"].includes(row.status) ? "HOLD" : null;
     const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningPartnerId === row.partnerId && item.earningStatus === expectedEarningStatus);
     const verified = amountVerified && earningsVerified;
