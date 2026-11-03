@@ -37,8 +37,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
     const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
-    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : "HOLD";
-    const earningsVerified = items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningPartnerId === row.partnerId && item.earningStatus === expectedEarningStatus);
+    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : ["REQUESTED", "APPROVED"].includes(row.status) ? "HOLD" : null;
+    const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningPartnerId === row.partnerId && item.earningStatus === expectedEarningStatus);
     const verified = amountVerified && earningsVerified;
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
