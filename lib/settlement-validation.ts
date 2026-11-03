@@ -104,3 +104,18 @@ export function settlementTimestampsMatch(
     paidAt.getTime() >= approvedAt.getTime();
   return false;
 }
+
+
+/** Reject financial lifecycle timestamps that precede the original request. */
+export function settlementTimelineMatches(
+  status: SettlementStatus,
+  requestedAt: Date,
+  approvedAt: Date | null,
+  paidAt: Date | null,
+): boolean {
+  if (!(requestedAt instanceof Date) || Number.isNaN(requestedAt.getTime())) return false;
+  if (!settlementTimestampsMatch(status, approvedAt, paidAt)) return false;
+  if (approvedAt !== null && approvedAt.getTime() < requestedAt.getTime()) return false;
+  if (paidAt !== null && paidAt.getTime() < requestedAt.getTime()) return false;
+  return true;
+}
