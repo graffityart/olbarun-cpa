@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
 import { settlementAuditMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
-import { auditLogs, settlementItems, settlements } from "@/db/schema";
+import { auditLogs, earnings, settlementItems, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -32,10 +32,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
       .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
     const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action));
-    const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId }).from(settlementItems)
+    const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
+      .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
     const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
-    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: { "Cache-Control": "no-store" } });
+    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : "HOLD";
+    const earningsVerified = items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningStatus === expectedEarningStatus);
+    const verified = amountVerified && earningsVerified;
+    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
