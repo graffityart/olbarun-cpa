@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
-import { settlementAuditMatches } from "@/lib/settlement-validation";
+import { settlementAuditMatches, settlementTimestampsMatch } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
 import { auditLogs, earnings, settlementItems, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -32,7 +32,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id),
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
       .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
-    const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action));
+    const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) && settlementTimestampsMatch(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", row.approvedAt, row.paidAt);
     const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
       .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
