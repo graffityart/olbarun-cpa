@@ -13,7 +13,7 @@ export default async function PartnerEarningsPage({searchParams}:{searchParams:P
 return <DashboardShell title="수익" nav={nav}><div className="partner-finance">
 <header className="pf-head"><div><h1>내 수익</h1><p>승인된 CPA·포스팅·1초알바 수익을 확인하세요.</p></div><Link href="/partner/settlements#request" className="pf-primary">출금 신청하기 →</Link></header>
 <section className="pf-stats" aria-label="수익 현황">{[
-['출금 가능',summary?.available,'지금 신청할 수 있는 확정 수익','featured'],['출금 처리 중',summary?.hold,'신청 후 검토·지급을 기다리는 금액',''],['지급 완료',summary?.paid,'지급이 완료된 수익',''],['누적 확정 수익',summary?.total,'취소된 수익을 제외한 누적 금액','']
+['출금 가능',summary?.available,'지금 신청할 수 있는 확정 수익','featured'],['출금 처리 중',summary?.hold,'신청 후 검토·지급을 기다리는 금액',''],['지급 완료',summary?.paid,'지급이 완료된 수익',''],['누적 확정 수익',summary?.total,'취소된 수익을 제외한 누적 금액',''],['포스팅 누적 수익',summary?.posting,'승인된 포스팅 수익 합계 · 출금 처리 중 및 지급 완료 포함','']
 ].map(([label,amount,help,cls])=><div className={'pf-stat '+cls} key={String(label)}><span>{label}</span><strong>{Number(amount??0).toLocaleString('ko-KR')}원</strong><small>{help}</small></div>)}</section>
 <p className="pf-help">작업 검수 중인 보상은 아직 확정 수익에 포함되지 않습니다. 승인 후 이 화면에 반영됩니다.</p>
 <section className="pf-panel"><div className="pf-section-head"><div><h2>수익 내역</h2><p>작업 종류와 출금 상태를 확인하세요.</p></div><span>{filtered.length.toLocaleString('ko-KR')}건</span></div>
