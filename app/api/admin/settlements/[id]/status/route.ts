@@ -58,7 +58,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       laterByEarning.set(entry.earningId, statuses);
     }
     const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => {
-      if (item.earningAmount !== item.amount || item.earningPartnerId !== row.partnerId) return false;
+      if (!(item.earningAmount === item.amount && item.earningPartnerId === row.partnerId)) return false;
       if (item.earningStatus === expectedEarningStatus) return true;
       if (row.status !== "REJECTED") return false;
       const later = laterByEarning.get(item.earningId);
