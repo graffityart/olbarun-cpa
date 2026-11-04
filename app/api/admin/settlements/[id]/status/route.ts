@@ -37,7 +37,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
       .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
-    const otherActiveReservation = items.length ? await getDb().select({ earningId: settlementItems.earningId }).from(settlementItems)
+    const otherActiveReservation = row.status !== "REJECTED" && items.length ? await getDb().select({ earningId: settlementItems.earningId }).from(settlementItems)
       .innerJoin(settlements, eq(settlementItems.settlementId, settlements.id))
       .where(and(ne(settlements.id, id), inArray(settlements.status, ["REQUESTED", "APPROVED"]), inArray(settlementItems.earningId, items.map(item => item.earningId)))).limit(1) : [];
     const amountVerified = otherActiveReservation.length === 0 && hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
