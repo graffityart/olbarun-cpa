@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
 import { settlementAuditMatches, settlementTimelineMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
@@ -42,7 +42,30 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .where(and(ne(settlements.id, id), inArray(settlements.status, ["REQUESTED", "APPROVED"]), inArray(settlementItems.earningId, items.map(item => item.earningId)))).limit(1) : [];
     const amountVerified = otherActiveReservation.length === 0 && hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
     const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : ["REQUESTED", "APPROVED"].includes(row.status) ? "HOLD" : null;
-    const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => item.earningAmount === item.amount && item.earningPartnerId === row.partnerId && item.earningStatus === expectedEarningStatus);
+    // A rejected request releases earnings; those same earnings can later be reserved and paid.
+    // Verify the newer settlement instead of treating the historical rejection as corrupt.
+    const laterSettlements = row.status === "REJECTED" && items.length
+      ? await getDb().select({ earningId: settlementItems.earningId, status: settlements.status })
+        .from(settlementItems).innerJoin(settlements, eq(settlementItems.settlementId, settlements.id))
+        .where(and(ne(settlements.id, id), eq(settlements.partnerId, row.partnerId),
+          gt(settlements.requestedAt, row.requestedAt),
+          inArray(settlementItems.earningId, items.map(item => item.earningId))))
+      : [];
+    const laterByEarning = new Map<string, Set<string>>();
+    for (const entry of laterSettlements) {
+      const statuses = laterByEarning.get(entry.earningId) ?? new Set<string>();
+      statuses.add(entry.status);
+      laterByEarning.set(entry.earningId, statuses);
+    }
+    const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => {
+      if (item.earningAmount !== item.amount || item.earningPartnerId !== row.partnerId) return false;
+      if (item.earningStatus === expectedEarningStatus) return true;
+      if (row.status !== "REJECTED") return false;
+      const later = laterByEarning.get(item.earningId);
+      return item.earningStatus === "HOLD"
+        ? !!later && (later.has("REQUESTED") || later.has("APPROVED"))
+        : item.earningStatus === "PAID" && !!later && later.has("PAID");
+    });
     const verified = amountVerified && earningsVerified;
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
