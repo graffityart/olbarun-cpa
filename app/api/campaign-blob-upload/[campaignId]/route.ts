@@ -34,6 +34,9 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     if(payload.campaignId!==campaignId||!uuid.test(payload.campaignId??""))throw Error("INVALID_CAMPAIGN");
     const filename=decodeURIComponent(blob.pathname.split("/").pop()??"file").replace(/-[a-zA-Z0-9]{12,}(?=\.[^.]+$)/,"").slice(0,180);
     const metadata=await head(blob.url);
+    const ext=filename.toLowerCase().match(/\.[^.]+$/)?.[0]??"";
+    const limits:Record<string,number>={".zip":50*1024*1024,".pdf":20*1024*1024,".jpg":10*1024*1024,".jpeg":10*1024*1024,".png":10*1024*1024,".webp":10*1024*1024};
+    if(!limits[ext]||metadata.size>limits[ext])throw Error("FILE_LIMIT_EXCEEDED");
     const sql=db();
     try{
      await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
