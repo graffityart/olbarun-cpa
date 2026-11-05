@@ -20,6 +20,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
    onBeforeGenerateToken:async(pathname)=>{
     requireSameOrigin(req);
     await requireAdmin();
+    if(!pathname.startsWith("campaigns/"+campaignId+"/")||pathname.length>512)throw Error("INVALID_UPLOAD_PATH");
     const ext=pathname.toLowerCase().match(/\.[^.]+$/)?.[0]??"";
     if(![".zip",".pdf",".jpg",".jpeg",".png",".webp"].includes(ext))throw Error("INVALID_FILE");
     const sql=db();
