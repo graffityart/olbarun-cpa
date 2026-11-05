@@ -1,6 +1,6 @@
 import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
-import { settlementAuditMatches, settlementTimelineMatches } from "@/lib/settlement-validation";
+import { settlementAuditMatches, settlementAuditIssue, settlementTimelineMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
 import { auditLogs, earnings, settlementItems, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -34,6 +34,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
       .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
     const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) && settlementTimelineMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", row.requestedAt, row.approvedAt, row.paidAt);
+    const auditIssue = !settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) ? settlementAuditIssue(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) : !settlementTimelineMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", row.requestedAt, row.approvedAt, row.paidAt) ? "정산 신청·승인·지급 시각이 처리 상태와 일치하지 않습니다." : null;
     const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
       .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
@@ -67,7 +68,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         : item.earningStatus === "PAID" && !!later && later.has("PAID");
     });
     const verified = amountVerified && earningsVerified;
-    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, auditIssue, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
