@@ -37,6 +37,8 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     const ext=filename.toLowerCase().match(/\.[^.]+$/)?.[0]??"";
     const limits:Record<string,number>={".zip":50*1024*1024,".pdf":20*1024*1024,".jpg":10*1024*1024,".jpeg":10*1024*1024,".png":10*1024*1024,".webp":10*1024*1024};
     if(!limits[ext]||metadata.size>limits[ext])throw Error("FILE_LIMIT_EXCEEDED");
+    const mimeByExt:Record<string,string[]>={".zip":["application/zip","application/x-zip-compressed","application/octet-stream"],".pdf":["application/pdf"],".jpg":["image/jpeg"],".jpeg":["image/jpeg"],".png":["image/png"],".webp":["image/webp"]};
+    if(metadata.size<=0||!(mimeByExt[ext]??[]).includes(blob.contentType))throw Error("INVALID_FILE_METADATA");
     const sql=db();
     try{
      await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
