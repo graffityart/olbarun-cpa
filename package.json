@@ -18,6 +18,7 @@
     "test:all": "npm run test:cpa && npm run test:settlements && npm run test:settlement-concurrency && npm run test:posting-review"
   },
   "dependencies": {
+    "@vercel/blob": "^2.0.0",
     "drizzle-orm": "latest",
     "next": "latest",
     "postgres": "latest",
