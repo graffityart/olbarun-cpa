@@ -7,12 +7,12 @@ export const settlementAuditSequence = sql`coalesce((select array_agg(${auditLog
 export const settlementAuditAnomaly = sql`not (case when ${settlements.status}='REQUESTED' then ${settlementAuditSequence}=ARRAY[]::text[] when ${settlements.status}='APPROVED' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_APPROVE']::text[] when ${settlements.status}='PAID' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_APPROVE','SETTLEMENT_PAID']::text[] when ${settlements.status}='REJECTED' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_REJECT']::text[] else false end)`;
 
 /** Invalid timestamps are audit anomalies too, including impossible approval/payment ordering. */
-export const settlementTimelineAnomaly = sql`not (
+export const settlementTimelineAnomaly = sql`not coalesce(
   (case
     when ${settlements.status}='REQUESTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
     when ${settlements.status}='REJECTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
     when ${settlements.status}='APPROVED' then ${settlements.approvedAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} is null
     when ${settlements.status}='PAID' then ${settlements.approvedAt} is not null and ${settlements.paidAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} >= ${settlements.approvedAt}
     else false
-  end)
+  end), false
 )`;
