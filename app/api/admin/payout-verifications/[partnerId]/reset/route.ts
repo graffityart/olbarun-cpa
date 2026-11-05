@@ -1,0 +1,32 @@
+import {sql} from "drizzle-orm";
+import {getDb} from "@/db";
+import {requireAdmin} from "@/lib/auth/guards";
+import {requireSameOrigin} from "@/lib/security/origin";
+import {auditLogs} from "@/db/schema";
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export async function POST(request:Request,{params}:{params:Promise<{partnerId:string}>}){
+ try{
+  requireSameOrigin(request);
+  const admin=await requireAdmin();
+  const {partnerId}=await params;
+  const body=await request.json().catch(()=>null);
+  const reason=typeof body?.reason==="string"?body.reason.trim():"";
+  if(!uuid.test(partnerId)||!reason||reason.length>2000)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
+  await getDb().transaction(async tx=>{
+   const locked=await tx.execute(sql`select id,status from partner_payout_verifications where partner_id=${partnerId} for update`);
+   if(locked.length!==1||locked[0].status!=="APPROVED")throw Error("NOT_APPROVED");
+   const pending=await tx.execute(sql`select id from settlements where partner_id=${partnerId} and status in ('REQUESTED','APPROVED') limit 1`);
+   if(pending.length)throw Error("PAYOUT_IN_PROGRESS");
+   const updated=await tx.execute(sql`update partner_payout_verifications set status='REJECTED',verified_account_fingerprint=null,reviewed_by=${admin.id},reviewed_at=now(),rejection_reason=${reason},updated_at=now() where partner_id=${partnerId} and status='APPROVED' returning id`);
+   if(updated.length!==1)throw Error("NOT_APPROVED");
+   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_RESET",targetType:"PARTNER",targetId:partnerId,summary:"출금계좌 변경 재검수 요청",metadata:{verificationId:updated[0].id,reason}});
+  });
+  return Response.json({ok:true,status:"REJECTED"},{headers:{"Cache-Control":"no-store"}});
+ }catch(error){
+  const code=error instanceof Error?error.message:"RESET_FAILED";
+  if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});
+  if(code==="NOT_APPROVED"||code==="PAYOUT_IN_PROGRESS")return Response.json({ok:false,error:code},{status:409});
+  console.error("Payout verification reset failed",error);
+  return Response.json({ok:false,error:"RESET_FAILED"},{status:500});
+ }
+}
