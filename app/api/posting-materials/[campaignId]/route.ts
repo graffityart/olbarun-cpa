@@ -26,7 +26,15 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
  if(!(file instanceof File)||file.size===0||file.size>maxBytes||!(allowed.get(file.name.toLowerCase().match(/\.[^.]+$/)?.[0]??"")??[]).includes(file.type))return Response.json({error:"INVALID_FILE"},{status:400});
  const filename=file.name.replace(/[\\/\x00-\x1f\x7f]/g,"_").slice(0,180);
  if(!filename)return Response.json({error:"INVALID_FILENAME"},{status:400});
- const bytes=Buffer.from(await file.arrayBuffer());const sql=db();
+ const bytes=Buffer.from(await file.arrayBuffer());
+ const ext=file.name.toLowerCase().match(/\.[^.]+$/)?.[0]??"";
+ const signatureValid=ext===".zip"?bytes.length>=4&&bytes[0]===0x50&&bytes[1]===0x4b&&[[0x03,0x04],[0x05,0x06],[0x07,0x08]].some(([a,b])=>bytes[2]===a&&bytes[3]===b):
+ ext===".pdf"?bytes.subarray(0,5).toString("ascii")==="%PDF-":
+ ext===".jpg"||ext===".jpeg"?bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff:
+ ext===".png"?bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):
+ ext===".webp"?bytes.length>=12&&bytes.subarray(0,4).toString("ascii")==="RIFF"&&bytes.subarray(8,12).toString("ascii")==="WEBP":false;
+ if(!signatureValid)return Response.json({error:"INVALID_FILE_SIGNATURE"},{status:400});
+ const sql=db();
  try{
  const rows=await sql`insert into posting_materials(campaign_id,filename,mime_type,file_size,file_data)
  select id,${filename},${file.type},${bytes.length},${bytes} from campaigns where id=${campaignId} and type in ('POSTING','CPA')
