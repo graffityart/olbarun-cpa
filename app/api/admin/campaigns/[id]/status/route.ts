@@ -16,6 +16,8 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
    const [row]=await tx.select({id:campaigns.id,status:campaigns.status,startAt:campaigns.startAt,endAt:campaigns.endAt}).from(campaigns).where(eq(campaigns.id,id)).for("update").limit(1);
    if(!row)throw new Error("NOT_FOUND");if(!allowed[row.status].includes(next))throw new Error("INVALID_TRANSITION");
    if(next==="ACTIVE"){
+    const approval=await tx.execute(sql`select registration_source,advertiser_approval_status from campaigns where id=${id}`);
+    if(approval[0]?.registration_source==="ADVERTISER"&&approval[0]?.advertiser_approval_status!=="APPROVED")throw new Error("ADVERTISER_APPROVAL_REQUIRED");
     const[rate]=await tx.select({advertiserRate:campaignRates.advertiserRate,partnerBaseRate:campaignRates.partnerBaseRate,minimumMargin:campaignRates.minimumMargin}).from(campaignRates).where(and(eq(campaignRates.campaignId,id),sql`${campaignRates.effectiveFrom}<=now() and (${campaignRates.effectiveTo} is null or ${campaignRates.effectiveTo}>now())`)).orderBy(desc(campaignRates.effectiveFrom)).limit(1);
     if(!rate||!validCpaCampaignRates(rate.advertiserRate,rate.partnerBaseRate,rate.minimumMargin))throw new Error("RATE_NOT_READY");
     const now=new Date();if(row.endAt&&row.endAt<=now)throw new Error("CAMPAIGN_ENDED");
