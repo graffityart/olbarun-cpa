@@ -3,8 +3,8 @@ import postgres from "postgres";
 import { getCurrentUser } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/guards";
 import { requireSameOrigin } from "@/lib/security/origin";
-const uuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
-const allowed=new Set(["application/zip","application/pdf","image/jpeg","image/png","image/webp"]);
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const allowed=new Map([[".zip",["application/zip","application/x-zip-compressed","application/octet-stream"]],[".pdf",["application/pdf"]],[".jpg",["image/jpeg"]],[".jpeg",["image/jpeg"]],[".png",["image/png"]],[".webp",["image/webp"]]]);
 const maxBytes=5*1024*1024;
 function db(){if(!process.env.DATABASE_URL)throw Error("DATABASE_NOT_READY");return postgres(process.env.DATABASE_URL,{max:1});}
 export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:string}>}){
@@ -23,7 +23,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
  const {campaignId}=await params;if(!uuid.test(campaignId))return Response.json({error:"INVALID_ID"},{status:400});
  const length=Number(req.headers.get("content-length")??0);if(length>maxBytes+65536)return Response.json({error:"FILE_TOO_LARGE"},{status:413});
  const form=await req.formData().catch(()=>null);const file=form?.get("file");
- if(!(file instanceof File)||file.size===0||file.size>maxBytes||!allowed.has(file.type))return Response.json({error:"INVALID_FILE"},{status:400});
+ if(!(file instanceof File)||file.size===0||file.size>maxBytes||!(allowed.get(file.name.toLowerCase().match(/\.[^.]+$/)?.[0]??"")??[]).includes(file.type))return Response.json({error:"INVALID_FILE"},{status:400});
  const filename=file.name.replace(/[\\/\x00-\x1f\x7f]/g,"_").slice(0,180);
  if(!filename)return Response.json({error:"INVALID_FILENAME"},{status:400});
  const bytes=Buffer.from(await file.arrayBuffer());const sql=db();
