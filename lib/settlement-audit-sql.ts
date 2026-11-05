@@ -8,12 +8,11 @@ export const settlementAuditAnomaly = sql`not (case when ${settlements.status}='
 
 /** Invalid timestamps are audit anomalies too, including impossible approval/payment ordering. */
 export const settlementTimelineAnomaly = sql`not (
-  ${settlements.requestedAt} <= now()
-  and (case
+  (case
     when ${settlements.status}='REQUESTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
     when ${settlements.status}='REJECTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
-    when ${settlements.status}='APPROVED' then ${settlements.approvedAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.approvedAt} <= now() and ${settlements.paidAt} is null
-    when ${settlements.status}='PAID' then ${settlements.approvedAt} is not null and ${settlements.paidAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} >= ${settlements.approvedAt} and ${settlements.paidAt} <= now()
+    when ${settlements.status}='APPROVED' then ${settlements.approvedAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} is null
+    when ${settlements.status}='PAID' then ${settlements.approvedAt} is not null and ${settlements.paidAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} >= ${settlements.approvedAt}
     else false
   end)
 )`;
