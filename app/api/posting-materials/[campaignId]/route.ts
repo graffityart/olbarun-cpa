@@ -12,7 +12,7 @@ export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:
  const user=await getCurrentUser();if(!user||user.status!=="ACTIVE"||!["ADMIN","SUPER_ADMIN","PARTNER"].includes(user.role))return Response.json({error:"UNAUTHORIZED"},{status:401});
  const sql=db();try{
  const campaign=await sql`select type,status from campaigns where id=${campaignId}`;
- if(!campaign.length||campaign[0].type!=="POSTING")return Response.json({error:"NOT_FOUND"},{status:404});
+ if(!campaign.length||!["POSTING","CPA"].includes(campaign[0].type))return Response.json({error:"NOT_FOUND"},{status:404});
  if(!["ADMIN","SUPER_ADMIN"].includes(user.role)&&!["ACTIVE","PAUSED","COMPLETED"].includes(campaign[0].status))return Response.json({error:"NOT_FOUND"},{status:404});
  const files=await sql`select id,filename,file_size,created_at from posting_materials where campaign_id=${campaignId} order by created_at desc`;
  return Response.json({ok:true,files},{headers:{"Cache-Control":"private, no-store"}});
@@ -29,7 +29,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
  const bytes=Buffer.from(await file.arrayBuffer());const sql=db();
  try{
  const rows=await sql`insert into posting_materials(campaign_id,filename,mime_type,file_size,file_data)
- select id,${filename},${file.type},${bytes.length},${bytes} from campaigns where id=${campaignId} and type='POSTING'
+ select id,${filename},${file.type},${bytes.length},${bytes} from campaigns where id=${campaignId} and type in ('POSTING','CPA')
  returning id`;
  if(!rows.length)return Response.json({error:"NOT_FOUND"},{status:404});
  return Response.json({ok:true,id:rows[0].id},{status:201});
