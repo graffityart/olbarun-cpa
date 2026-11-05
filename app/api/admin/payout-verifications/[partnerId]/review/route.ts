@@ -8,6 +8,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
  try{
   requireSameOrigin(request);const admin=await requireAdmin();const {partnerId}=await params;
   const body=await request.json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
+  if(decision==="APPROVED"&&body?.identityAndBankMatch!==true)return Response.json({ok:false,error:"IDENTITY_MATCH_CONFIRMATION_REQUIRED"},{status:400});
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   const result=await getDb().transaction(async tx=>{
    const locked=await tx.execute(sql`select id from partner_payout_verifications where partner_id=${partnerId} and status='PENDING' for update`);
@@ -23,7 +24,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    returning id,partner_id,status`);
    if(rows.length!==1)throw Error("NOT_PENDING");
    const row=rows[0];
-   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_REVIEW",targetType:"PARTNER",targetId:partnerId,summary:decision==="APPROVED"?"출금 본인확인 승인":"출금 본인확인 반려",metadata:{verificationId:row.id,decision,reason:decision==="REJECTED"?reason:undefined}});
+   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_REVIEW",targetType:"PARTNER",targetId:partnerId,summary:decision==="APPROVED"?"출금 본인확인 승인":"출금 본인확인 반려",metadata:{verificationId:row.id,decision,identityAndBankMatch:decision==="APPROVED",reason:decision==="REJECTED"?reason:undefined}});
    return {status:decision};
   });
   return Response.json({ok:true,...result},{headers:{"Cache-Control":"no-store"}});
