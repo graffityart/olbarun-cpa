@@ -1,5 +1,6 @@
 import {sql} from "drizzle-orm";
 import {getDb} from "@/db";
+import {auditLogs} from "@/db/schema";
 import {requireAdmin} from "@/lib/auth/guards";
 import {requireSameOrigin} from "@/lib/security/origin";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -12,6 +13,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
    where id=${id} and type='CPA' and registration_source='ADVERTISER' and advertiser_approval_status='PENDING' and status='DRAFT'
    returning id`);
   if(!rows.length)return Response.json({ok:false,error:"NOT_PENDING"},{status:409});
+  await getDb().insert(auditLogs).values({actorUserId:admin.id,action:"ADVERTISER_CAMPAIGN_REVIEW",targetType:"CAMPAIGN",targetId:id,summary:`광고주 캠페인 검수 ${decision==="APPROVED"?"승인":"반려"}`,metadata:{decision,note}});
   return Response.json({ok:true,id,approvalStatus:decision});
  }catch(error){console.error("CPA review failed",error);return Response.json({ok:false,error:"REVIEW_FAILED"},{status:500});}
 }
