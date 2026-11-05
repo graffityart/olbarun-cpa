@@ -15,7 +15,8 @@ export function payoutAccountFingerprint(input:PayoutAccount):string{
  return createHmac("sha256",secret).update(JSON.stringify([a.bankName,a.accountNumber,a.accountHolder])).digest("hex");
 }
 export function payoutAccountMatches(input:PayoutAccount,fingerprint:unknown):boolean{
+ const actualHex=payoutAccountFingerprint(input);
  if(typeof fingerprint!=="string"||!/^[0-9a-f]{64}$/.test(fingerprint))return false;
- const expected=Buffer.from(fingerprint,"hex"),actual=Buffer.from(payoutAccountFingerprint(input),"hex");
+ const expected=Buffer.from(fingerprint,"hex"),actual=Buffer.from(actualHex,"hex");
  return timingSafeEqual(expected,actual);
 }
