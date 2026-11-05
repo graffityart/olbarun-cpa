@@ -23,6 +23,14 @@ const settle=await route('app/api/partner/settlements/route.ts','settle');
 const request=body=>new Request('https://test.local/api',{method:'POST',headers:body instanceof FormData?{origin:'https://test.local',host:'test.local'}:{origin:'https://test.local',host:'test.local','Content-Type':'application/json'},body:body instanceof FormData?body:JSON.stringify(body)});
 const config={title:'test job',category:'설문',description:'test',instructions:'test',notice:'test',target_url:'https://example.com',reward:500,capacity:1,status:'OPEN'};
 let r=await manage.POST(request(config));assert.equal(r.status,200);const job=(await r.json()).id;
+const draftResponse=await manage.POST(request({...config,title:'internal draft test',status:'DRAFT'}));assert.equal(draftResponse.status,200);const draftId=(await draftResponse.json()).id;
+const draftContext={params:Promise.resolve({id:draftId})};
+globalThis.quickTestUser=a;
+const draftForm=new FormData();draftForm.set('action','apply');
+const draftApply=await participate.POST(request(draftForm),draftContext);
+assert.equal((await draftApply.json()).error,'CLOSED');
+assert.equal((await db.query('select count(*)::int as n from quick_submissions where job_id=$1',[draftId])).rows[0].n,0);
+globalThis.quickTestUser={id:admin,role:'ADMIN',status:'ACTIVE'};
 const ctx={params:Promise.resolve({id:job})};
 const apply=()=>{const f=new FormData();f.set('action','apply');return request(f);};
 globalThis.quickTestUser=a;r=await participate.POST(apply(),ctx);assert.equal(r.status,200);r=await participate.POST(apply(),ctx);assert.equal(r.status,200);assert.equal((await db.query('select count(*)::int as n from quick_submissions')).rows[0].n,1);
@@ -38,5 +46,5 @@ globalThis.quickTestUser={id:admin,role:'ADMIN',status:'ACTIVE'};r=await review.
 const rows=(await db.query('select amount,status,type from earnings')).rows;assert.equal(rows.length,1);assert.equal(rows[0].amount,500);assert.equal(rows[0].status,'AVAILABLE');assert.equal(rows[0].type,'QUICK_APPROVAL');
 globalThis.quickTestUser=a;r=await settle.POST(request({amount:500,bankName:'test',accountNumber:'123',accountHolder:'test'}));assert.equal(r.status,201);assert.equal((await db.query("select status from earnings")).rows[0].status,'HOLD');assert.equal((await db.query('select count(*)::int as n from settlement_items')).rows[0].n,1);r=await settle.POST(request({amount:500,bankName:'test',accountNumber:'123',accountHolder:'test'}));assert.equal(r.status,409);
 globalThis.quickTestUser=null;r=await manage.POST(request(config));assert.equal(r.status,401);
-console.log('PASS: migration repeatability, capacity reservation, duplicate participation, reward snapshot, 3-image enforcement, proof authorization, rejection and resubmission, atomic approval, duplicate approval, existing earnings availability, existing settlement request and duplicate denial, anonymous denial');await db.close();
+console.log('PASS: draft participation blocked, migration repeatability, capacity reservation, duplicate participation, reward snapshot, 3-image enforcement, proof authorization, rejection and resubmission, atomic approval, duplicate approval, existing earnings availability, existing settlement request and duplicate denial, anonymous denial');await db.close();
 
