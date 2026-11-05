@@ -12,7 +12,8 @@ return <DashboardShell title="출금 신청" nav={[{href:'/partner',label:'대�
 <li><strong>지급 전 본인확인이 필요합니다.</strong> 통장 사본과 신분증 또는 사업자 증빙을 제출하고 관리자 검수를 받아야 합니다. 증빙 제출 기능은 준비 중이며, 안전한 제출 경로가 마련되면 이곳에서 안내합니다.</li>
 <li><strong>계좌정보를 정확히 입력해 주세요.</strong> 은행명·계좌번호·예금주를 확인한 뒤 신청할 수 있습니다. 계좌 변경은 향후 마이페이지의 전용 메뉴에서 지원할 예정입니다.</li>
 <li><strong>정기 지급 일정:</strong> 목요일까지 접수된 출금 신청은 관리자 검토 후 다음 날 금요일 지급을 기준으로 운영할 예정입니다. 공휴일 또는 추가 확인이 필요한 경우 지급일이 달라질 수 있습니다.</li>
-<li><strong>세금 및 실지급액:</strong> 소득 유형에 따라 원천징수 등 세금 처리가 달라질 수 있습니다. 3.3% 공제 적용 여부와 실제 지급액은 지급 전 별도로 확인·안내합니다.</li>
+<li><strong>개인 파트너:</strong> 출금 신청 금액에서 세금 3.3%를 공제한 금액을 지급합니다. 실제 지급액은 출금 승인 시 확인해 주세요.</li>
+<li><strong>사업자 파트너:</strong> 공급가액에 부가세 10%를 더한 금액으로 출금을 신청하고, 신청 직후 해당 금액에 대한 세금계산서를 먼저 발행해 주세요. <strong>세금계산서 발행 이메일: c0810@naver.com</strong> (사업자 유형 및 과세 여부에 따라 적용 기준을 별도 확인합니다.)</li>
 <li><strong>이용 연령:</strong> 마케터 활동은 만 15세 이상을 대상으로 하며, 만 15세 미만은 출금을 신청할 수 없습니다. 연령 확인 절차는 별도 도입 예정입니다.</li></ul><p className="pf-help">부정 출금 및 자금세탁 방지를 위해 본인확인 서류를 요청할 수 있으며, 서류는 검수 목적에 한해 제한적으로 처리해야 합니다.</p></section>
 <SettlementRequest key={available} available={available} pending={rows.some(r=>r.status==="REQUESTED"||r.status==="APPROVED")}/>
 <section className="pf-panel"><div className="pf-section-head"><div><h2>출금 신청 내역</h2><p>반려된 신청 금액은 다시 출금 가능한 수익으로 돌아갑니다.</p></div><span>{filtered.length}건</span></div>
