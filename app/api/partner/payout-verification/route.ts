@@ -17,6 +17,8 @@ export async function POST(request:Request){
   requireSameOrigin(request);
   const user=await getCurrentUser();
   if(!user||user.status!=="ACTIVE"||user.role!=="PARTNER"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
+  const contentLength=Number(request.headers.get("content-length")??0);
+  if(contentLength>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
   const form=await request.formData();
   const bank=form.get("bankDocument"),identity=form.get("identityDocument"),documentType=form.get("documentType");
   if(!(bank instanceof File)||!(identity instanceof File)||!["PERSONAL_ID","BUSINESS_REGISTRATION"].includes(String(documentType)))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
@@ -24,6 +26,9 @@ export async function POST(request:Request){
   const bankBytes=new Uint8Array(await bank.arrayBuffer()),identityBytes=new Uint8Array(await identity.arrayBuffer());
   const bankFormat=detect(bankBytes),identityFormat=detect(identityBytes);
   if(!bankFormat||!identityFormat)return Response.json({ok:false,error:"FILE_TYPE_INVALID"},{status:400});
+  const partner=await getDb().execute(sql`select member_type from partners where id=${user.partnerId} limit 1`);
+  if(partner.length!==1)return Response.json({ok:false,error:"PARTNER_NOT_FOUND"},{status:404});
+  if(documentType==="BUSINESS_REGISTRATION"&&partner[0].member_type==="INDIVIDUAL")return Response.json({ok:false,error:"DOCUMENT_TYPE_MISMATCH"},{status:400});
   const existing=await getDb().execute(sql`select status from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
   if(existing[0]?.status==="PENDING"||existing[0]?.status==="APPROVED")return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
@@ -33,7 +38,7 @@ export async function POST(request:Request){
    values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},now(),now(),now())
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
-   submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,updated_at=now()
+   submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=null,updated_at=now()
    where partner_payout_verifications.status in ('NOT_SUBMITTED','REJECTED') returning id`);
   if(updated.length!==1)return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
