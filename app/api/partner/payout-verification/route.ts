@@ -33,8 +33,9 @@ export async function POST(request:Request){
   const partner=await getDb().execute(sql`select member_type from partners where id=${user.partnerId} limit 1`);
   if(partner.length!==1)return Response.json({ok:false,error:"PARTNER_NOT_FOUND"},{status:404});
   if(documentType==="BUSINESS_REGISTRATION"&&partner[0].member_type==="INDIVIDUAL")return Response.json({ok:false,error:"DOCUMENT_TYPE_MISMATCH"},{status:400});
-  const existing=await getDb().execute(sql`select status from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
+  const existing=await getDb().execute(sql`select status,submitted_at from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
   if(existing[0]?.status==="PENDING"||existing[0]?.status==="APPROVED")return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
+  if(existing[0]?.status==="REJECTED"&&existing[0]?.submitted_at&&Date.now()-new Date(String(existing[0].submitted_at)).getTime()<10*60*1000)return Response.json({ok:false,error:"RESUBMISSION_COOLDOWN"},{status:429,headers:{"Retry-After":"600"}});
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
   const uploadedPaths:string[]=[];
   try{
@@ -47,8 +48,8 @@ export async function POST(request:Request){
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
    submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=excluded.verified_account_fingerprint,updated_at=now()
-   where partner_payout_verifications.status in ('NOT_SUBMITTED','REJECTED') returning id`);
-  if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});}
+   where partner_payout_verifications.status='NOT_SUBMITTED' or (partner_payout_verifications.status='REJECTED' and (partner_payout_verifications.submitted_at is null or partner_payout_verifications.submitted_at<=now()-interval '10 minutes')) returning id`);
+  if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return Response.json({ok:false,error:"RESUBMISSION_COOLDOWN_OR_ALREADY_SUBMITTED"},{status:409});}
   }catch(uploadError){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw uploadError;}
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
  }catch(error){const code=error instanceof Error?error.message:"SUBMISSION_FAILED";if(code==="PAYOUT_ACCOUNT_SECRET_MISSING")return Response.json({ok:false,error:code},{status:503});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});console.error("Payout verification submission failed",error);return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
