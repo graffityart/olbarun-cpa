@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS campaign_blob_materials (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), campaign_id uuid NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE, filename varchar(180) NOT NULL, mime_type varchar(100) NOT NULL, file_size integer NOT NULL CHECK (file_size > 0 AND file_size <= 52428800), blob_url text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS campaign_blob_materials_campaign_idx ON campaign_blob_materials(campaign_id);

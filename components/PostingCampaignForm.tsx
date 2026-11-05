@@ -45,7 +45,7 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
 
   return <form onSubmit={submit} className="panel card form-card">
     <h2>포스팅 캠페인 통합 입력</h2>
-    <p className="muted">모집조건과 작성·검수 가이드를 입력하면 초안으로 저장됩니다.</p>
+    <p className="muted">모집조건과 작성·검수 가이드를 입력하면 초안으로 저장됩니다. 먼저 아래 정보를 임시저장하면 자료 업로드 버튼이 나타납니다. 저장 후 캠페인 상세 화면에서 이미지·ZIP·PDF를 등록할 수 있습니다.</p>
     <div className="form-grid">
       <label>광고주 *<select name="advertiserId" required defaultValue=""><option value="" disabled>광고주 선택</option>{advertisers.map(a => <option key={a.id} value={a.id}>{a.companyName} ({a.advertiserCode})</option>)}</select></label>
       <label>광고매체 *<select name="mediaType" defaultValue="BLOG"><option value="BLOG">네이버 블로그</option><option value="CAFE">카페</option><option value="SNS">SNS</option><option value="OTHER">기타</option></select></label>
@@ -65,7 +65,7 @@ export default function PostingCampaignForm({ advertisers }: { advertisers: Adve
       <label className="full">작성 가이드<textarea name="guide" rows={5} placeholder="이미지, 링크, 문구, 주의사항 등을 입력하세요." /></label>
     </div>
     {message && <p className="form-message" role="status" aria-live="polite">{message}</p>}
-    {createdCampaign && <p><a className="btn" href={`/admin/campaigns/${createdCampaign.id}`}>저장한 캠페인 상세·검토하기 ({createdCampaign.code})</a> <a className="btn" href="/admin/campaigns">전체 목록 보기</a></p>}
+    {createdCampaign && <p><a className="btn" href={`/admin/campaigns/${createdCampaign.id}`}>다음 단계: 이미지·ZIP·PDF 자료 업로드 ({createdCampaign.code})</a> <a className="btn" href="/admin/campaigns">전체 목록 보기</a></p>}
     <div className="form-actions"><a className="btn" href="/admin/campaigns">취소</a><button disabled={saving}>{saving ? "저장 중..." : "임시저장"}</button></div>
   </form>;
 }

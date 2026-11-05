@@ -9,6 +9,8 @@ const errors: Record<string,string> = {
   INVALID_EARNINGS_AMOUNT: "수익 금액 확인이 필요합니다. 고객센터에 문의해 주세요.",
   PARTNER_NOT_FOUND: "파트너 정보를 확인할 수 없습니다. 로그인 상태를 확인하거나 고객센터에 문의해 주세요.",
   EARNINGS_CHANGED: "출금 가능 금액이 변경되었습니다. 신청 내역을 확인한 뒤 다시 시도해 주세요.",
+  DUPLICATE_SETTLEMENT_EARNING: "출금 대상 수익에 중복 항목이 발견되었습니다. 고객센터에 문의해 주세요.",
+  EARNING_ALREADY_RESERVED: "이미 처리 중인 정산에 연결된 수익이 있습니다. 출금 신청 내역을 확인해 주세요.",
   UNAUTHORIZED: "로그인 상태를 확인해 주세요.",
   INVALID_ORIGIN: "화면을 새로고침한 뒤 다시 신청해 주세요.",
   ORIGIN_CHECK_FAILED: "화면을 새로고침한 뒤 다시 신청해 주세요.",

@@ -89,3 +89,33 @@ export function settlementAuditIssue(status: SettlementStatus, actions: readonly
   if (status === "REJECTED") return "반려 처리 기록이 없거나 일치하지 않습니다.";
   return "알 수 없는 정산 상태입니다.";
 }
+
+
+/** Ensure approval and payment timestamps agree with the settlement lifecycle. */
+export function settlementTimestampsMatch(
+  status: SettlementStatus,
+  approvedAt: Date | null,
+  paidAt: Date | null,
+): boolean {
+  if (status === "REQUESTED" || status === "REJECTED") return approvedAt === null && paidAt === null;
+  if (status === "APPROVED") return approvedAt instanceof Date && !Number.isNaN(approvedAt.getTime()) && paidAt === null;
+  if (status === "PAID") return approvedAt instanceof Date && paidAt instanceof Date &&
+    !Number.isNaN(approvedAt.getTime()) && !Number.isNaN(paidAt.getTime()) &&
+    paidAt.getTime() >= approvedAt.getTime();
+  return false;
+}
+
+
+/** Reject financial lifecycle timestamps that precede the original request. */
+export function settlementTimelineMatches(
+  status: SettlementStatus,
+  requestedAt: Date,
+  approvedAt: Date | null,
+  paidAt: Date | null,
+): boolean {
+  if (!(requestedAt instanceof Date) || Number.isNaN(requestedAt.getTime())) return false;
+  if (!settlementTimestampsMatch(status, approvedAt, paidAt)) return false;
+  if (approvedAt !== null && approvedAt.getTime() < requestedAt.getTime()) return false;
+  if (paidAt !== null && paidAt.getTime() < requestedAt.getTime()) return false;
+  return true;
+}

@@ -1,8 +1,8 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 import { settlementAmountsMatch, hasUniqueSettlementEarnings } from "@/lib/settlement-validation";
-import { settlementAuditMatches } from "@/lib/settlement-validation";
+import { settlementAuditMatches, settlementAuditIssue, settlementTimelineMatches } from "@/lib/settlement-validation";
 import { getDb } from "@/db";
-import { auditLogs, settlementItems, settlements } from "@/db/schema";
+import { auditLogs, earnings, settlementItems, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
     const [row] = await getDb().select({
       status: settlements.status,
+      partnerId: settlements.partnerId,
       requestedAmount: settlements.requestedAmount,
       paymentAmount: settlements.paymentAmount,
       deductionAmount: settlements.deductionAmount,
+      requestedAt: settlements.requestedAt,
       approvedAt: settlements.approvedAt,
       paidAt: settlements.paidAt,
     }).from(settlements).where(eq(settlements.id, id)).limit(1);
@@ -31,11 +33,42 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id),
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
       .orderBy(asc(auditLogs.createdAt), asc(auditLogs.id));
-    const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action));
-    const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId }).from(settlementItems)
+    const auditVerified = settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) && settlementTimelineMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", row.requestedAt, row.approvedAt, row.paidAt);
+    const auditIssue = !settlementAuditMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) ? settlementAuditIssue(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", audit.map(entry => entry.action)) : !settlementTimelineMatches(row.status as "REQUESTED"|"APPROVED"|"PAID"|"REJECTED", row.requestedAt, row.approvedAt, row.paidAt) ? "정산 신청·승인·지급 시각이 처리 상태와 일치하지 않습니다." : null;
+    const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId, earningAmount: earnings.amount, earningStatus: earnings.status, earningPartnerId: earnings.partnerId }).from(settlementItems)
+      .leftJoin(earnings, eq(settlementItems.earningId, earnings.id))
       .where(eq(settlementItems.settlementId, id));
-    const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
-    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: { "Cache-Control": "no-store" } });
+    const otherActiveReservation = row.status !== "REJECTED" && items.length ? await getDb().select({ earningId: settlementItems.earningId }).from(settlementItems)
+      .innerJoin(settlements, eq(settlementItems.settlementId, settlements.id))
+      .where(and(ne(settlements.id, id), inArray(settlements.status, ["REQUESTED", "APPROVED"]), inArray(settlementItems.earningId, items.map(item => item.earningId)))).limit(1) : [];
+    const amountVerified = otherActiveReservation.length === 0 && hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
+    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : ["REQUESTED", "APPROVED"].includes(row.status) ? "HOLD" : null;
+    // A rejected request releases earnings; those same earnings can later be reserved and paid.
+    // Verify the newer settlement instead of treating the historical rejection as corrupt.
+    const laterSettlements = row.status === "REJECTED" && items.length
+      ? await getDb().select({ earningId: settlementItems.earningId, status: settlements.status })
+        .from(settlementItems).innerJoin(settlements, eq(settlementItems.settlementId, settlements.id))
+        .where(and(ne(settlements.id, id), eq(settlements.partnerId, row.partnerId),
+          gt(settlements.requestedAt, row.requestedAt),
+          inArray(settlementItems.earningId, items.map(item => item.earningId))))
+      : [];
+    const laterByEarning = new Map<string, Set<string>>();
+    for (const entry of laterSettlements) {
+      const statuses = laterByEarning.get(entry.earningId) ?? new Set<string>();
+      statuses.add(entry.status);
+      laterByEarning.set(entry.earningId, statuses);
+    }
+    const earningsVerified = expectedEarningStatus !== null && items.length > 0 && items.every(item => {
+      if (!(item.earningAmount === item.amount && item.earningPartnerId === row.partnerId)) return false;
+      if (item.earningStatus === expectedEarningStatus) return true;
+      if (row.status !== "REJECTED") return false;
+      const later = laterByEarning.get(item.earningId);
+      return item.earningStatus === "HOLD"
+        ? !!later && (later.has("REQUESTED") || later.has("APPROVED"))
+        : item.earningStatus === "PAID" && !!later && later.has("PAID");
+    });
+    const verified = amountVerified && earningsVerified;
+    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, auditIssue, amountVerified: verified }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
