@@ -24,7 +24,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     if(![".zip",".pdf",".jpg",".jpeg",".png",".webp"].includes(ext))throw Error("INVALID_FILE");
     const sql=db();
     try{
-     const campaigns=await sql`select id from campaigns where id=${campaignId} and type in ('POSTING','CPA')`;
+     const campaigns=await sql`select id from campaigns where id=${campaignId} and type in ('POSTING','CPA') and not exists (select 1 from campaign_blob_materials where blob_url=${blob.url})`;
      if(!campaigns.length)throw Error("CAMPAIGN_NOT_FOUND");
     }finally{await sql.end();}
     return {allowedContentTypes:types,maximumSizeInBytes:maxBytes,addRandomSuffix:true,tokenPayload:JSON.stringify({campaignId})};
@@ -32,7 +32,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
    onUploadCompleted:async({blob,tokenPayload})=>{
     const payload=JSON.parse(tokenPayload??"{}") as {campaignId?:string};
     if(payload.campaignId!==campaignId||!uuid.test(payload.campaignId??""))throw Error("INVALID_CAMPAIGN");
-    const filename=decodeURIComponent(blob.pathname.split("/").pop()??"file").slice(0,180);
+    const filename=decodeURIComponent(blob.pathname.split("/").pop()??"file").replace(/-[a-zA-Z0-9]{12,}(?=\.[^.]+$)/,"").slice(0,180);
     const metadata=await head(blob.url);
     const sql=db();
     try{
