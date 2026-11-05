@@ -33,7 +33,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     const payload=JSON.parse(tokenPayload??"{}") as {campaignId?:string};
     if(payload.campaignId!==campaignId||!uuid.test(payload.campaignId??""))throw Error("INVALID_CAMPAIGN");
     const filename=decodeURIComponent(blob.pathname.split("/").pop()??"file").slice(0,180);
-    const metadata=await head(blob.url,{access:"private"});
+    const metadata=await head(blob.url);
     const sql=db();
     try{
      await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
