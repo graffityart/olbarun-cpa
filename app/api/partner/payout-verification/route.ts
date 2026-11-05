@@ -66,7 +66,10 @@ export async function POST(request:Request){
    try{
     const current=await getDb().execute(sql`select bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
     const active=new Set([current[0]?.bank_document_blob_path,current[0]?.identity_document_blob_path]);
-    await Promise.allSettled(oldPaths.filter(path=>!active.has(path)).map(path=>del(path)));
+    const obsolete=oldPaths.filter(path=>!active.has(path));
+    const cleanupResults=await Promise.allSettled(obsolete.map(path=>del(path)));
+    const failedCount=cleanupResults.filter(result=>result.status==="rejected").length;
+    if(failedCount>0)console.error("Old payout verification blob cleanup incomplete",{failedCount});
    }catch(cleanupError){console.error("Old payout verification blob cleanup deferred",cleanupError);}
   }
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
