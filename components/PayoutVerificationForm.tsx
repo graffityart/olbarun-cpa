@@ -6,8 +6,10 @@ export default function PayoutVerificationForm({status}:{status:string}){
  async function submit(event:FormEvent<HTMLFormElement>){
   event.preventDefault();setBusy(true);setMessage("");
   try{
-   const response=await fetch("/api/partner/payout-verification",{method:"POST",body:new FormData(event.currentTarget)});
-   if(!response.ok)throw Error("서류 접수에 실패했습니다.");
+   const data=new FormData(event.currentTarget);
+   for(const key of ["bankDocument","identityDocument"]){const file=data.get(key);if(!(file instanceof File)||file.size<8||file.size>5*1024*1024)throw Error("서류 파일은 각각 5MB 이하로 선택해 주세요.");}
+   const response=await fetch("/api/partner/payout-verification",{method:"POST",body:data});
+   if(!response.ok){const result=await response.json().catch(()=>null);const errors:Record<string,string>={ALREADY_SUBMITTED:"이미 접수되었거나 승인된 서류가 있습니다. 화면을 새로고침해 주세요.",DOCUMENT_TYPE_MISMATCH:"회원 유형과 증빙 유형이 일치하지 않습니다.",FILE_SIZE_INVALID:"서류 파일은 각각 5MB 이하로 선택해 주세요.",FILE_TYPE_INVALID:"PDF, JPG, PNG 파일만 제출할 수 있습니다.",INVALID_INPUT:"증빙 유형과 첨부 파일을 확인해 주세요."};throw Error(errors[result?.error]??"서류 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.");}
    setMessage("서류가 접수되었습니다. 관리자 검수를 기다려 주세요.");window.location.reload();
   }catch(error){setMessage(error instanceof Error?error.message:"오류가 발생했습니다.");}finally{setBusy(false);}
  }
