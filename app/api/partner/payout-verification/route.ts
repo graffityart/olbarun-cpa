@@ -18,14 +18,17 @@ export async function POST(request:Request){
   requireSameOrigin(request);
   const user=await getCurrentUser();
   if(!user||user.status!=="ACTIVE"||user.role!=="PARTNER"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
-  const contentLength=Number(request.headers.get("content-length")??0);
-  if(contentLength>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
+  const rawLength=request.headers.get("content-length");
+  if(rawLength!==null&&(!/^\\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
+  if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
   const form=await request.formData();
   const bank=form.get("bankDocument"),identity=form.get("identityDocument"),documentType=form.get("documentType");
-  const account={bankName:String(form.get("bankName")??""),accountNumber:String(form.get("accountNumber")??""),accountHolder:String(form.get("accountHolder")??"")};
+  const bankName=form.get("bankName"),accountNumber=form.get("accountNumber"),accountHolder=form.get("accountHolder");
+  if(typeof bankName!=="string"||typeof accountNumber!=="string"||typeof accountHolder!=="string"||typeof documentType!=="string")return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
+  const account={bankName,accountNumber,accountHolder};
   if(!validPayoutAccount(account))return Response.json({ok:false,error:"INVALID_PAYOUT_ACCOUNT"},{status:400});
   const accountFingerprint=payoutAccountFingerprint(account);
-  if(!(bank instanceof File)||!(identity instanceof File)||!["PERSONAL_ID","BUSINESS_REGISTRATION"].includes(String(documentType)))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
+  if(!(bank instanceof File)||!(identity instanceof File)||!["PERSONAL_ID","BUSINESS_REGISTRATION"].includes(documentType))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   if(bank.size<8||identity.size<8||bank.size>MAX_BYTES||identity.size>MAX_BYTES)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:400});
   const bankBytes=new Uint8Array(await bank.arrayBuffer()),identityBytes=new Uint8Array(await identity.arrayBuffer());
   const bankFormat=detect(bankBytes),identityFormat=detect(identityBytes);
@@ -44,7 +47,7 @@ export async function POST(request:Request){
   const identityBlob=await put(`${prefix}/identity.${identityFormat.ext}`,Buffer.from(identityBytes),{access:"private",contentType:identityFormat.mime,addRandomSuffix:true});
   uploadedPaths.push(identityBlob.pathname);
   const updated=await getDb().execute(sql`insert into partner_payout_verifications(partner_id,status,bank_document_blob_path,identity_document_blob_path,document_type,verified_account_fingerprint,submitted_at,created_at,updated_at)
-   values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},${accountFingerprint},now(),now(),now())
+   values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${documentType},${accountFingerprint},now(),now(),now())
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
    submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=excluded.verified_account_fingerprint,updated_at=now()
