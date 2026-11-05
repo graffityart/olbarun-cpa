@@ -7,6 +7,7 @@ create table if not exists partner_payout_verifications (
  bank_document_blob_path text,
  identity_document_blob_path text,
  document_type varchar(20),
+ verified_account_fingerprint text,
  submitted_at timestamptz,
  reviewed_at timestamptz,
  reviewed_by uuid references users(id),
