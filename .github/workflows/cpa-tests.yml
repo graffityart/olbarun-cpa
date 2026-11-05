@@ -13,6 +13,20 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: settlement_test
+          POSTGRES_PASSWORD: settlement_test_password
+          POSTGRES_DB: settlement_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U settlement_test -d settlement_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +36,10 @@ jobs:
         run: npm install --no-package-lock --no-audit --no-fund
       - name: Run regression tests
         id: tests
+        env:
+          NODE_ENV: test
+          SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
+          SETTLEMENT_TEST_DB_CONFIRM: disposable
         run: |
           set -o pipefail
           npm run test:all 2>&1 | tee cpa-test-results.log
