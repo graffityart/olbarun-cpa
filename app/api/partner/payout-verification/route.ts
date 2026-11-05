@@ -19,7 +19,7 @@ export async function POST(request:Request){
   const user=await getCurrentUser();
   if(!user||user.status!=="ACTIVE"||user.role!=="PARTNER"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
   const rawLength=request.headers.get("content-length");
-  if(rawLength!==null&&(!/^\\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
+  if(rawLength!==null&&(!/^\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
   if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
   const form=await request.formData();
   const allowedFields=new Set(["bankDocument","identityDocument","documentType","bankName","accountNumber","accountHolder","privacyMaskConfirmed"]);
