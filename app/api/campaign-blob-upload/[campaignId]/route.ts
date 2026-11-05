@@ -24,7 +24,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     if(![".zip",".pdf",".jpg",".jpeg",".png",".webp"].includes(ext))throw Error("INVALID_FILE");
     const sql=db();
     try{
-     const campaigns=await sql`select id from campaigns where id=${campaignId} and type in ('POSTING','CPA') and not exists (select 1 from campaign_blob_materials where blob_url=${blob.url})`;
+     const campaigns=await sql`select id from campaigns where id=${campaignId} and type in ('POSTING','CPA')`;
      if(!campaigns.length)throw Error("CAMPAIGN_NOT_FOUND");
     }finally{await sql.end();}
     return {allowedContentTypes:types,maximumSizeInBytes:maxBytes,addRandomSuffix:true,tokenPayload:JSON.stringify({campaignId})};
@@ -38,7 +38,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     try{
      await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
        select id,${filename},${blob.contentType},${metadata.size},${blob.url} from campaigns
-       where id=${campaignId} and type in ('POSTING','CPA')`;
+       where id=${campaignId} and type in ('POSTING','CPA') and not exists (select 1 from campaign_blob_materials where blob_url=${blob.url})`;
     }finally{await sql.end();}
    }
   });
