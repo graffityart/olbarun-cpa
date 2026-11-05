@@ -11,7 +11,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   const result=await getDb().transaction(async tx=>{
    if(decision==="APPROVED"){
-    const viewed=await tx.execute(sql`select count(distinct metadata->>'documentKind')::int as count from audit_logs where actor_user_id=${admin.id} and target_type='PARTNER' and target_id=${partnerId} and action='PAYOUT_IDENTITY_DOCUMENT_VIEW' and metadata->>'documentKind' in ('bank','identity') and created_at>now()-interval '30 minutes'`);
+    const viewed=await tx.execute(sql`select count(distinct metadata->>'documentKind')::int as count from audit_logs where actor_user_id=${admin.id} and target_type='PARTNER' and target_id=${partnerId} and action='PAYOUT_IDENTITY_DOCUMENT_VIEW' and metadata->>'documentKind' in ('bank','identity') and created_at>now()-interval '30 minutes' and created_at>(select submitted_at from partner_payout_verifications where partner_id=${partnerId})`);
     if(Number(viewed[0]?.count)!==2)throw Error("DOCUMENT_REVIEW_REQUIRED");
    }
    const rows=await tx.execute(sql`update partner_payout_verifications
