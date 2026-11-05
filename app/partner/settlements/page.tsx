@@ -1,4 +1,4 @@
-import Link from "next/link";import "../finance.css";import DashboardShell from "@/components/DashboardShell";import SettlementRequest from "@/components/SettlementRequest";import {desc,eq,sql} from "drizzle-orm";import {getDb} from "@/db";import {requirePartner} from "@/lib/auth/guards";import {earnings,settlements} from "@/db/schema";
+import Link from "next/link";import "../finance.css";import DashboardShell from "@/components/DashboardShell";import SettlementRequest from "@/components/SettlementRequest";import PayoutTaxPreview from "@/components/PayoutTaxPreview";import {desc,eq,sql} from "drizzle-orm";import {getDb} from "@/db";import {requirePartner} from "@/lib/auth/guards";import {earnings,settlements} from "@/db/schema";
 export const dynamic="force-dynamic";const labels:Record<string,string>={REQUESTED:"검토대기",APPROVED:"지급대기",PAID:"지급완료",REJECTED:"반려"};
 const formatDate=(value:Date)=>value.toLocaleString("ko-KR",{timeZone:"Asia/Seoul"});
 const statusDescriptions:Record<string,string>={REQUESTED:"신청이 접수되어 관리자 검토를 기다리고 있습니다.",APPROVED:"신청이 승인되어 지급을 기다리고 있습니다.",PAID:"지급 처리가 완료되었습니다.",REJECTED:"신청이 반려되어 출금 가능 수익으로 복구되었습니다."};
@@ -15,6 +15,7 @@ return <DashboardShell title="출금 신청" nav={[{href:'/partner',label:'대�
 <li><strong>개인 파트너:</strong> 출금 신청 금액에서 세금 3.3%를 공제한 금액을 지급합니다. 실제 지급액은 출금 승인 시 확인해 주세요.</li>
 <li><strong>사업자 파트너:</strong> 공급가액에 부가세 10%를 더한 금액으로 출금을 신청하고, 신청 직후 해당 금액에 대한 세금계산서를 먼저 발행해 주세요. <strong>세금계산서 발행 이메일: c0810@naver.com</strong> (사업자 유형 및 과세 여부에 따라 적용 기준을 별도 확인합니다.)</li>
 <li><strong>이용 연령:</strong> 마케터 활동은 만 15세 이상을 대상으로 하며, 만 15세 미만은 출금을 신청할 수 없습니다. 연령 확인 절차는 별도 도입 예정입니다.</li></ul><p className="pf-help">부정 출금 및 자금세탁 방지를 위해 본인확인 서류를 요청할 수 있으며, 서류는 검수 목적에 한해 제한적으로 처리해야 합니다.</p></section>
+<PayoutTaxPreview amount={available}/>
 <SettlementRequest key={available} available={available} pending={rows.some(r=>r.status==="REQUESTED"||r.status==="APPROVED")}/>
 <section className="pf-panel"><div className="pf-section-head"><div><h2>출금 신청 내역</h2><p>반려된 신청 금액은 다시 출금 가능한 수익으로 돌아갑니다.</p></div><span>{filtered.length}건</span></div>
 <nav className="pf-filters" aria-label="출금 상태 필터">{Object.entries({ALL:'전체',...labels}).map(([key,label])=><Link key={key} href={'/partner/settlements?status='+key} aria-current={status===key?'page':undefined}>{label}</Link>)}</nav>
