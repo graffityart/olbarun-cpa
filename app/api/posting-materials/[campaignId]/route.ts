@@ -9,7 +9,7 @@ const maxBytes=5*1024*1024;
 function db(){if(!process.env.DATABASE_URL)throw Error("DATABASE_NOT_READY");return postgres(process.env.DATABASE_URL,{max:1});}
 export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:string}>}){
  const {campaignId}=await params;if(!uuid.test(campaignId))return Response.json({error:"INVALID_ID"},{status:400});
- const user=await getCurrentUser();if(!user||user.status!=="ACTIVE")return Response.json({error:"UNAUTHORIZED"},{status:401});
+ const user=await getCurrentUser();if(!user||user.status!=="ACTIVE"||!["ADMIN","SUPER_ADMIN","PARTNER"].includes(user.role))return Response.json({error:"UNAUTHORIZED"},{status:401});
  const sql=db();try{
  const campaign=await sql`select type,status from campaigns where id=${campaignId}`;
  if(!campaign.length||campaign[0].type!=="POSTING")return Response.json({error:"NOT_FOUND"},{status:404});
