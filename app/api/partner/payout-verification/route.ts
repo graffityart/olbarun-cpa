@@ -1,4 +1,5 @@
 import {put,del} from "@vercel/blob";
+import {payoutAccountFingerprint,validPayoutAccount} from "@/lib/payout-account";
 import {getDb} from "@/db";
 import {getCurrentUser} from "@/lib/auth/session";
 import {requireSameOrigin} from "@/lib/security/origin";
@@ -21,6 +22,9 @@ export async function POST(request:Request){
   if(contentLength>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
   const form=await request.formData();
   const bank=form.get("bankDocument"),identity=form.get("identityDocument"),documentType=form.get("documentType");
+  const account={bankName:String(form.get("bankName")??""),accountNumber:String(form.get("accountNumber")??""),accountHolder:String(form.get("accountHolder")??"")};
+  if(!validPayoutAccount(account))return Response.json({ok:false,error:"INVALID_PAYOUT_ACCOUNT"},{status:400});
+  const accountFingerprint=payoutAccountFingerprint(account);
   if(!(bank instanceof File)||!(identity instanceof File)||!["PERSONAL_ID","BUSINESS_REGISTRATION"].includes(String(documentType)))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   if(bank.size<8||identity.size<8||bank.size>MAX_BYTES||identity.size>MAX_BYTES)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:400});
   const bankBytes=new Uint8Array(await bank.arrayBuffer()),identityBytes=new Uint8Array(await identity.arrayBuffer());
@@ -38,11 +42,11 @@ export async function POST(request:Request){
   uploadedPaths.push(bankBlob.pathname);
   const identityBlob=await put(`${prefix}/identity.${identityFormat.ext}`,Buffer.from(identityBytes),{access:"private",contentType:identityFormat.mime,addRandomSuffix:true});
   uploadedPaths.push(identityBlob.pathname);
-  const updated=await getDb().execute(sql`insert into partner_payout_verifications(partner_id,status,bank_document_blob_path,identity_document_blob_path,document_type,submitted_at,created_at,updated_at)
-   values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},now(),now(),now())
+  const updated=await getDb().execute(sql`insert into partner_payout_verifications(partner_id,status,bank_document_blob_path,identity_document_blob_path,document_type,verified_account_fingerprint,submitted_at,created_at,updated_at)
+   values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},${accountFingerprint},now(),now(),now())
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
-   submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=null,updated_at=now()
+   submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=excluded.verified_account_fingerprint,updated_at=now()
    where partner_payout_verifications.status in ('NOT_SUBMITTED','REJECTED') returning id`);
   if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});}
   }catch(uploadError){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw uploadError;}
