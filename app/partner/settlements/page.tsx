@@ -7,6 +7,13 @@ return <DashboardShell title="출금 신청" nav={[{href:'/partner',label:'대�
 <header className="pf-head"><div><h1>출금 신청</h1><p>확정된 수익을 신청하고 지급 상태를 확인하세요.</p></div><Link href="/partner/earnings" className="pf-primary">수익 내역 보기 →</Link></header>
 <section className="pf-stats" aria-label="출금 현황">{[['출금 가능',available,'지금 신청할 수 있는 금액','featured'],['출금 처리 중',sum?.hold,'검토·지급을 기다리는 금액',''],['지급 완료',sum?.paid,'지급이 완료된 수익','']].map(([label,amount,help,cls])=><div className={'pf-stat '+cls} key={String(label)}><span>{label}</span><strong>{Number(amount??0).toLocaleString('ko-KR')}원</strong><small>{help}</small></div>)}</section>
 <div className="pf-flow" aria-label="출금 처리 순서"><span>1. 출금 신청</span><span>2. 관리자 검토</span><span>3. 승인 후 지급</span></div>
+<section className="pf-panel" aria-labelledby="withdrawal-guidance"><div className="pf-section-head"><div><h2 id="withdrawal-guidance">출금 신청 전 꼭 확인해 주세요</h2><p>정확하고 안전한 수익금 지급을 위한 안내입니다.</p></div></div><ul style={{paddingLeft:22,display:"grid",gap:10,lineHeight:1.75}}>
+<li><strong>본인 명의 계좌를 사용해 주세요.</strong> 가입 정보와 예금주 등 확인 정보가 일치하지 않으면 지급이 보류될 수 있습니다.</li>
+<li><strong>지급 전 본인확인이 필요합니다.</strong> 통장 사본과 신분증 또는 사업자 증빙을 제출하고 관리자 검수를 받아야 합니다. 증빙 제출 기능은 준비 중이며, 안전한 제출 경로가 마련되면 이곳에서 안내합니다.</li>
+<li><strong>계좌정보를 정확히 입력해 주세요.</strong> 은행명·계좌번호·예금주를 확인한 뒤 신청할 수 있습니다. 계좌 변경은 향후 마이페이지의 전용 메뉴에서 지원할 예정입니다.</li>
+<li><strong>정기 지급 일정:</strong> 목요일까지 접수된 출금 신청은 관리자 검토 후 다음 날 금요일 지급을 기준으로 운영할 예정입니다. 공휴일 또는 추가 확인이 필요한 경우 지급일이 달라질 수 있습니다.</li>
+<li><strong>세금 및 실지급액:</strong> 소득 유형에 따라 원천징수 등 세금 처리가 달라질 수 있습니다. 3.3% 공제 적용 여부와 실제 지급액은 지급 전 별도로 확인·안내합니다.</li>
+<li><strong>이용 연령:</strong> 마케터 활동은 만 15세 이상을 대상으로 하며, 만 15세 미만은 출금을 신청할 수 없습니다. 연령 확인 절차는 별도 도입 예정입니다.</li></ul><p className="pf-help">부정 출금 및 자금세탁 방지를 위해 본인확인 서류를 요청할 수 있으며, 서류는 검수 목적에 한해 제한적으로 처리해야 합니다.</p></section>
 <SettlementRequest key={available} available={available} pending={rows.some(r=>r.status==="REQUESTED"||r.status==="APPROVED")}/>
 <section className="pf-panel"><div className="pf-section-head"><div><h2>출금 신청 내역</h2><p>반려된 신청 금액은 다시 출금 가능한 수익으로 돌아갑니다.</p></div><span>{filtered.length}건</span></div>
 <nav className="pf-filters" aria-label="출금 상태 필터">{Object.entries({ALL:'전체',...labels}).map(([key,label])=><Link key={key} href={'/partner/settlements?status='+key} aria-current={status===key?'page':undefined}>{label}</Link>)}</nav>
