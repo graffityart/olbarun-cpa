@@ -5,3 +5,15 @@ import { auditLogs, settlements } from "@/db/schema";
 export const settlementAuditSequence = sql`coalesce((select array_agg(${auditLogs.action}::text order by ${auditLogs.createdAt}, ${auditLogs.id}) from ${auditLogs} where ${auditLogs.targetType}='SETTLEMENT' and ${auditLogs.targetId}=${settlements.id}::text and ${auditLogs.action} in ('SETTLEMENT_APPROVE','SETTLEMENT_PAID','SETTLEMENT_REJECT')),ARRAY[]::text[])`;
 
 export const settlementAuditAnomaly = sql`not (case when ${settlements.status}='REQUESTED' then ${settlementAuditSequence}=ARRAY[]::text[] when ${settlements.status}='APPROVED' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_APPROVE']::text[] when ${settlements.status}='PAID' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_APPROVE','SETTLEMENT_PAID']::text[] when ${settlements.status}='REJECTED' then ${settlementAuditSequence}=ARRAY['SETTLEMENT_REJECT']::text[] else false end)`;
+
+/** Invalid timestamps are audit anomalies too, including impossible approval/payment ordering. */
+export const settlementTimelineAnomaly = sql`not (
+  ${settlements.requestedAt} <= now()
+  and (case
+    when ${settlements.status}='REQUESTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
+    when ${settlements.status}='REJECTED' then ${settlements.approvedAt} is null and ${settlements.paidAt} is null
+    when ${settlements.status}='APPROVED' then ${settlements.approvedAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.approvedAt} <= now() and ${settlements.paidAt} is null
+    when ${settlements.status}='PAID' then ${settlements.approvedAt} is not null and ${settlements.paidAt} is not null and ${settlements.approvedAt} >= ${settlements.requestedAt} and ${settlements.paidAt} >= ${settlements.approvedAt} and ${settlements.paidAt} <= now()
+    else false
+  end)
+)`;
