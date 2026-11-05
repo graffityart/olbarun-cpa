@@ -14,7 +14,7 @@ export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:
  const campaign=await sql`select type,status from campaigns where id=${campaignId}`;
  if(!campaign.length||!["POSTING","CPA"].includes(campaign[0].type))return Response.json({error:"NOT_FOUND"},{status:404});
  if(!["ADMIN","SUPER_ADMIN"].includes(user.role)&&!["ACTIVE","PAUSED","COMPLETED"].includes(campaign[0].status))return Response.json({error:"NOT_FOUND"},{status:404});
- const files=await sql`select id,filename,file_size,created_at from posting_materials where campaign_id=${campaignId} order by created_at desc`;
+ const files=await sql`select id,filename,file_size,created_at from posting_materials where campaign_id=${campaignId} union all select id,filename,file_size,created_at from campaign_blob_materials where campaign_id=${campaignId} order by created_at desc`;
  return Response.json({ok:true,files},{headers:{"Cache-Control":"private, no-store"}});
  }finally{await sql.end();}
 }
