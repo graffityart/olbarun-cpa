@@ -21,8 +21,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    set status=${decision},reviewed_by=${admin.id},reviewed_at=now(),rejection_reason=${decision==="REJECTED"?reason:null},updated_at=now()
    where partner_id=${partnerId} and status='PENDING'
    and bank_document_blob_path is not null and identity_document_blob_path is not null
-   and (${decision}='REJECTED' or verified_account_fingerprint ~ '^[0-9a-f]{64}
-   returning id,partner_id,status`);
+   and (${decision}='REJECTED' or verified_account_fingerprint ~ '^[0-9a-f]{64}   returning id,partner_id,status`);
    if(rows.length!==1)throw Error("NOT_PENDING");
    const row=rows[0];
    await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_REVIEW",targetType:"PARTNER",targetId:partnerId,summary:decision==="APPROVED"?"출금 본인확인 승인":"출금 본인확인 반려",metadata:{verificationId:row.id,decision,identityAndBankMatch:decision==="APPROVED",reason:decision==="REJECTED"?reason:undefined}});
