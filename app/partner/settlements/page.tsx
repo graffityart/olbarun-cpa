@@ -9,11 +9,11 @@ return <DashboardShell title="출금 신청" nav={[{href:'/partner',label:'대�
 <div className="pf-flow" aria-label="출금 처리 순서"><span>1. 출금 신청</span><span>2. 관리자 검토</span><span>3. 승인 후 지급</span></div>
 <section className="pf-panel" aria-labelledby="withdrawal-guidance"><div className="pf-section-head"><div><h2 id="withdrawal-guidance">출금 신청 전 꼭 확인해 주세요</h2><p>정확하고 안전한 수익금 지급을 위한 안내입니다.</p></div></div><ul style={{paddingLeft:22,display:"grid",gap:10,lineHeight:1.75}}>
 <li><strong>본인 명의 계좌를 사용해 주세요.</strong> 가입 정보와 예금주 등 확인 정보가 일치하지 않으면 지급이 보류될 수 있습니다.</li>
-<li><strong>지급 전 본인확인이 필요합니다.</strong> 통장 사본과 신분증 또는 사업자 증빙을 제출하고 관리자 검수를 받아야 합니다. 증빙 제출 기능은 준비 중이며, 안전한 제출 경로가 마련되면 이곳에서 안내합니다.</li>
-<li><strong>계좌정보를 정확히 입력해 주세요.</strong> 은행명·계좌번호·예금주를 확인한 뒤 신청할 수 있습니다. 계좌 변경은 향후 마이페이지의 전용 메뉴에서 지원할 예정입니다.</li>
+<li><strong>지급 전 본인확인이 필요합니다.</strong> 통장 사본과 신분증 또는 사업자 증빙을 제출하고 관리자 검수를 받아야 합니다. 아래 본인확인 서류 제출 화면에서 신청할 수 있습니다. 승인 후에는 검증된 계좌로만 출금할 수 있습니다.</li>
+<li><strong>계좌정보를 정확히 입력해 주세요.</strong> 은행명·계좌번호·예금주를 확인한 뒤 신청할 수 있습니다. 계좌를 변경하려면 고객센터에 재검수를 요청해 주세요. 관리자 확인 전에는 새 계좌로 출금할 수 없습니다.</li>
 <li><strong>정기 지급 일정:</strong> 목요일까지 접수된 출금 신청은 관리자 검토 후 다음 날 금요일 지급을 기준으로 운영할 예정입니다. 공휴일 또는 추가 확인이 필요한 경우 지급일이 달라질 수 있습니다.</li>
-<li><strong>개인 파트너:</strong> 출금 신청 금액에서 세금 3.3%를 공제한 금액을 지급합니다. 실제 지급액은 출금 승인 시 확인해 주세요.</li>
-<li><strong>사업자 파트너:</strong> 공급가액에 부가세 10%를 더한 금액으로 출금을 신청하고, 신청 직후 해당 금액에 대한 세금계산서를 먼저 발행해 주세요. <strong>세금계산서 발행 이메일: c0810@naver.com</strong> (사업자 유형 및 과세 여부에 따라 적용 기준을 별도 확인합니다.)</li>
+<li><strong>개인 파트너:</strong> 아래 3.3% 세금 계산은 예상 안내입니다. 실제 원천징수 여부와 지급액은 지급 처리 기준에 따라 별도 확인해야 합니다.</li>
+<li><strong>사업자 파트너:</strong> 부가세 10% 계산은 참고용이며, 사업자 유형과 거래의 과세 여부에 따라 달라질 수 있습니다. 세금계산서 발행 여부와 금액은 관리자와 확인해 주세요. <strong>세금계산서 발행 이메일: c0810@naver.com</strong> (사업자 유형 및 과세 여부에 따라 적용 기준을 별도 확인합니다.)</li>
 <li><strong>이용 연령:</strong> 마케터 활동은 만 15세 이상을 대상으로 하며, 만 15세 미만은 출금을 신청할 수 없습니다. 연령 확인 절차는 별도 도입 예정입니다.</li></ul><p className="pf-help">부정 출금 및 자금세탁 방지를 위해 본인확인 서류를 요청할 수 있으며, 서류는 검수 목적에 한해 제한적으로 처리해야 합니다.</p></section>
 <PayoutVerificationForm status={verificationStatus}/>
 <PayoutTaxPreview amount={available}/>
