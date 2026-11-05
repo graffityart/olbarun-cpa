@@ -1,4 +1,4 @@
-import {put} from "@vercel/blob";
+import {put,del} from "@vercel/blob";
 import {getDb} from "@/db";
 import {getCurrentUser} from "@/lib/auth/session";
 import {requireSameOrigin} from "@/lib/security/origin";
@@ -32,15 +32,20 @@ export async function POST(request:Request){
   const existing=await getDb().execute(sql`select status from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
   if(existing[0]?.status==="PENDING"||existing[0]?.status==="APPROVED")return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
+  const uploadedPaths:string[]=[];
+  try{
   const bankBlob=await put(`${prefix}/bank.${bankFormat.ext}`,Buffer.from(bankBytes),{access:"private",contentType:bankFormat.mime,addRandomSuffix:true});
+  uploadedPaths.push(bankBlob.pathname);
   const identityBlob=await put(`${prefix}/identity.${identityFormat.ext}`,Buffer.from(identityBytes),{access:"private",contentType:identityFormat.mime,addRandomSuffix:true});
+  uploadedPaths.push(identityBlob.pathname);
   const updated=await getDb().execute(sql`insert into partner_payout_verifications(partner_id,status,bank_document_blob_path,identity_document_blob_path,document_type,submitted_at,created_at,updated_at)
    values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},now(),now(),now())
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
    submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=null,updated_at=now()
    where partner_payout_verifications.status in ('NOT_SUBMITTED','REJECTED') returning id`);
-  if(updated.length!==1)return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
+  if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});}
+  }catch(uploadError){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw uploadError;}
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
  }catch(error){console.error("Payout verification submission failed",error);return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
 }
