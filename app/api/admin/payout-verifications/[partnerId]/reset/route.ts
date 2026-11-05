@@ -13,10 +13,10 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   const reason=typeof body?.reason==="string"?body.reason.trim():"";
   if(!uuid.test(partnerId)||!reason||reason.length>2000)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   await getDb().transaction(async tx=>{
-   const locked=await tx.execute(sql`select id,status from partner_payout_verifications where partner_id=${partnerId} for update`);
-   if(locked.length!==1||locked[0].status!=="APPROVED")throw Error("NOT_APPROVED");
    const partnerLock=await tx.execute(sql`select id from partners where id=${partnerId} for update`);
    if(partnerLock.length!==1)throw Error("NOT_APPROVED");
+   const locked=await tx.execute(sql`select id,status from partner_payout_verifications where partner_id=${partnerId} for update`);
+   if(locked.length!==1||locked[0].status!=="APPROVED")throw Error("NOT_APPROVED");
    const pending=await tx.execute(sql`select id from settlements where partner_id=${partnerId} and status in ('REQUESTED','APPROVED') limit 1`);
    if(pending.length)throw Error("PAYOUT_IN_PROGRESS");
    const updated=await tx.execute(sql`update partner_payout_verifications set status='REJECTED',verified_account_fingerprint=null,reviewed_by=${admin.id},reviewed_at=now(),rejection_reason=${reason},updated_at=now() where partner_id=${partnerId} and status='APPROVED' returning id`);
