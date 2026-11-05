@@ -9,7 +9,7 @@ export default function PayoutVerificationReview({partnerId}:{partnerId:string})
   setBusy(true);setMessage("");
   try{
    const res=await fetch(`/api/admin/payout-verifications/${partnerId}/review`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision,reason})});
-   if(!res.ok)throw Error("검수 처리에 실패했습니다.");setMessage(decision==="APPROVED"?"승인되었습니다.":"반려되었습니다.");router.refresh();
+   if(!res.ok){const result=await res.json().catch(()=>null);throw Error(result?.error==="DOCUMENT_REVIEW_REQUIRED"?"현재 제출 건의 통장 사본과 신분확인 서류를 모두 열람한 후 승인해 주세요.":"검수 처리에 실패했습니다.");}setMessage(decision==="APPROVED"?"승인되었습니다.":"반려되었습니다.");router.refresh();
   }catch(error){setMessage(error instanceof Error?error.message:"오류가 발생했습니다.");}finally{setBusy(false);}
  }
  return <div style={{display:"grid",gap:8}}><div style={{display:"flex",gap:10,flexWrap:"wrap"}}><a href={`/api/admin/payout-verifications/${partnerId}/documents/bank`}>통장 사본 확인</a><a href={`/api/admin/payout-verifications/${partnerId}/documents/identity`}>신분확인 서류 확인</a></div><input aria-label="반려 사유" value={reason} onChange={e=>setReason(e.target.value)} placeholder="반려 사유 (반려 시 필수)" maxLength={2000}/><div style={{display:"flex",gap:8}}><button disabled={busy} onClick={()=>void review("APPROVED")}>검수 승인</button><button disabled={busy} onClick={()=>void review("REJECTED")}>반려</button></div>{message&&<p role="status">{message}</p>}</div>;
