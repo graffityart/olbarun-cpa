@@ -22,6 +22,9 @@ export async function POST(request:Request){
   if(rawLength!==null&&(!/^\\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
   if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return Response.json({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
   const form=await request.formData();
+  const allowedFields=new Set(["bankDocument","identityDocument","documentType","bankName","accountNumber","accountHolder"]);
+  if([...form.keys()].some(key=>!allowedFields.has(key)))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
+  if([...allowedFields].some(key=>form.getAll(key).length!==1))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   const bank=form.get("bankDocument"),identity=form.get("identityDocument"),documentType=form.get("documentType");
   const bankName=form.get("bankName"),accountNumber=form.get("accountNumber"),accountHolder=form.get("accountHolder");
   if(typeof bankName!=="string"||typeof accountNumber!=="string"||typeof accountHolder!=="string"||typeof documentType!=="string")return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
