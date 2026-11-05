@@ -42,7 +42,13 @@ export async function POST(request:Request){
   if(documentType==="BUSINESS_REGISTRATION"&&partner[0].member_type==="INDIVIDUAL")return Response.json({ok:false,error:"DOCUMENT_TYPE_MISMATCH"},{status:400});
   const existing=await getDb().execute(sql`select status,submitted_at,bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
   if(existing[0]?.status==="PENDING"||existing[0]?.status==="APPROVED")return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
-  if(existing[0]?.status==="REJECTED"&&existing[0]?.submitted_at&&Date.now()-new Date(String(existing[0].submitted_at)).getTime()<10*60*1000)return Response.json({ok:false,error:"RESUBMISSION_COOLDOWN"},{status:429,headers:{"Retry-After":"600"}});
+  if(existing[0]?.status==="REJECTED"&&existing[0]?.submitted_at){
+   const submittedAt=new Date(String(existing[0].submitted_at)).getTime();
+   if(Number.isFinite(submittedAt)){
+    const remainingMs=10*60*1000-(Date.now()-submittedAt);
+    if(remainingMs>0)return Response.json({ok:false,error:"RESUBMISSION_COOLDOWN"},{status:429,headers:{"Retry-After":String(Math.ceil(remainingMs/1000))}});
+   }
+  }
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
   const uploadedPaths:string[]=[];
   try{
