@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useState} from "react";
+type Item={id:string;filename:string;file_size:number;created_at:string};
+export default function PostingMaterialManager({campaignId,admin=false}:{campaignId:string;admin?:boolean}){
+ const [items,setItems]=useState<Item[]>([]),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
+ async function refresh(){try{const r=await fetch(`/api/posting-materials/${campaignId}`,{cache:"no-store"});if(r.ok){const j=await r.json();setItems(j.files??[]);}else setMessage("자료 목록을 불러올 수 없습니다.");}catch{setMessage("자료 조회 중 연결 오류가 발생했습니다.");}}
+ useEffect(()=>{void refresh();},[campaignId]);
+ async function upload(e:React.FormEvent<HTMLFormElement>){e.preventDefault();if(busy)return;const form=e.currentTarget;const file=new FormData(form).get("file");if(!(file instanceof File))return;if(file.size>5*1024*1024){setMessage("파일은 5MB 이하만 가능합니다.");return;}setBusy(true);setMessage("");try{const data=new FormData();data.append("file",file);const r=await fetch(`/api/posting-materials/${campaignId}`,{method:"POST",body:data});if(!r.ok)throw Error("업로드에 실패했습니다. 파일 형식과 크기를 확인하세요.");form.reset();await refresh();setMessage("자료가 등록되었습니다.");}catch(err){setMessage(err instanceof Error?err.message:"업로드 실패");}finally{setBusy(false);}}
+ async function remove(id:string){if(busy||!confirm("이 자료를 삭제하시겠습니까?"))return;setBusy(true);try{const r=await fetch(`/api/posting-materials/${campaignId}/${id}`,{method:"DELETE"});if(!r.ok)throw Error();await refresh();setMessage("삭제되었습니다.");}catch{setMessage("삭제에 실패했습니다.");}finally{setBusy(false);}}
+ return <section className="pt-panel"><h2>포스팅 제공 자료</h2><p>이미지·ZIP·PDF 자료를 내려받아 작성 가이드에 맞게 사용하세요.</p>{admin&&<form onSubmit={upload}><label>자료 업로드 (ZIP, PDF, JPG, PNG, WebP · 파일당 5MB)<input type="file" name="file" accept=".zip,.pdf,.jpg,.jpeg,.png,.webp" required/></label><button disabled={busy} type="submit">{busy?"처리 중":"자료 등록"}</button></form>}
+ {message&&<p role="status">{message}</p>}{items.length?<ul>{items.map(item=><li key={item.id}><a href={`/api/posting-materials/${campaignId}/${item.id}`}>{item.filename} ({(item.file_size/1024).toFixed(0)}KB) 다운로드</a>{admin&&<button type="button" disabled={busy} onClick={()=>void remove(item.id)}>삭제</button>}</li>)}</ul>:<p>현재 제공된 첨부자료가 없습니다.</p>}</section>;
+}
