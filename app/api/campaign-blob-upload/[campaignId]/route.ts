@@ -41,7 +41,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:
     try{
      await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
        select id,${filename},${blob.contentType},${metadata.size},${blob.url} from campaigns
-       where id=${campaignId} and type in ('POSTING','CPA') and not exists (select 1 from campaign_blob_materials where blob_url=${blob.url})`;
+       where id=${campaignId} and type in ('POSTING','CPA') on conflict (blob_url) do nothing`;
     }finally{await sql.end();}
    }
   });
