@@ -16,7 +16,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{partnerId:s
   const file=await get(path,{access:"private"});
   if(file?.statusCode!==200)return new Response(null,{status:404});
   await getDb().insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_DOCUMENT_VIEW",targetType:"PARTNER",targetId:partnerId,summary:kind==="bank"?"출금 통장 사본 열람":"출금 본인확인 서류 열람",metadata:{documentKind:kind}});
-  const contentType=file.blob.contentType;
+  const contentType=path.endsWith(".pdf")?"application/pdf":path.endsWith(".png")?"image/png":path.endsWith(".jpg")?"image/jpeg":"";
   if(!["application/pdf","image/jpeg","image/png"].includes(contentType))return new Response(null,{status:415});
   return new Response(file.stream,{headers:{"Content-Type":contentType,"Content-Disposition":`attachment; filename="${kind==="bank"?"bank":"identity"}.${contentType==="application/pdf"?"pdf":contentType==="image/png"?"png":"jpg"}"`,"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store","Content-Security-Policy":"default-src 'none'; sandbox"}});
  }catch(error){console.error("Private verification document access failed",error);return new Response(null,{status:500});}
