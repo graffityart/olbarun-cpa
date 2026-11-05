@@ -27,8 +27,8 @@ export async function POST(request:Request){
   const existing=await getDb().execute(sql`select status from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
   if(existing[0]?.status==="PENDING"||existing[0]?.status==="APPROVED")return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
-  const bankBlob=await put(`${prefix}/bank.${bankFormat.ext}`,bankBytes,{access:"private",contentType:bankFormat.mime,addRandomSuffix:true});
-  const identityBlob=await put(`${prefix}/identity.${identityFormat.ext}`,identityBytes,{access:"private",contentType:identityFormat.mime,addRandomSuffix:true});
+  const bankBlob=await put(`${prefix}/bank.${bankFormat.ext}`,Buffer.from(bankBytes),{access:"private",contentType:bankFormat.mime,addRandomSuffix:true});
+  const identityBlob=await put(`${prefix}/identity.${identityFormat.ext}`,Buffer.from(identityBytes),{access:"private",contentType:identityFormat.mime,addRandomSuffix:true});
   const updated=await getDb().execute(sql`insert into partner_payout_verifications(partner_id,status,bank_document_blob_path,identity_document_blob_path,document_type,submitted_at,created_at,updated_at)
    values(${user.partnerId},'PENDING',${bankBlob.pathname},${identityBlob.pathname},${String(documentType)},now(),now(),now())
    on conflict(partner_id) do update set status='PENDING',bank_document_blob_path=excluded.bank_document_blob_path,
