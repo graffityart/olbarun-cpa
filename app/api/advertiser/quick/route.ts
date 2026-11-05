@@ -17,7 +17,7 @@ export async function POST(request:Request){
   if(!title||title.length>200||!category||category.length>40||![description,instructions,notice].every(v=>v.length>0&&v.length<=10000)||targetUrl.length>2000||!["https:","http:"].includes(url.protocol)||url.username||url.password||!Number.isSafeInteger(reward)||reward<1||reward>10000000||!Number.isSafeInteger(capacity)||capacity<1||capacity>1000000)return Response.json({error:"INVALID_INPUT"},{status:400});
   const rows=await getDb().execute(sql`insert into quick_jobs(title,category,description,instructions,notice,target_url,reward,capacity,status,registration_source,advertiser_id,approval_status)
   select ${title},${category},${description},${instructions},${notice},${targetUrl},${reward},${capacity},'DRAFT','ADVERTISER',au.advertiser_id,'PENDING'
-  from advertiser_users au join advertisers a on a.id=au.advertiser_id where au.user_id=${user.id} and a.status='ACTIVE'
+  from advertiser_users au where au.user_id=${user.id}
   returning id`);
   if(!rows.length)return Response.json({error:"ADVERTISER_NOT_APPROVED"},{status:403});
   return Response.json({ok:true,id:rows[0].id,status:"PENDING"},{status:201});
