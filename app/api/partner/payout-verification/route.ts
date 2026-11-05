@@ -51,5 +51,5 @@ export async function POST(request:Request){
   if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return Response.json({ok:false,error:"ALREADY_SUBMITTED"},{status:409});}
   }catch(uploadError){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw uploadError;}
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
- }catch(error){console.error("Payout verification submission failed",error);return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
+ }catch(error){const code=error instanceof Error?error.message:"SUBMISSION_FAILED";if(code==="PAYOUT_ACCOUNT_SECRET_MISSING")return Response.json({ok:false,error:code},{status:503});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});console.error("Payout verification submission failed",error);return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
 }
