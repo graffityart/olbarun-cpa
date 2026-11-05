@@ -15,8 +15,7 @@ export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:
  const blobRows=await sql`select m.filename,m.mime_type,m.blob_url,c.status from campaign_blob_materials m join campaigns c on c.id=m.campaign_id where m.campaign_id=${campaignId} and m.id=${fileId} and c.type in ('POSTING','CPA')`;
  if(!blobRows.length||(!["ADMIN","SUPER_ADMIN"].includes(user.role)&&!["ACTIVE","PAUSED","COMPLETED"].includes(blobRows[0].status)))return new Response(null,{status:404});
  const file=blobRows[0];
- const pathname=decodeURIComponent(new URL(file.blob_url).pathname.slice(1));
- const result=await get(pathname,{access:"private"});
+ const result=await get(file.blob_url,{access:"private"});
  if(result?.statusCode!==200)return new Response(null,{status:404});
  return new Response(result.stream,{headers:{"Content-Type":file.mime_type,"Content-Disposition":`attachment; filename*=UTF-8''${encodeURIComponent(file.filename)}`,"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store"}});
  }
