@@ -8,6 +8,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
  try{
   requireSameOrigin(request);
   const admin=await requireAdmin();
+  if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return Response.json({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
   const {partnerId}=await params;
   const body=await request.json().catch(()=>null);
   const reason=typeof body?.reason==="string"?body.reason.trim():"";
