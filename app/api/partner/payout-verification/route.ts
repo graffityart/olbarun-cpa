@@ -64,6 +64,10 @@ export async function POST(request:Request){
   const identityExtension=identity.name.toLowerCase().split(".").pop()??"";
   if(!allowedExtensions[bankFormat.ext].includes(bankExtension)||!allowedExtensions[identityFormat.ext].includes(identityExtension))
    return privateJson({ok:false,error:"FILE_TYPE_INVALID"},{status:400});
+  // File.type is browser-supplied and not authoritative, but a mismatch is suspicious.
+  // Empty MIME values are allowed for clients that omit this optional metadata.
+  if((bank.type&&bank.type!==bankFormat.mime)||(identity.type&&identity.type!==identityFormat.mime))
+   return privateJson({ok:false,error:"FILE_TYPE_INVALID"},{status:400});
 
   const partner=await getDb().execute(sql`select member_type from partners where id=${user.partnerId} limit 1`);
   if(partner.length!==1)return privateJson({ok:false,error:"PARTNER_NOT_FOUND"},{status:404});
