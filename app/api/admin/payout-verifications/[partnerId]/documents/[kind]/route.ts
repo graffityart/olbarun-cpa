@@ -8,7 +8,9 @@ export const runtime="nodejs";
 const privateError=(status:number)=>new Response(null,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
 export async function GET(_request:Request,{params}:{params:Promise<{partnerId:string;kind:string}>}){
  try{
-  const admin=await requireAdmin(),{partnerId,kind}=await params;
+  const admin=await requireAdmin();
+  if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateError(503);
+  const {partnerId,kind}=await params;
   if(!uuid.test(partnerId)||!["bank","identity"].includes(kind))return privateError(400);
   const rows=await getDb().execute(sql`select bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${partnerId} and status in ('PENDING','APPROVED','REJECTED') limit 1`);
   if(rows.length!==1)return privateError(404);
