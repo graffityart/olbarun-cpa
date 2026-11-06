@@ -50,7 +50,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    returning id,partner_id,status`);
    if(rows.length!==1)throw Error("NOT_PENDING");
    const row=rows[0];
-   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_REVIEW",targetType:"PARTNER",targetId:partnerId,summary:decision==="APPROVED"?"출금 본인확인 승인":"출금 본인확인 반려",metadata:{verificationId:row.id,decision,identityAndBankMatch:decision==="APPROVED",sensitiveDataMasked:decision==="APPROVED",reason:decision==="REJECTED"?reason:undefined}});
+   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_REVIEW",targetType:"PARTNER",targetId:partnerId,summary:decision==="APPROVED"?"출금 본인확인 승인":"출금 본인확인 반려",metadata:{verificationId:row.id,decision,identityAndBankMatch:decision==="APPROVED",sensitiveDataMasked:decision==="APPROVED"}});
    return {status:decision};
   });
   return privateJson({ok:true,...result},{headers:{"Cache-Control":"no-store"}});
