@@ -40,7 +40,8 @@ export async function POST(request:Request){
   }
   // Reject non-multipart requests before parsing potentially large bodies.
   const contentType=request.headers.get("content-type")??"";
-  if(!/^multipart\/form-data\s*;\s*boundary=/i.test(contentType))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
+  // Require one well-formed boundary parameter; reject extra or ambiguous parameters.
+  if(!/^multipart\/form-data\s*;\s*boundary=(?:"[A-Za-z0-9\x27()+_,.\/:=?-]{1,70}"|[A-Za-z0-9\x27()+_,.\/:=?-]{1,70})\s*$/i.test(contentType))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
   const rawLength=request.headers.get("content-length");
   if(rawLength!==null&&(!/^\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return privateJson({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
   if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return privateJson({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
