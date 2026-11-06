@@ -53,6 +53,14 @@ export async function POST(request:Request){
   const bankBytes=new Uint8Array(await bank.arrayBuffer()),identityBytes=new Uint8Array(await identity.arrayBuffer());
   const bankFormat=detect(bankBytes),identityFormat=detect(identityBytes);
   if(!bankFormat||!identityFormat)return privateJson({ok:false,error:"FILE_TYPE_INVALID"},{status:400});
+  // The filename extension must agree with the validated binary signature.
+  // This does not replace malware scanning or content sanitization.
+  const allowedExtensions:Record<string,string[]>={pdf:["pdf"],jpg:["jpg","jpeg"],png:["png"]};
+  const bankExtension=bank.name.toLowerCase().split(".").pop()??"";
+  const identityExtension=identity.name.toLowerCase().split(".").pop()??"";
+  if(!allowedExtensions[bankFormat.ext].includes(bankExtension)||!allowedExtensions[identityFormat.ext].includes(identityExtension))
+   return privateJson({ok:false,error:"FILE_TYPE_INVALID"},{status:400});
+
   const partner=await getDb().execute(sql`select member_type from partners where id=${user.partnerId} limit 1`);
   if(partner.length!==1)return privateJson({ok:false,error:"PARTNER_NOT_FOUND"},{status:404});
   if(documentType==="BUSINESS_REGISTRATION"&&partner[0].member_type==="INDIVIDUAL")return privateJson({ok:false,error:"DOCUMENT_TYPE_MISMATCH"},{status:400});
