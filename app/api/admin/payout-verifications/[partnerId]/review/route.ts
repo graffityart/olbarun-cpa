@@ -53,5 +53,6 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    return {status:decision};
   });
   return privateJson({ok:true,...result},{headers:{"Cache-Control":"no-store"}});
- }catch(error){const code=error instanceof Error?error.message:"REVIEW_FAILED";if(code==="DOCUMENT_REVIEW_REQUIRED")return privateJson({ok:false,error:code},{status:409});if(code==="NOT_PENDING")return privateJson({ok:false,error:code},{status:409});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return privateJson({ok:false,error:code},{status:403});console.error("Payout identity review failed",error);return privateJson({ok:false,error:"REVIEW_FAILED"},{status:500});}
+ }catch(error){const code=error instanceof Error?error.message:"REVIEW_FAILED";if(code==="DOCUMENT_REVIEW_REQUIRED")return privateJson({ok:false,error:code},{status:409});if(code==="NOT_PENDING")return privateJson({ok:false,error:code},{status:409});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return privateJson({ok:false,error:code},{status:403});// Avoid logging raw exceptions that may contain sensitive database parameters or document metadata.
+  console.error("Payout identity review failed",{code:"REVIEW_FAILED"});return privateJson({ok:false,error:"REVIEW_FAILED"},{status:500});}
 }
