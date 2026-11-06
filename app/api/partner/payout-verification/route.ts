@@ -12,7 +12,13 @@ const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,
 function detect(bytes:Uint8Array){
  if(bytes.length>=8&&bytes[0]===0x25&&bytes[1]===0x50&&bytes[2]===0x44&&bytes[3]===0x46&&bytes[4]===0x2d&&bytes[5]>=0x31&&bytes[5]<=0x32&&bytes[6]===0x2e&&bytes[7]>=0x30&&bytes[7]<=0x39)return {ext:"pdf",mime:"application/pdf"};
  if(bytes.length>=4&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9)return {ext:"jpg",mime:"image/jpeg"};
- if(bytes.length>=24&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)&&[73,72,68,82].every((v,i)=>bytes[12+i]===v)&&[73,69,78,68,174,66,96,130].every((v,i)=>bytes[bytes.length-8+i]===v))return {ext:"png",mime:"image/png"};
+ if(bytes.length>=24&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)&&[73,72,68,82].every((v,i)=>bytes[12+i]===v)&&[73,69,78,68,174,66,96,130].every((v,i)=>bytes[bytes.length-8+i]===v)){
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const width=view.getUint32(16),height=view.getUint32(20);
+  // Reject impossible or excessively large PNG dimensions before private storage.
+  if(width<1||height<1||width>10000||height>10000||width*height>25000000)return null;
+  return {ext:"png",mime:"image/png"};
+ }
  return null;
 }
 export async function POST(request:Request){
