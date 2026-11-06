@@ -41,7 +41,23 @@ export async function POST(request:Request){
   const rawLength=request.headers.get("content-length");
   if(rawLength!==null&&(!/^\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return privateJson({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
   if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return privateJson({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
-  const form=await request.formData();
+  // A missing or forged Content-Length must not bypass the total upload limit.
+  // Read at most the permitted payload size before invoking the multipart parser.
+  const maxRequestBytes=MAX_BYTES*2+1024*1024;
+  if(!request.body)return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
+  const reader=request.body.getReader();
+  const chunks:Uint8Array[]=[];
+  let totalBytes=0;
+  try{
+   while(true){
+    const {done,value}=await reader.read();
+    if(done)break;
+    totalBytes+=value.byteLength;
+    if(totalBytes>maxRequestBytes){await reader.cancel().catch(()=>{});return privateJson({ok:false,error:"FILE_SIZE_INVALID"},{status:413});}
+    chunks.push(value);
+   }
+  }finally{reader.releaseLock();}
+  const form=await new Request(request.url,{method:"POST",headers:request.headers,body:new Blob(chunks.map(chunk=>new Uint8Array(chunk)))}).formData();
   const allowedFields=new Set(["bankDocument","identityDocument","documentType","bankName","accountNumber","accountHolder","privacyMaskConfirmed"]);
   if([...form.keys()].some(key=>!allowedFields.has(key)))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   if([...allowedFields].some(key=>form.getAll(key).length!==1))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
