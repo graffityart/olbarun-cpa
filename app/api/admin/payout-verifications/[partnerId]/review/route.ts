@@ -44,7 +44,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    const rows=await tx.execute(sql`update partner_payout_verifications
    set status=${decision},reviewed_by=${admin.id},reviewed_at=now(),rejection_reason=${decision==="REJECTED"?reason:null},updated_at=now()
    where partner_id=${partnerId} and status='PENDING'
-   and bank_document_blob_path is not null and identity_document_blob_path is not null
+   and (${decision}='REJECTED' or (bank_document_blob_path is not null and identity_document_blob_path is not null))
    and (${decision}='REJECTED' or bank_document_blob_path <> identity_document_blob_path)
    and (${decision}='REJECTED' or verified_account_fingerprint ~ '^[0-9a-f]{64}$')
    returning id,partner_id,status`);
