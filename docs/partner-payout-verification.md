@@ -98,3 +98,10 @@
 - 조회한 변수 목록에는 `PAYOUT_ACCOUNT_FINGERPRINT_SECRET`, `PAYOUT_KYC_DOCUMENT_UPLOAD`, `PAYOUT_KYC_ENFORCEMENT`, `PAYOUT_UPLOAD_RATE_LIMIT`이 없었다. KYC 플래그는 기본 비활성이다.
 - HTTP 통합 테스트 시작 전 Preview 전용 Neon 테스트 브랜치와 별도 비공개 Blob 저장소를 연결하고, 해당 Preview 배포가 실제로 테스트 리소스만 참조하는지 검증해야 한다.
 - 환경변수 변경, 테스트용 계정 생성, 파일 업로드, 운영 DB 마이그레이션은 이번 점검에서 수행하지 않았다.
+
+## Preview 격리 DB 사전 확인 (2026-11-06)
+
+- Neon 테스트 브랜치 `br-icy-king-a5fv45ua`는 운영 브랜치에서 **parent-data**로 분기되었다. 따라서 별도 브랜치라는 사실만으로 실제 사용자 정보가 없는 테스트 DB라고 간주할 수 없다.
+- 해당 브랜치에는 KYC 검증용 테이블이 존재하지만, 운영 데이터에서 복제된 다른 테이블이 남아 있을 수 있다. 실제 HTTP 통합 테스트 전 **가짜 계정만 포함한 데이터셋 또는 별도 테스트 프로젝트**를 준비하고 접근 범위를 확인한다.
+- Preview의 `DATABASE_URL`과 `BLOB_READ_WRITE_TOKEN`은 대상 환경이 공유되는 변수로 확인됐으므로 Preview 전용 값으로 분리하기 전까지 쓰기 테스트를 금지한다.
+- 운영에서 복제한 개인정보를 테스트 자료로 사용하거나, 실사용자에게 테스트 알림·지급을 발송하지 않는다.
