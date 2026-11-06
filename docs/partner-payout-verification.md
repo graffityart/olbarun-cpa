@@ -59,3 +59,11 @@
 - [ ] GitHub 필수 체크와 Vercel Production 빌드가 성공했는지 확인하고, 실제 운영 도메인의 공개 페이지 및 관리자/파트너 로그인 흐름을 점검한다.
 
 **주의:** 코드가 운영에 배포되어도 위 플래그가 비활성이면 KYC 서류 접수는 시작되지 않는다. 이 상태를 기능 오작동으로 판단해 임의로 플래그를 활성화하지 않는다. 마이그레이션 SQL을 자동 실행하거나 기존 파트너의 출금을 일괄 차단하지 않는다.
+
+## 2026-11-06 Neon 분리 브랜치 검증 결과
+
+- Neon 프로젝트 `soft-mud-72335385`의 운영 브랜치 `br-wandering-smoke-a5kcazle`에서 기존 `partners.id`, `users.id`가 UUID인 것을 읽기 전용으로 확인했다.
+- 운영 브랜치에서 `partner_payout_verifications`, `partner_payout_upload_limits`가 **모두 없음**을 확인했다. 운영 마이그레이션은 수행하지 않았다.
+- 분리된 테스트 브랜치 `br-icy-king-a5fv45ua` (`payout-kyc-migration-validation-20261106`)에서 0020/0021의 CREATE TABLE 및 인덱스 구문을 트랜잭션으로 실행했고 성공했다. 테스트 테이블은 각각 0행이며 상태 인덱스가 존재한다.
+- 해당 검증은 DDL 호환성 확인일 뿐, 실제 업로드/다운로드, Blob 접근권한, 관리자 검수, 보존기간 및 악성코드 방어를 검증한 것이 아니다.
+- 운영 적용 시 GitHub SQL 파일의 COMMENT 구문까지 포함해 적용 여부를 점검하고, 운영 DB 백업 및 롤백 절차를 먼저 확정한다.
