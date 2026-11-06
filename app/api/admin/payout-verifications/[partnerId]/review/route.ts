@@ -6,7 +6,9 @@ import {auditLogs} from "@/db/schema";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request:Request,{params}:{params:Promise<{partnerId:string}>}){
  try{
-  requireSameOrigin(request);const admin=await requireAdmin();const {partnerId}=await params;
+  requireSameOrigin(request);const admin=await requireAdmin();
+  if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return Response.json({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
+  const {partnerId}=await params;
   const body=await request.json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
   if(decision==="APPROVED"&&body?.identityAndBankMatch!==true)return Response.json({ok:false,error:"IDENTITY_MATCH_CONFIRMATION_REQUIRED"},{status:400});
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
