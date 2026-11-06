@@ -60,7 +60,8 @@ export async function POST(request:Request){
     chunks.push(value);
    }
   }finally{reader.releaseLock();}
-  const form=await new Request(request.url,{method:"POST",headers:request.headers,body:new Blob(chunks.map(chunk=>new Uint8Array(chunk)))}).formData();
+  const form=await new Request(request.url,{method:"POST",headers:request.headers,body:new Blob(chunks.map(chunk=>new Uint8Array(chunk)))}).formData().catch(()=>null);
+  if(!form)return privateJson({ok:false,error:"INVALID_MULTIPART_BODY"},{status:400});
   const allowedFields=new Set(["bankDocument","identityDocument","documentType","bankName","accountNumber","accountHolder","privacyMaskConfirmed"]);
   if([...form.keys()].some(key=>!allowedFields.has(key)))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   if([...allowedFields].some(key=>form.getAll(key).length!==1))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
