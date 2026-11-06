@@ -77,8 +77,8 @@ export async function POST(request:Request){
     const cleanupResults=await Promise.allSettled(obsolete.map(path=>del(path)));
     const failedCount=cleanupResults.filter(result=>result.status==="rejected").length;
     if(failedCount>0)console.error("Old payout verification blob cleanup incomplete",{failedCount});
-   }catch(cleanupError){console.error("Old payout verification blob cleanup deferred",cleanupError);}
+   }catch(cleanupError){console.error("Old payout verification blob cleanup deferred");}
   }
   return Response.json({ok:true,status:"PENDING"},{headers:{"Cache-Control":"no-store"}});
- }catch(error){const code=error instanceof Error?error.message:"SUBMISSION_FAILED";if(code==="PAYOUT_ACCOUNT_SECRET_MISSING")return Response.json({ok:false,error:code},{status:503});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});console.error("Payout verification submission failed",error);return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
+ }catch(error){const code=error instanceof Error?error.message:"SUBMISSION_FAILED";if(code==="PAYOUT_ACCOUNT_SECRET_MISSING")return Response.json({ok:false,error:code},{status:503});if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});console.error("Payout verification submission failed",{code:"SUBMISSION_FAILED"});return Response.json({ok:false,error:"SUBMISSION_FAILED"},{status:500});}
 }
