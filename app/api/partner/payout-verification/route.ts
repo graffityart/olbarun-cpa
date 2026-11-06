@@ -21,8 +21,11 @@ export async function POST(request:Request){
   requireSameOrigin(request);
   const user=await getCurrentUser();
   if(!user||user.status!=="ACTIVE"||user.role!=="PARTNER"||!user.partnerId)return privateJson({ok:false,error:"UNAUTHORIZED"},{status:401});
-  // Opt-in until migration 0021 is applied. Atomic DB counter works across serverless instances.
-  if(process.env.PAYOUT_UPLOAD_RATE_LIMIT==="enabled"){
+  // Fail closed: enabling sensitive document uploads requires the DB-backed rate limiter.
+  // Migration 0021 must exist before both flags are enabled in any environment.
+  if(process.env.PAYOUT_UPLOAD_RATE_LIMIT!=="enabled")return privateJson({ok:false,error:"UPLOAD_RATE_LIMIT_UNAVAILABLE"},{status:503});
+  {
+   // Atomic DB counter works across serverless instances.
    const attempts=await getDb().execute(sql`insert into partner_payout_upload_limits(partner_id,window_started_at,attempt_count,updated_at)
     values(${user.partnerId},now(),1,now())
     on conflict(partner_id) do update set
