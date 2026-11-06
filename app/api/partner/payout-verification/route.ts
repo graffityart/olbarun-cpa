@@ -20,6 +20,20 @@ export async function POST(request:Request){
   requireSameOrigin(request);
   const user=await getCurrentUser();
   if(!user||user.status!=="ACTIVE"||user.role!=="PARTNER"||!user.partnerId)return privateJson({ok:false,error:"UNAUTHORIZED"},{status:401});
+  // Opt-in until migration 0021 is applied. Atomic DB counter works across serverless instances.
+  if(process.env.PAYOUT_UPLOAD_RATE_LIMIT==="enabled"){
+   const attempts=await getDb().execute(sql`insert into partner_payout_upload_limits(partner_id,window_started_at,attempt_count,updated_at)
+    values(${user.partnerId},now(),1,now())
+    on conflict(partner_id) do update set
+     window_started_at=case when partner_payout_upload_limits.window_started_at<=now()-interval '1 hour' then now() else partner_payout_upload_limits.window_started_at end,
+     attempt_count=case when partner_payout_upload_limits.window_started_at<=now()-interval '1 hour' then 1 else least(partner_payout_upload_limits.attempt_count+1,6) end,
+     updated_at=now()
+    returning attempt_count,extract(epoch from (window_started_at+interval '1 hour'-now())) as retry_seconds`);
+   if(Number(attempts[0]?.attempt_count)>5){
+    const retryAfter=Math.max(1,Math.ceil(Number(attempts[0]?.retry_seconds)||3600));
+    return privateJson({ok:false,error:"UPLOAD_RATE_LIMITED"},{status:429,headers:{"Retry-After":String(retryAfter)}});
+   }
+  }
   const rawLength=request.headers.get("content-length");
   if(rawLength!==null&&(!/^\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return privateJson({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
   if(rawLength!==null&&Number(rawLength)>MAX_BYTES*2+1024*1024)return privateJson({ok:false,error:"FILE_SIZE_INVALID"},{status:413});
