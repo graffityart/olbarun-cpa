@@ -6,8 +6,9 @@ import {auditLogs} from "@/db/schema";
 const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,headers:{...Object.fromEntries(new Headers(init?.headers)),"Cache-Control":"no-store"}});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request:Request,{params}:{params:Promise<{partnerId:string}>}){
+ const admin=await requireAdmin();
  try{
-  requireSameOrigin(request);const admin=await requireAdmin();
+  requireSameOrigin(request);
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
   const {partnerId}=await params;
   if(!/^application\/json(?:\s*;\s*charset\s*=\s*utf-8)?\s*$/i.test(request.headers.get("content-type")??""))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
