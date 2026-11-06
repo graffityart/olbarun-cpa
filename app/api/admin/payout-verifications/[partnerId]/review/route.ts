@@ -34,7 +34,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   if(("reason" in body&&typeof body.reason!=="string")||("identityAndBankMatch" in body&&typeof body.identityAndBankMatch!=="boolean")||("sensitiveDataMasked" in body&&typeof body.sensitiveDataMasked!=="boolean"))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   if(decision==="APPROVED"&&body?.identityAndBankMatch!==true)return privateJson({ok:false,error:"IDENTITY_MATCH_CONFIRMATION_REQUIRED"},{status:400});
   if(decision==="APPROVED"&&body?.sensitiveDataMasked!==true)return privateJson({ok:false,error:"PRIVACY_MASK_REVIEW_REQUIRED"},{status:400});
-  if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
+  if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason)||(decision==="APPROVED"&&reason.length>0))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   const result=await getDb().transaction(async tx=>{
    const locked=await tx.execute(sql`select id from partner_payout_verifications where partner_id=${partnerId} and status='PENDING' for update`);
    if(locked.length!==1)throw Error("NOT_PENDING");
