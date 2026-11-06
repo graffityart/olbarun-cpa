@@ -14,7 +14,12 @@ function detect(bytes:Uint8Array){
  if(bytes.length>=4&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9)return {ext:"jpg",mime:"image/jpeg"};
  if(bytes.length>=24&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)&&[73,72,68,82].every((v,i)=>bytes[12+i]===v)&&[73,69,78,68,174,66,96,130].every((v,i)=>bytes[bytes.length-8+i]===v)){
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  // PNG's first chunk must be the 13-byte IHDR; reject malformed headers.
+  if(view.getUint32(8)!==13||bytes.length<45)return null;
   const width=view.getUint32(16),height=view.getUint32(20);
+  const depth=bytes[24],color=bytes[25];
+  const allowedDepths:Record<number,number[]>={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
+  if(!allowedDepths[color]?.includes(depth)||bytes[26]!==0||bytes[27]!==0||bytes[28]>1)return null;
   // Reject impossible or excessively large PNG dimensions before private storage.
   if(width<1||height<1||width>10000||height>10000||width*height>25000000)return null;
   return {ext:"png",mime:"image/png"};
