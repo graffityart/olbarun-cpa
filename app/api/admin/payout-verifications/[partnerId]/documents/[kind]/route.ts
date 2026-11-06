@@ -5,7 +5,7 @@ import {sql} from "drizzle-orm";
 import {auditLogs} from "@/db/schema";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const runtime="nodejs";
-const privateError=(status:number)=>new Response(null,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
+const privateError=(status:number)=>new Response(null,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer","Cross-Origin-Resource-Policy":"same-origin"}});
 export async function GET(_request:Request,{params}:{params:Promise<{partnerId:string;kind:string}>}){
  try{
   const admin=await requireAdmin();
@@ -22,6 +22,6 @@ export async function GET(_request:Request,{params}:{params:Promise<{partnerId:s
   if(!["application/pdf","image/jpeg","image/png"].includes(contentType))return privateError(415);
   await getDb().insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_DOCUMENT_VIEW",targetType:"PARTNER",targetId:partnerId,summary:kind==="bank"?"출금 통장 사본 열람":"출금 본인확인 서류 열람",metadata:{documentKind:kind}});
 
-  return new Response(file.stream,{headers:{"Content-Type":contentType,"Content-Disposition":`attachment; filename="${kind==="bank"?"bank":"identity"}.${contentType==="application/pdf"?"pdf":contentType==="image/png"?"png":"jpg"}"`,"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store","Referrer-Policy":"no-referrer","X-Frame-Options":"DENY","Content-Security-Policy":"default-src 'none'; sandbox"}});
+  return new Response(file.stream,{headers:{"Content-Type":contentType,"Content-Disposition":`attachment; filename="${kind==="bank"?"bank":"identity"}.${contentType==="application/pdf"?"pdf":contentType==="image/png"?"png":"jpg"}"`,"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store","Referrer-Policy":"no-referrer","X-Frame-Options":"DENY","Cross-Origin-Resource-Policy":"same-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Content-Security-Policy":"default-src 'none'; sandbox"}});
  }catch{console.error("Private verification document access failed");return privateError(500);}
 }
