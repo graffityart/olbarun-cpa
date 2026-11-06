@@ -10,6 +10,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   requireSameOrigin(request);const admin=await requireAdmin();
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
   const {partnerId}=await params;
+  if(!/^application\/json(?:\s*;|\s*$)/i.test(request.headers.get("content-type")??""))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
   // Bound even chunked requests without Content-Length before parsing admin review JSON.
   const maxReviewBytes=4096;
   const reader=request.body?.getReader();
@@ -26,6 +27,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    }
   }finally{reader.releaseLock();}
   const body=await new Response(new Blob(chunks.map(chunk=>new Uint8Array(chunk)))).json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
+  if(!body||typeof body!=="object"||Array.isArray(body))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   if(decision==="APPROVED"&&body?.identityAndBankMatch!==true)return privateJson({ok:false,error:"IDENTITY_MATCH_CONFIRMATION_REQUIRED"},{status:400});
   if(decision==="APPROVED"&&body?.sensitiveDataMasked!==true)return privateJson({ok:false,error:"PRIVACY_MASK_REVIEW_REQUIRED"},{status:400});
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
