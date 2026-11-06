@@ -5,7 +5,7 @@ export default function PayoutVerificationReview({partnerId}:{partnerId:string})
  const router=useRouter(),[reason,setReason]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[matched,setMatched]=useState(false),[masked,setMasked]=useState(false);
  async function review(decision:"APPROVED"|"REJECTED"){
   if(busy)return;if(decision==="REJECTED"&&!reason.trim()){setMessage("반려 사유를 입력해 주세요.");return;}
-  if(decision==="APPROVED"&&!matched){setMessage("서류의 이름과 계좌 예금주가 일치하는지 확인한 후 체크해 주세요.");return;}if(decision==="APPROVED"&&!masked){setMessage("개인정보 가림 여부를 확인해 주세요.");return;}if(decision==="APPROVED"&&!window.confirm("통장 및 신분확인 서류를 직접 확인했으며 명의가 일치합니까?"))return;
+  if(decision==="APPROVED"&&!matched){setMessage("서류의 이름과 계좌 예금주가 일치하는지 확인한 후 체크해 주세요.");return;}if(decision==="APPROVED"&&!masked){setMessage("개인정보 가림 여부를 확인해 주세요.");return;}if(decision==="APPROVED"&&!window.confirm("통장·신분확인 서류의 명의 일치와 개인정보 가림을 모두 확인했습니까? 개인정보가 노출된 서류는 승인하지 말고 반려해 주세요."))return;
   setBusy(true);setMessage("");
   try{
    const res=await fetch(`/api/admin/payout-verifications/${partnerId}/review`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({decision,reason,identityAndBankMatch:decision==="APPROVED"?matched:undefined,sensitiveDataMasked:decision==="APPROVED"?masked:undefined})});
