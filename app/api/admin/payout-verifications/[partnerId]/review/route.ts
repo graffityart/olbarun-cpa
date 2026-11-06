@@ -31,6 +31,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   // Accept only fields used by the review workflow; reject unexpected metadata.
   const allowedReviewFields=new Set(["decision","reason","identityAndBankMatch","sensitiveDataMasked"]);
   if(Object.keys(body).some(key=>!allowedReviewFields.has(key)))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
+  if(("reason" in body&&typeof body.reason!=="string")||("identityAndBankMatch" in body&&typeof body.identityAndBankMatch!=="boolean")||("sensitiveDataMasked" in body&&typeof body.sensitiveDataMasked!=="boolean"))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   if(decision==="APPROVED"&&body?.identityAndBankMatch!==true)return privateJson({ok:false,error:"IDENTITY_MATCH_CONFIRMATION_REQUIRED"},{status:400});
   if(decision==="APPROVED"&&body?.sensitiveDataMasked!==true)return privateJson({ok:false,error:"PRIVACY_MASK_REVIEW_REQUIRED"},{status:400});
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
