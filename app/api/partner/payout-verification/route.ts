@@ -16,6 +16,7 @@ function detect(bytes:Uint8Array){
  return null;
 }
 export async function POST(request:Request){
+ if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_UPLOAD_UNAVAILABLE"},{status:503});
  try{
   requireSameOrigin(request);
   const user=await getCurrentUser();
