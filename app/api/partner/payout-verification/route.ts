@@ -13,7 +13,7 @@ function detect(bytes:Uint8Array){
  if(bytes.length>=16&&bytes[0]===0x25&&bytes[1]===0x50&&bytes[2]===0x44&&bytes[3]===0x46&&bytes[4]===0x2d&&bytes[5]>=0x31&&bytes[5]<=0x32&&bytes[6]===0x2e&&bytes[7]>=0x30&&bytes[7]<=0x39){
   // Reject truncated PDFs lacking a terminal EOF marker; this is not a PDF sanitizer.
   const tail=Buffer.from(bytes.subarray(Math.max(0,bytes.length-1024))).toString("latin1");
-  if(!/%%EOF(?:\\r?\\n|\\r|[ \\t])*$/i.test(tail))return null;
+  if(!/%%EOF(?:\r?\n|\r|[ \t])*$/i.test(tail))return null;
   return {ext:"pdf",mime:"application/pdf"};
  }
  if(bytes.length>=4&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9)return {ext:"jpg",mime:"image/jpeg"};
