@@ -45,6 +45,8 @@ function detect(bytes:Uint8Array){
     break;
    }
    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+    // A second SOF must not replace the dimensions or component IDs of the first frame.
+    if(validFrame)break;
     if(length<9)break;
     const precision=bytes[offset+2];
     if(marker===0xc0?precision!==8:![8,12].includes(precision))break;
