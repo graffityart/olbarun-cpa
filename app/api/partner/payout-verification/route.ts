@@ -90,6 +90,14 @@ function detect(bytes:Uint8Array){
    // IHDR is only permitted as the first chunk; IEND must be terminal.
    if([73,72,68,82].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
    if([73,69,78,68].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
+   // CRC covers chunk type and payload, excluding length and stored CRC.
+   let chunkCrc=0xffffffff;
+   const crcEnd=chunkOffset+8+chunkLength;
+   for(let i=chunkOffset+4;i<crcEnd;i++){
+    chunkCrc^=bytes[i];
+    for(let bit=0;bit<8;bit++)chunkCrc=(chunkCrc>>>1)^((chunkCrc&1)?0xedb88320:0);
+   }
+   if(((chunkCrc^0xffffffff)>>>0)!==view.getUint32(crcEnd))return null;
    chunkOffset+=chunkLength+12;
   }
   if(chunkOffset!==endOffset)return null;
