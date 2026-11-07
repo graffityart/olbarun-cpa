@@ -31,6 +31,8 @@ function detect(bytes:Uint8Array){
    if(marker===0xda){if(validFrame&&length>=6&&offset+length<bytes.length-2)validScan=true;break;}
    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
     if(length<9)break;
+    const precision=bytes[offset+2];
+    if(precision!==(marker===0xc0||marker===0xc1||marker===0xc2?8:12))break;
     const components=bytes[offset+7];
     if(components<1||components>4||length!==8+3*components)break;
     const height=(bytes[offset+3]<<8)|bytes[offset+4],width=(bytes[offset+5]<<8)|bytes[offset+6];
