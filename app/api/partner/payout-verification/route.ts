@@ -16,7 +16,28 @@ function detect(bytes:Uint8Array){
   if(!/%%EOF(?:\r?\n|\r|[ \t])*$/i.test(tail))return null;
   return {ext:"pdf",mime:"application/pdf"};
  }
- if(bytes.length>=4&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9)return {ext:"jpg",mime:"image/jpeg"};
+ if(bytes.length>=16&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9){
+  // Walk JPEG markers until a Start of Frame header is found. Do not trust SOI/EOI alone.
+  let offset=2,validFrame=false;
+  while(offset+4<bytes.length){
+   if(bytes[offset]!==0xff)break;
+   while(bytes[offset]===0xff)offset++;
+   const marker=bytes[offset++];
+   if(marker===0xda||marker===0xd9)break;
+   if(marker===0x01||(marker>=0xd0&&marker<=0xd7))continue;
+   if(offset+2>bytes.length)break;
+   const length=(bytes[offset]<<8)|bytes[offset+1];
+   if(length<2||offset+length>bytes.length)break;
+   if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+    if(length<8)break;
+    const height=(bytes[offset+3]<<8)|bytes[offset+4],width=(bytes[offset+5]<<8)|bytes[offset+6];
+    if(width<1||height<1||width>10000||height>10000||width*height>25000000)break;
+    validFrame=true;
+   }
+   offset+=length;
+  }
+  if(validFrame)return {ext:"jpg",mime:"image/jpeg"};
+ }
  if(bytes.length>=24&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)&&[73,72,68,82].every((v,i)=>bytes[12+i]===v)&&[73,69,78,68,174,66,96,130].every((v,i)=>bytes[bytes.length-8+i]===v)){
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   // PNG's first chunk must be the 13-byte IHDR; reject malformed headers.
