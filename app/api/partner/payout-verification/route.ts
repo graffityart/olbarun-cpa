@@ -45,6 +45,13 @@ function detect(bytes:Uint8Array){
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   // PNG's first chunk must be the 13-byte IHDR; reject malformed headers.
   if(view.getUint32(8)!==13||bytes.length<45)return null;
+  // Validate the IHDR CRC (chunk type + 13-byte data) before trusting dimensions.
+  let crc=0xffffffff;
+  for(let i=12;i<29;i++){
+   crc^=bytes[i];
+   for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+  }
+  if(((crc^0xffffffff)>>>0)!==view.getUint32(29))return null;
   const width=view.getUint32(16),height=view.getUint32(20);
   const depth=bytes[24],color=bytes[25];
   const allowedDepths:Record<number,number[]>={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
