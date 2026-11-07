@@ -73,6 +73,8 @@ function detect(bytes:Uint8Array){
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   // PNG's first chunk must be the 13-byte IHDR; reject malformed headers.
   if(view.getUint32(8)!==13||bytes.length<45)return null;
+  // IEND must be the final zero-length chunk with the standard PNG CRC.
+  if(view.getUint32(bytes.length-12)!==0)return null;
   // Validate the IHDR CRC (chunk type + 13-byte data) before trusting dimensions.
   let crc=0xffffffff;
   for(let i=12;i<29;i++){
