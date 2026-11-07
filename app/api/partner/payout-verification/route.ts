@@ -87,6 +87,10 @@ function detect(bytes:Uint8Array){
     const c=bytes[i];
     if(!((c>=65&&c<=90)||(c>=97&&c<=122)))return null;
    }
+   // Unknown critical chunks (uppercase first letter) cannot be safely interpreted.
+   const knownCritical=([73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v)||
+    [80,76,84,69].every((v,i)=>bytes[chunkOffset+4+i]===v));
+   if(bytes[chunkOffset+4]>=65&&bytes[chunkOffset+4]<=90&&!knownCritical)return null;
    // IHDR is only permitted as the first chunk; IEND must be terminal.
    if([73,72,68,82].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
    if([73,69,78,68].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
