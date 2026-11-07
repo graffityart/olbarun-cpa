@@ -19,6 +19,7 @@ function detect(bytes:Uint8Array){
  if(bytes.length>=16&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff&&bytes[bytes.length-2]===0xff&&bytes[bytes.length-1]===0xd9){
   // Walk JPEG markers until a Start of Frame header is found. Do not trust SOI/EOI alone.
   let offset=2,validFrame=false,validScan=false,frameComponents=0;
+  const frameComponentIds=new Set<number>();
   while(offset+4<bytes.length){
    if(bytes[offset]!==0xff)break;
    while(bytes[offset]===0xff)offset++;
@@ -31,7 +32,16 @@ function detect(bytes:Uint8Array){
    if(marker===0xda){
     // SOS length is 6 + 2 * scan component count; reject truncated or malformed scan headers.
     const scanComponents=bytes[offset+2];
-    if(validFrame&&scanComponents>=1&&scanComponents<=frameComponents&&length===6+2*scanComponents&&offset+length<bytes.length-2)validScan=true;
+    if(validFrame&&scanComponents>=1&&scanComponents<=frameComponents&&length===6+2*scanComponents&&offset+length<bytes.length-2){
+     const scanIds=new Set<number>();
+     let validIds=true;
+     for(let i=0;i<scanComponents;i++){
+      const id=bytes[offset+3+2*i];
+      if(!frameComponentIds.has(id)||scanIds.has(id)){validIds=false;break;}
+      scanIds.add(id);
+     }
+     if(validIds)validScan=true;
+    }
     break;
    }
    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
@@ -42,6 +52,14 @@ function detect(bytes:Uint8Array){
     if(components<1||components>4||length!==8+3*components)break;
     const height=(bytes[offset+3]<<8)|bytes[offset+4],width=(bytes[offset+5]<<8)|bytes[offset+6];
     if(width<1||height<1||width>10000||height>10000||width*height>25000000)break;
+    frameComponentIds.clear();
+    let validIds=true;
+    for(let i=0;i<components;i++){
+     const id=bytes[offset+8+3*i];
+     if(frameComponentIds.has(id)){validIds=false;break;}
+     frameComponentIds.add(id);
+    }
+    if(!validIds)break;
     frameComponents=components;
     validFrame=true;
    }
