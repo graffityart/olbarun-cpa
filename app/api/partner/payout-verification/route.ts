@@ -28,7 +28,12 @@ function detect(bytes:Uint8Array){
    if(offset+2>bytes.length)break;
    const length=(bytes[offset]<<8)|bytes[offset+1];
    if(length<2||offset+length>bytes.length)break;
-   if(marker===0xda){if(validFrame&&length>=6&&offset+length<bytes.length-2)validScan=true;break;}
+   if(marker===0xda){
+    // SOS length is 6 + 2 * scan component count; reject truncated or malformed scan headers.
+    const scanComponents=bytes[offset+2];
+    if(validFrame&&scanComponents>=1&&scanComponents<=4&&length===6+2*scanComponents&&offset+length<bytes.length-2)validScan=true;
+    break;
+   }
    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
     if(length<9)break;
     const precision=bytes[offset+2];
