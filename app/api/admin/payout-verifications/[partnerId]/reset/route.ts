@@ -12,6 +12,8 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   const {partnerId}=await params;
   const body=await request.json().catch(()=>null);
   const reason=typeof body?.reason==="string"?body.reason.trim():"";
+  // Never store complete resident registration numbers in reset reasons or audit metadata.
+  if(/\b\d{6}\s*[-‐‑‒–—−]?\s*\d{7}\b/.test(reason.normalize("NFKC")))return Response.json({ok:false,error:"SENSITIVE_REASON_DATA"},{status:400,headers:{"Cache-Control":"no-store"}});
   if(!uuid.test(partnerId)||!reason||reason.length>2000)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   await getDb().transaction(async tx=>{
    const partnerLock=await tx.execute(sql`select id from partners where id=${partnerId} for update`);
@@ -29,7 +31,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   const code=error instanceof Error?error.message:"RESET_FAILED";
   if(code==="INVALID_ORIGIN"||code==="ORIGIN_CHECK_FAILED")return Response.json({ok:false,error:code},{status:403});
   if(code==="NOT_APPROVED"||code==="PAYOUT_IN_PROGRESS")return Response.json({ok:false,error:code},{status:409});
-  console.error("Payout verification reset failed",error);
+  console.error("Payout verification reset failed",{code:"RESET_FAILED"});
   return Response.json({ok:false,error:"RESET_FAILED"},{status:500});
  }
 }
