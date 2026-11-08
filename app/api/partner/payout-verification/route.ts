@@ -79,6 +79,8 @@ function detect(bytes:Uint8Array){
   // This checks framing only; full PNG decoding and malware scanning remain separate.
   let chunkOffset=33;
   let sawIdat=false;
+  let idatEnded=false;
+  let sawPlte=false;
   const endOffset=bytes.length-12;
   while(chunkOffset<endOffset){
    if(chunkOffset+12>endOffset)return null;
@@ -92,7 +94,16 @@ function detect(bytes:Uint8Array){
    const knownCritical=([73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v)||
     [80,76,84,69].every((v,i)=>bytes[chunkOffset+4+i]===v));
    if(bytes[chunkOffset+4]>=65&&bytes[chunkOffset+4]<=90&&!knownCritical)return null;
-   if([73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v))sawIdat=true;
+   const isIdat=[73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v);
+   const isPlte=[80,76,84,69].every((v,i)=>bytes[chunkOffset+4+i]===v);
+   if(isIdat){
+    if(idatEnded)return null;
+    sawIdat=true;
+   }else if(sawIdat)idatEnded=true;
+   if(isPlte){
+    if(sawPlte||sawIdat||chunkLength===0||chunkLength%3!==0||chunkLength>768)return null;
+    sawPlte=true;
+   }
    // IHDR is only permitted as the first chunk; IEND must be terminal.
    if([73,72,68,82].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
    if([73,69,78,68].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
