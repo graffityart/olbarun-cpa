@@ -78,6 +78,7 @@ function detect(bytes:Uint8Array){
   // Walk intervening chunks without trusting their declared lengths.
   // This checks framing only; full PNG decoding and malware scanning remain separate.
   let chunkOffset=33;
+  let sawIdat=false;
   const endOffset=bytes.length-12;
   while(chunkOffset<endOffset){
    if(chunkOffset+12>endOffset)return null;
@@ -91,6 +92,7 @@ function detect(bytes:Uint8Array){
    const knownCritical=([73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v)||
     [80,76,84,69].every((v,i)=>bytes[chunkOffset+4+i]===v));
    if(bytes[chunkOffset+4]>=65&&bytes[chunkOffset+4]<=90&&!knownCritical)return null;
+   if([73,68,65,84].every((v,i)=>bytes[chunkOffset+4+i]===v))sawIdat=true;
    // IHDR is only permitted as the first chunk; IEND must be terminal.
    if([73,72,68,82].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
    if([73,69,78,68].every((v,i)=>bytes[chunkOffset+4+i]===v))return null;
@@ -104,7 +106,7 @@ function detect(bytes:Uint8Array){
    if(((chunkCrc^0xffffffff)>>>0)!==view.getUint32(crcEnd))return null;
    chunkOffset+=chunkLength+12;
   }
-  if(chunkOffset!==endOffset)return null;
+  if(chunkOffset!==endOffset||!sawIdat)return null;
   // Validate the IHDR CRC (chunk type + 13-byte data) before trusting dimensions.
   let crc=0xffffffff;
   for(let i=12;i<29;i++){
