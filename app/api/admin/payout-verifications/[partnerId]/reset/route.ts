@@ -10,10 +10,10 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   const admin=await requireAdmin();
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return Response.json({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
   const {partnerId}=await params;
-  if(!/^application\\/json(?:\\s*;\\s*charset\\s*=\\s*utf-8)?\\s*$/i.test(request.headers.get("content-type")??""))return Response.json({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415,headers:{"Cache-Control":"no-store"}});
+  if(!/^application\/json(?:\s*;\s*charset\s*=\s*utf-8)?\s*$/i.test(request.headers.get("content-type")??""))return Response.json({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415,headers:{"Cache-Control":"no-store"}});
   const maxBodyBytes=4096;
   const declaredLength=request.headers.get("content-length");
-  if(declaredLength!==null&&(!/^\\d+$/.test(declaredLength)||!Number.isSafeInteger(Number(declaredLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400,headers:{"Cache-Control":"no-store"}});
+  if(declaredLength!==null&&(!/^\d+$/.test(declaredLength)||!Number.isSafeInteger(Number(declaredLength))))return Response.json({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400,headers:{"Cache-Control":"no-store"}});
   if(declaredLength!==null&&Number(declaredLength)>maxBodyBytes)return Response.json({ok:false,error:"RESET_PAYLOAD_TOO_LARGE"},{status:413,headers:{"Cache-Control":"no-store"}});
   const reader=request.body?.getReader();
   if(!reader)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400,headers:{"Cache-Control":"no-store"}});
