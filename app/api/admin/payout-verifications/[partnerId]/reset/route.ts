@@ -43,7 +43,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    if(pending.length)throw Error("PAYOUT_IN_PROGRESS");
    const updated=await tx.execute(sql`update partner_payout_verifications set status='REJECTED',verified_account_fingerprint=null,reviewed_by=${admin.id},reviewed_at=now(),rejection_reason=${reason},updated_at=now() where partner_id=${partnerId} and status='APPROVED' returning id`);
    if(updated.length!==1)throw Error("NOT_APPROVED");
-   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_RESET",targetType:"PARTNER",targetId:partnerId,summary:"출금계좌 변경 재검수 요청",metadata:{verificationId:updated[0].id,reason}});
+   await tx.insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_RESET",targetType:"PARTNER",targetId:partnerId,summary:"출금계좌 변경 재검수 요청",metadata:{verificationId:updated[0].id}});
   });
   return Response.json({ok:true,status:"REJECTED"},{headers:{"Cache-Control":"no-store"}});
  }catch(error){
