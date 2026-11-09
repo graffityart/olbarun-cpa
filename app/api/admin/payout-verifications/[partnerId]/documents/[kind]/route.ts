@@ -20,6 +20,13 @@ export async function GET(_request:Request,{params}:{params:Promise<{partnerId:s
   if(file?.statusCode!==200)return privateError(404);
   const contentType=/\.pdf(?:-[a-zA-Z0-9]+)?$/.test(path)?"application/pdf":/\.png(?:-[a-zA-Z0-9]+)?$/.test(path)?"image/png":/\.jpg(?:-[a-zA-Z0-9]+)?$/.test(path)?"image/jpeg":"";
   if(!["application/pdf","image/jpeg","image/png"].includes(contentType))return privateError(415);
+  // Recheck the exact document reference after fetching the private blob.
+  // A concurrent approval, rejection or resubmission must invalidate this download.
+  const stillPending=await getDb().execute(sql`select id from partner_payout_verifications
+   where id=${rows[0].id} and partner_id=${partnerId} and status='PENDING'
+   and ${kind==="bank"?sql`bank_document_blob_path=${path}`:sql`identity_document_blob_path=${path}`}
+   limit 1`);
+  if(stillPending.length!==1)return privateError(409);
   await getDb().insert(auditLogs).values({actorUserId:admin.id,action:"PAYOUT_IDENTITY_DOCUMENT_VIEW",targetType:"PARTNER",targetId:partnerId,summary:kind==="bank"?"출금 통장 사본 열람":"출금 본인확인 서류 열람",metadata:{verificationId:rows[0].id,documentKind:kind}});
 
   return new Response(file.stream,{headers:{"Content-Type":contentType,"Content-Disposition":`attachment; filename="${kind==="bank"?"bank":"identity"}.${contentType==="application/pdf"?"pdf":contentType==="image/png"?"png":"jpg"}"`,"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store","Referrer-Policy":"no-referrer","X-Frame-Options":"DENY","Cross-Origin-Resource-Policy":"same-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","Content-Security-Policy":"default-src 'none'; sandbox"}});
