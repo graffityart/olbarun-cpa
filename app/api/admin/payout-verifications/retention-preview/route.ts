@@ -18,13 +18,20 @@ export async function GET(request:Request){
   if(!datePattern.test(before))return privateJson({ok:false,error:"INVALID_DATE"},{status:400});
   const date=new Date(before+"T00:00:00.000Z");
   if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==before||date.getTime()>Date.now())return privateJson({ok:false,error:"INVALID_DATE"},{status:400});
-  const result=await getDb().execute(sql`select count(*)::int as count
+  // Aggregate only: never expose partner IDs, blob paths or document contents.
+  const result=await getDb().execute(sql`select
+   count(*) filter (where not exists(
+    select 1 from settlements s where s.partner_id=v.partner_id and s.status in ('REQUESTED','APPROVED')
+   ))::int as candidate_count,
+   count(*) filter (where exists(
+    select 1 from settlements s where s.partner_id=v.partner_id and s.status in ('REQUESTED','APPROVED')
+   ))::int as active_payout_excluded_count
    from partner_payout_verifications v
    where v.status='REJECTED' and v.submitted_at<${date.toISOString()}::timestamptz
-   and (v.bank_document_blob_path is not null or v.identity_document_blob_path is not null)
-   and not exists(select 1 from settlements s where s.partner_id=v.partner_id and s.status in ('REQUESTED','APPROVED'))`);
-  const count=Number(result[0]?.count??0);
-  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount:count,documentsDeleted:0,warning:"RETENTION_POLICY_NOT_APPROVED"});
+   and (v.bank_document_blob_path is not null or v.identity_document_blob_path is not null)`);
+  const candidateCount=Number(result[0]?.candidate_count??0);
+  const activePayoutExcludedCount=Number(result[0]?.active_payout_excluded_count??0);
+  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount,activePayoutExcludedCount,documentsDeleted:0,warning:"RETENTION_POLICY_NOT_APPROVED"});
  }catch{
   console.error("Payout document inventory failed");
   return privateJson({ok:false,error:"INVENTORY_FAILED"},{status:500});
