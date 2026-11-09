@@ -132,3 +132,9 @@
 6. **업로드 제한 이력:** `partner_payout_upload_limits`의 지난 시간창 행도 정리 대상이지만, 개인정보 처리방침과 운영 모니터링에 필요한 최소 기간을 먼저 정한다. 운영 테이블에 대한 무조건적인 DELETE는 수행하지 않는다.
 
 **운영 전 차단 조건:** 보존 기간 확정, 삭제/재시도 작업 구현 및 테스트, 악성파일 검사, 격리된 HTTP 통합 테스트 완료 전에는 `PAYOUT_KYC_DOCUMENT_UPLOAD`과 `PAYOUT_KYC_ENFORCEMENT`를 활성화하지 않는다.
+
+## 삭제 승인 사전 점검 API (2026-11-09)
+
+관리자 전용 `GET /api/admin/payout-verifications/retention-preview?before=YYYY-MM-DD`는 해당 기준일 이전에 제출된 반려 서류 중 현재 진행 중인 지급이 없는 건수(`candidateCount`)와 지급 중이어서 제외한 건수(`activePayoutExcludedCount`)를 집계한다. 실제 삭제 가능 여부를 판정하지 않으며 개인별 식별자·Blob 경로·문서 내용은 반환하지 않는다.
+
+응답의 `retentionPolicyApproved:false`, `deletionAllowed:false`, `documentsDeleted:0`은 삭제 미승인 상태를 명시한다. `requiredBeforeDeletion`은 보관 정책 승인, 법적 보존 대상 검토, 지급 상태 재검증, 관리자 승인, 감사 기록이 남는 별도 삭제 실행기 구현을 뜻한다. 기준일은 조회 목적의 입력일 뿐 법적 보존 기한이 아니다. **승인·삭제·실패 재시도 API는 아직 구현되지 않았다.** 운영 자료에 대한 삭제를 수행하지 않는다.
