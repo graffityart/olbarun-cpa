@@ -42,7 +42,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    const locked=await tx.execute(sql`select id from partner_payout_verifications where partner_id=${partnerId} and status='PENDING' for update`);
    if(locked.length!==1)throw Error("NOT_PENDING");
    if(decision==="APPROVED"){
-    const viewed=await tx.execute(sql`select count(distinct metadata->>'documentKind')::int as count from audit_logs where actor_user_id=${admin.id} and target_type='PARTNER' and target_id=${partnerId} and action='PAYOUT_IDENTITY_DOCUMENT_VIEW' and metadata->>'documentKind' in ('bank','identity') and created_at>now()-interval '30 minutes' and created_at>(select submitted_at from partner_payout_verifications where partner_id=${partnerId})`);
+    const viewed=await tx.execute(sql`select count(distinct metadata->>'documentKind')::int as count from audit_logs where actor_user_id=${admin.id} and target_type='PARTNER' and target_id=${partnerId} and action='PAYOUT_IDENTITY_DOCUMENT_VIEW' and metadata->>'documentKind' in ('bank','identity') and metadata->>'verificationId'=${locked[0].id} and created_at>now()-interval '30 minutes' and created_at>(select submitted_at from partner_payout_verifications where partner_id=${partnerId})`);
     if(Number(viewed[0]?.count)!==2)throw Error("DOCUMENT_REVIEW_REQUIRED");
    }
    const rows=await tx.execute(sql`update partner_payout_verifications
