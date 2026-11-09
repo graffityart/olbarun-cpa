@@ -31,7 +31,7 @@ export async function GET(request:Request){
    and (v.bank_document_blob_path is not null or v.identity_document_blob_path is not null)`);
   const candidateCount=Number(result[0]?.candidate_count??0);
   const activePayoutExcludedCount=Number(result[0]?.active_payout_excluded_count??0);
-  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount,activePayoutExcludedCount,documentsDeleted:0,warning:"RETENTION_POLICY_NOT_APPROVED"});
+  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount,activePayoutExcludedCount,retentionPolicyApproved:false,deletionAllowed:false,documentsDeleted:0,requiredBeforeDeletion:["APPROVED_RETENTION_POLICY","LEGAL_HOLD_REVIEW","ACTIVE_PAYOUT_RECHECK","ADMIN_APPROVAL","AUDITED_DELETE_WORKER"],warning:"RETENTION_POLICY_NOT_APPROVED"});
  }catch{
   console.error("Payout document inventory failed");
   return privateJson({ok:false,error:"INVENTORY_FAILED"},{status:500});
