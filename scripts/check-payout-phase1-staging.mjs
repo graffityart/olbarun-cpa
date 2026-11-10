@@ -13,6 +13,8 @@ const productionUrl = process.env.DATABASE_URL ?? "";
 let db;
 try { db = new URL(databaseUrl); } catch { if (databaseUrl) errors.push("staging database URL is invalid"); }
 if (db) {
+  if (db.username === "" || db.password === "") errors.push("staging database credentials are required");
+  if (db.searchParams.get("sslmode") === "disable") errors.push("staging database must not disable TLS");
   if (!["postgres:", "postgresql:"].includes(db.protocol)) errors.push("staging database must use PostgreSQL");
   if (db.hostname === "localhost" || db.hostname === "127.0.0.1") errors.push("HTTP staging must use a separately provisioned database");
   if (databaseUrl === productionUrl) errors.push("staging database matches application DATABASE_URL");
@@ -25,6 +27,7 @@ if (db) {
 }
 let base;
 try { base = new URL(process.env.PAYOUT_STAGING_BASE_URL ?? ""); } catch { if (process.env.PAYOUT_STAGING_BASE_URL) errors.push("staging URL is invalid"); }
+if (base && base.pathname !== "/") errors.push("staging base URL must have root path");
 if (base && base.protocol !== "https:") errors.push("staging URL must use HTTPS");
 if (base && (base.hostname.toLowerCase() === "mypickup.kr" || base.hostname.toLowerCase().endsWith(".mypickup.kr"))) errors.push("production domain and its subdomains are forbidden");
 if (base && (base.username || base.password)) errors.push("staging URL must not contain embedded credentials");
