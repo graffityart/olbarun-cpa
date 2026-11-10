@@ -31,6 +31,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    return privateJson({ok:false,error:"REVIEW_STREAM_FAILED"},{status:400});
   }finally{reader.releaseLock();}
   const body=await new Response(new Blob(chunks.map(chunk=>new Uint8Array(chunk)))).json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
+  // Reject nested arrays and primitive JSON before inspecting review fields.
   if(!body||typeof body!=="object"||Array.isArray(body))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   // Accept only fields used by the review workflow; reject unexpected metadata.
   const allowedReviewFields=new Set(["decision","reason","identityAndBankMatch","sensitiveDataMasked"]);
