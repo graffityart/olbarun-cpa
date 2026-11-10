@@ -5,7 +5,7 @@ import {sql} from "drizzle-orm";
 import {auditLogs} from "@/db/schema";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const runtime="nodejs";
-const privateError=(status:number)=>new Response(null,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer","Cross-Origin-Resource-Policy":"same-origin"}});
+const privateError=(status:number)=>new Response(null,{status,headers:{"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer","Cross-Origin-Resource-Policy":"same-origin","X-Frame-Options":"DENY"}});
 export async function GET(_request:Request,{params}:{params:Promise<{partnerId:string;kind:string}>}){
  const admin=await requireAdmin();
  try{
