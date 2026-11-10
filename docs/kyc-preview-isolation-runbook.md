@@ -8,7 +8,7 @@
 - Vercel `BLOB_READ_WRITE_TOKEN`: 하나의 토큰 레코드가 production, preview, development에 적용됨. 연결 저장소는 `mypickup-campaign-materials` (`store_yzVUNQ0ht867rDOB`).
 - **Preview 전용 Private Blob 저장소 생성 완료**: `mypickup-kyc-preview-isolated` (`store_xsX5AMF4O4kjyhm5`, `icn1`). 프로젝트에는 아직 연결하지 않았고 기존 토큰도 교체하지 않았음.
 - Neon: 별도 검증 브랜치 `payout-kyc-migration-validation-20261106` (`br-icy-king-a5fv45ua`) 존재. 현재 Preview가 이 브랜치에 연결됐다는 근거는 없음.
-- `PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED`는 분리 여부를 자동 검증하지 않는 운영자 확인 플래그다. Preview API 런타임은 해당 플래그뿐 아니라 배포 브랜치가 `feature/partner-payout-verification`인지, 서로 다른 DB 브랜치 및 Blob 저장소 식별자 네 개가 모두 있는지 확인해야 보호 조건을 통과한다. 이 식별자들은 운영자가 입력한 값이므로 **실제 연결이 분리됐다는 증거가 아니다**.
+- `PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED`는 분리 여부를 자동 검증하지 않는 운영자 확인 플래그다. Preview API 런타임은 해당 플래그뿐 아니라 배포 브랜치가 `feature/partner-payout-verification`인지, 서로 다른 DB 브랜치 및 Blob 저장소 식별자 네 개가 모두 있는지 확인해야 보호 조건을 통과한다. 추가로 `PAYOUT_KYC_BLOB_TOKEN_STORE_ID`가 Preview Blob 저장소 ID와 일치해야 한다. 이 식별자들은 운영자가 입력한 값이므로 **실제 연결이 분리됐다는 증거가 아니다**.
 
 ## 공유 환경변수 분리 시 변경 금지 사항
 
