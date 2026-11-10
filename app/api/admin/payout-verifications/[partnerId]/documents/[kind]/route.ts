@@ -10,6 +10,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{partnerId:s
  const admin=await requireAdmin();
  try{
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateError(503);
+  if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return privateError(503);
   const {partnerId,kind}=await params;
   if(!uuid.test(partnerId)||!["bank","identity"].includes(kind))return privateError(400);
   const rows=await getDb().execute(sql`select id,bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${partnerId} and status='PENDING' limit 1`);
