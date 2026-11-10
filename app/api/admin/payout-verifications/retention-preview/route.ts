@@ -25,13 +25,15 @@ export async function GET(request:Request){
    ))::int as candidate_count,
    count(*) filter (where exists(
     select 1 from settlements s where s.partner_id=v.partner_id and s.status in ('REQUESTED','APPROVED')
-   ))::int as active_payout_excluded_count
+   ))::int as active_payout_excluded_count,
+   count(*) filter (where (v.bank_document_blob_path is null) <> (v.identity_document_blob_path is null))::int as partial_document_reference_count
    from partner_payout_verifications v
    where v.status='REJECTED' and v.submitted_at<${date.toISOString()}::timestamptz
    and (v.bank_document_blob_path is not null or v.identity_document_blob_path is not null)`);
   const candidateCount=Number(result[0]?.candidate_count??0);
   const activePayoutExcludedCount=Number(result[0]?.active_payout_excluded_count??0);
-  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount,activePayoutExcludedCount,retentionPolicyApproved:false,deletionAllowed:false,documentsDeleted:0,requiredBeforeDeletion:["APPROVED_RETENTION_POLICY","LEGAL_HOLD_REVIEW","ACTIVE_PAYOUT_RECHECK","ADMIN_APPROVAL","AUDITED_DELETE_WORKER"],warning:"RETENTION_POLICY_NOT_APPROVED"});
+  const partialDocumentReferenceCount=Number(result[0]?.partial_document_reference_count??0);
+  return privateJson({ok:true,assessmentOnly:true,cutoff:before,candidateCount,activePayoutExcludedCount,partialDocumentReferenceCount,orphanBlobScanPerformed:false,retentionPolicyApproved:false,deletionAllowed:false,documentsDeleted:0,requiredBeforeDeletion:["APPROVED_RETENTION_POLICY","LEGAL_HOLD_REVIEW","ACTIVE_PAYOUT_RECHECK","ADMIN_APPROVAL","AUDITED_DELETE_WORKER"],warning:"RETENTION_POLICY_NOT_APPROVED"});
  }catch{
   console.error("Payout document inventory failed");
   return privateJson({ok:false,error:"INVENTORY_FAILED"},{status:500});
