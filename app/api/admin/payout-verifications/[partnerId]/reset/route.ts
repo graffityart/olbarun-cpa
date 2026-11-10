@@ -9,6 +9,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   requireSameOrigin(request);
   const admin=await requireAdmin();
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return Response.json({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
+  if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return Response.json({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503,headers:{"Cache-Control":"private, no-store"}});
   const {partnerId}=await params;
   if(!/^application\/json(?:\s*;\s*charset\s*=\s*utf-8)?\s*$/i.test(request.headers.get("content-type")??""))return Response.json({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415,headers:{"Cache-Control":"no-store"}});
   const maxBodyBytes=4096;
