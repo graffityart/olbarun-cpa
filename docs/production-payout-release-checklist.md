@@ -55,6 +55,13 @@
 - 테스트는 임시 테이블을 생성·삭제하므로 **운영 Neon 및 현재 공유 Preview DB에 연결해 실행하면 안 된다**.
 - **운영 릴리스 게이트:** 격리된 로컬 PostgreSQL에서 해당 테스트의 실제 실행 결과(통과/실패/건너뜀)를 기록하기 전까지 정산 동시성 검증 완료로 표시하지 않는다.
 
+## GitHub Actions 실 실행 확인 (2026-11-10)
+- 검증 커밋: `fb6160c7fd6276305d131190d8a8a9c0258cd0e7`.
+- GitHub Actions `CPA and settlement tests` 실행 ID `42767801697`: **success**. PostgreSQL 서비스 컨테이너 초기화, `npm run test:settlements`, `PostgreSQL concurrency and rollback tests`, `npm run test:cpa`, `npm run typecheck` 단계 모두 **success**.
+- 같은 커밋의 `CPA regression and TypeScript`, `CPA checks` 워크플로도 **success**.
+- Vercel Preview도 **success**.
+- 이 결과는 CI 격리 PostgreSQL에서 수행된 자동 테스트를 의미하며, 운영 데이터/인증된 실제 HTTP/KYC Blob 연동 검증을 대체하지 않는다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
