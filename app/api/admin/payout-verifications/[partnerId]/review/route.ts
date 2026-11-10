@@ -3,7 +3,7 @@ import {getDb} from "@/db";
 import {requireAdmin} from "@/lib/auth/guards";
 import {requireSameOrigin} from "@/lib/security/origin";
 import {auditLogs} from "@/db/schema";
-const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,headers:{...Object.fromEntries(new Headers(init?.headers)),"Cache-Control":"no-store"}});
+const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,headers:{...Object.fromEntries(new Headers(init?.headers)),"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request:Request,{params}:{params:Promise<{partnerId:string}>}){
  const admin=await requireAdmin();
@@ -26,6 +26,9 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
     if(size>maxReviewBytes){await reader.cancel().catch(()=>{});return privateJson({ok:false,error:"REVIEW_PAYLOAD_TOO_LARGE"},{status:413});}
     chunks.push(value);
    }
+  }catch{
+   await reader.cancel().catch(()=>{});
+   return privateJson({ok:false,error:"REVIEW_STREAM_FAILED"},{status:400});
   }finally{reader.releaseLock();}
   const body=await new Response(new Blob(chunks.map(chunk=>new Uint8Array(chunk)))).json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
   if(!body||typeof body!=="object"||Array.isArray(body))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
