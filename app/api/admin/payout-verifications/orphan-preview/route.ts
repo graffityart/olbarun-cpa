@@ -8,7 +8,7 @@ const privateJson=(data:unknown,init?:ResponseInit)=>Response.json(data,{...init
 const prefix="payout-verifications/";
 const graceMs=48*60*60*1000;
 
-// Read-only, single-page diagnostic. Never call del() or return object names.
+// Read-only, single-page diagnostic. Never delete objects or return object names.
 // A complete result requires a complete listing and a successful DB comparison.
 export async function GET(request:Request){
  const admin=await requireAdmin();
