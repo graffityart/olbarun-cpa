@@ -48,3 +48,11 @@ Use dedicated test partner and admin accounts against an **isolated nonproductio
 15. Capture sanitized HTTP status codes, test account identifiers, database row counts and timestamps as evidence. Never commit personal identity documents, full bank account numbers, credentials or database URLs.
 
 **Gate:** CI and source-level checks do not replace the above authenticated acceptance tests. Do not merge or deploy without explicit operator approval.
+
+## Release verification update (2026-11-11)
+
+- Commit `f85543c9`: all four GitHub Actions workflows passed, and Vercel Preview succeeded after adapting settlement response tests for no-store headers.
+- The phase-one branch now adds no-store headers to partner settlement submission/history and administrator review/status responses. These changes have source-level regression assertions, but **authenticated HTTP behavior is still unverified**.
+- The disposable PostgreSQL suite already includes a simulated audit-persistence failure test that checks settlement `APPROVED`, earning `HOLD`, and zero audit rows after rollback. A redundant follow-up test was removed; do not count duplicate tests as extra independent coverage.
+- Later commits have a successful Vercel Preview, but GitHub Actions results for the latest branch head must be independently confirmed before release.
+- No production merge, deployment, schema migration, environment-variable change, or live payout is authorized by these checks.
