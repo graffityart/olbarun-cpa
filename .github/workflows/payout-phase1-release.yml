@@ -1,0 +1,33 @@
+name: Phase 1 payout release safety
+on:
+  push:
+    branches: [release/payout-phase1-20261110]
+  pull_request:
+    paths:
+      - "lib/payout-phase1-release.test.mjs"
+      - "app/api/partner/settlements/route.ts"
+      - "app/api/admin/settlements/[id]/review/route.ts"
+      - "app/partner/settlements/page.tsx"
+      - "db/migrations/**"
+      - "app/api/**/payout-verification/**"
+      - ".github/workflows/payout-phase1-release.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phase1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check KYC exclusion boundary
+        run: node --test lib/payout-phase1-release.test.mjs
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Run existing settlement regression tests
+        run: npm run test:settlements
+      - name: Typecheck
+        run: npm run typecheck
