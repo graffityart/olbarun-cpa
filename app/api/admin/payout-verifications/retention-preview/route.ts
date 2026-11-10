@@ -12,6 +12,7 @@ export async function GET(request:Request){
  try{
   await requireAdmin();
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503});
+  if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
   const url=new URL(request.url);
   if([...url.searchParams.keys()].some(key=>key!=="before")||url.searchParams.getAll("before").length!==1)return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   const before=url.searchParams.get("before")??"";
