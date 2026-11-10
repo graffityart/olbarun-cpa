@@ -20,6 +20,19 @@
 - 이 조회는 테이블 구조만 검증하며 실제 API, 파일 저장, DB 트랜잭션 통합 테스트를 대체하지 않는다.
 - 운영 브랜치에는 두 테이블이 없으므로 KYC 기능 활성화는 보류한다.
 
+## 격리 DB 인덱스 확인 (2026-11-10)
+- `partner_payout_verifications`: `partner_payout_verifications_pkey` (id), `payout_verification_unique_partner` (partner_id), `partner_payout_verifications_status_idx` (status, submitted_at) 확인.
+- `partner_payout_upload_limits`: `partner_payout_upload_limits_pkey` (partner_id) 확인.
+- 인덱스 확인은 실제 동시성/성능 테스트를 대체하지 않는다.
+
+## 운영 DB 적용 순서 (승인 전 실행 금지)
+1. 운영 백업/복구 가능 여부와 현재 릴리스 SHA를 확인한다.
+2. 운영 스키마를 다시 읽기 전용으로 조회하여 신규 테이블이 여전히 없는지 확인한다.
+3. 검증 브랜치와 운영 스키마 차이를 검토한다.
+4. 승인 후 `0020_partner_payout_verifications.sql`, 이어서 `0021_partner_payout_upload_limits.sql` 적용한다.
+5. 테이블·컬럼·제약조건·인덱스 존재 여부를 다시 조회한다.
+6. KYC 업로드 기능은 계속 비활성화하고 일반 출금 기능 회귀 테스트를 완료한 후 별도 활성화를 검토한다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
