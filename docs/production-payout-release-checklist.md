@@ -7,6 +7,12 @@
 - 변경 범위: 출금 신청·심사 API, 파트너/관리자 화면, KYC 서류 API, 테스트, DB 마이그레이션.
 - 전체 브랜치를 바로 운영에 병합하지 않고 릴리스 범위를 확정한다.
 
+## 운영/검증 DB 스키마 실제 조회 결과 (2026-11-10)
+- Neon 운영 브랜치 `br-wandering-smoke-a5kcazle`: `partners`, `settlements`, `settlement_items` 존재. `partner_payout_verifications`, `partner_payout_upload_limits`는 `information_schema.columns` 조회 결과 **없음**.
+- Neon 격리 검증 브랜치 `br-icy-king-a5fv45ua`: 두 신규 테이블이 `information_schema.tables`에 **존재**함. 컬럼/제약조건 및 실제 트랜잭션 동작까지 검증했다는 뜻은 아님.
+- 모든 확인은 읽기 전용 SQL로 수행했으며 운영 DB에 마이그레이션을 실행하지 않음.
+- **결론: 현재 운영 DB에 KYC 기능을 즉시 활성화할 수 없음.** 마이그레이션 검증 및 별도 승인 필요.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
