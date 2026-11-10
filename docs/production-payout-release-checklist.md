@@ -40,6 +40,14 @@
 - 신규 KYC 서류 업로드 API는 별도의 `PAYOUT_KYC_DOCUMENT_UPLOAD` 플래그를 사용한다. 두 플래그를 혼동하지 않는다.
 - 출금 API는 은행 계좌 스냅샷과 수익 항목을 트랜잭션으로 처리하지만, 실제 DB 통합 테스트 및 인증된 HTTP 테스트는 아직 수행하지 않았다.
 
+## 운영 Vercel 환경변수 및 기존 정산 스키마 확인 (2026-11-10)
+- Vercel 프로젝트 환경변수 **메타데이터만** 조회(비밀값 복호화 안 함). `PAYOUT_KYC_ENFORCEMENT` 및 `PAYOUT_KYC_DOCUMENT_UPLOAD` 키는 목록에 없었음. 코드에서는 정확히 `"enabled"`일 때만 활성화.
+- `DATABASE_URL`은 하나의 환경변수 레코드가 production/preview 모두에 적용됨. 동일한 값으로 사용될 위험이 있으므로 별도 연결로 분리할 때까지 Preview 실 데이터 테스트 금지.
+- `BLOB_READ_WRITE_TOKEN`은 하나의 환경변수 레코드가 production/preview/development에 적용되며, 저장소 메타데이터는 `store_yzVUNQ0ht867rDOB`. Preview 전용 저장소는 아직 연결되지 않음.
+- 운영 Neon 브랜치 `br-wandering-smoke-a5kcazle` 읽기 전용 확인: `partners`, `earnings`, `settlements`, `settlement_items`, `audit_logs` 테이블의 출금 경로 주요 컬럼 존재.
+- **판정:** 기본 출금 경로는 기존 운영 DB 스키마와 주요 컬럼 수준에서 호환되지만, 코드 전체·인증·트랜잭션·동시성에 대한 운영 전 검증은 미완료. KYC 활성화 금지.
+- 운영 환경변수 값과 자격증명은 출력·복호화하지 않았으며, 운영 배포/설정 변경도 수행하지 않았음.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
