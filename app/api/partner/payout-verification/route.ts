@@ -255,9 +255,13 @@ export async function POST(request:Request){
    .filter((path):path is string=>typeof path==="string"&&path.startsWith(`payout-verifications/${user.partnerId}/`));
   if(oldPaths.length){
    try{
-    const current=await getDb().execute(sql`select bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
-    const active=new Set([current[0]?.bank_document_blob_path,current[0]?.identity_document_blob_path]);
-    const obsolete=oldPaths.filter(path=>!active.has(path));
+    const current=await getDb().execute(sql`select status,bank_document_blob_path,identity_document_blob_path from partner_payout_verifications where partner_id=${user.partnerId} limit 1`);
+    // Only this request's committed submission may authorize old-file cleanup.
+    // If a concurrent request changed the row, leave all old files for later review.
+    if(current[0]?.status!=="PENDING"||current[0]?.bank_document_blob_path!==uploadedPaths[0]||current[0]?.identity_document_blob_path!==uploadedPaths[1])
+     throw Error("CLEANUP_SUBMISSION_CHANGED");
+    const active=new Set([current[0].bank_document_blob_path,current[0].identity_document_blob_path]);
+    const obsolete=[...new Set(oldPaths)].filter(path=>!active.has(path));
     const cleanupResults=await Promise.allSettled(obsolete.map(path=>del(path)));
     const failedCount=cleanupResults.filter(result=>result.status==="rejected").length;
     if(failedCount>0)console.error("Old payout verification blob cleanup incomplete",{failedCount});
