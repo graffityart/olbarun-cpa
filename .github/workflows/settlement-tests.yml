@@ -1,12 +1,19 @@
 name: CPA and settlement tests
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/partner-payout-verification]
     paths:
       - "lib/settlement-list-filters.ts"
       - "lib/settlement-validation.ts"
       - "lib/settlement-validation.test.mjs"
       - "lib/settlement-concurrency.test.mjs"
+      - "lib/payout-account.test.mjs"
+      - "lib/payout-account.ts"
+      - "app/api/partner/payout-verification/**"
+      - "app/api/admin/payout-verifications/**"
+      - "components/PayoutVerificationForm.tsx"
+      - "components/PayoutVerificationReset.tsx"
+      - "components/PayoutVerificationReview.tsx"
       - "lib/cpa/**"
       - "app/api/**/cpa/**"
       - "app/api/**/conversions/**"
@@ -26,6 +33,13 @@ on:
       - "lib/settlement-validation.ts"
       - "lib/settlement-validation.test.mjs"
       - "lib/settlement-concurrency.test.mjs"
+      - "lib/payout-account.test.mjs"
+      - "lib/payout-account.ts"
+      - "app/api/partner/payout-verification/**"
+      - "app/api/admin/payout-verifications/**"
+      - "components/PayoutVerificationForm.tsx"
+      - "components/PayoutVerificationReset.tsx"
+      - "components/PayoutVerificationReview.tsx"
       - "lib/cpa/**"
       - "app/api/**/cpa/**"
       - "app/api/**/conversions/**"
