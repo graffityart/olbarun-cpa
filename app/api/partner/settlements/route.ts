@@ -10,9 +10,9 @@ export async function POST(request:Request){try{requireSameOrigin(request);const
 
 export async function GET(){
  const user=await getCurrentUser();
- if(!user||user.role!=="PARTNER"||user.status!=="ACTIVE"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401});
+ if(!user||user.role!=="PARTNER"||user.status!=="ACTIVE"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401,headers:{"Cache-Control":"no-store"}});
  try{
   const rows=await getDb().select({settlementCode:settlements.settlementCode,status:settlements.status,requestedAmount:settlements.requestedAmount,requestedAt:settlements.requestedAt}).from(settlements).where(eq(settlements.partnerId,user.partnerId)).orderBy(desc(settlements.requestedAt)).limit(10);
   return Response.json({ok:true,settlements:rows},{headers:{"Cache-Control":"no-store"}});
- }catch(error){console.error("Partner settlement history lookup failed",error);return Response.json({ok:false,error:"LOOKUP_FAILED"},{status:500});}
+ }catch(error){console.error("Partner settlement history lookup failed",error);return Response.json({ok:false,error:"LOOKUP_FAILED"},{status:500,headers:{"Cache-Control":"no-store"}});}
 }
