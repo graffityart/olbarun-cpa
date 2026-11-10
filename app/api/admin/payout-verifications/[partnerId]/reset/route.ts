@@ -29,7 +29,11 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
     if(total>maxBodyBytes){await reader.cancel().catch(()=>{});return Response.json({ok:false,error:"RESET_PAYLOAD_TOO_LARGE"},{status:413,headers:{"Cache-Control":"no-store"}});}
     chunks.push(value);
    }
+  }catch{
+   await reader.cancel().catch(()=>{});
+   return Response.json({ok:false,error:"INVALID_INPUT"},{status:400,headers:{"Cache-Control":"private, no-store"}});
   }finally{reader.releaseLock();}
+  if(declaredLength!==null&&total!==Number(declaredLength))return Response.json({ok:false,error:"CONTENT_LENGTH_MISMATCH"},{status:400,headers:{"Cache-Control":"private, no-store"}});
   const body=await new Response(new Blob(chunks.map(chunk=>new Uint8Array(chunk)))).json().catch(()=>null);
   if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(key=>key!=="reason"))return Response.json({ok:false,error:"INVALID_INPUT"},{status:400,headers:{"Cache-Control":"no-store"}});
   const reason=typeof body?.reason==="string"?body.reason.trim():"";
