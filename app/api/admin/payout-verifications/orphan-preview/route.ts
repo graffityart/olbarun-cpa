@@ -17,9 +17,18 @@ export async function GET(request:Request){
   if(process.env.PAYOUT_KYC_ORPHAN_INVENTORY!=="enabled"||process.env.VERCEL_ENV==="production")
    return privateJson({ok:false,error:"INVENTORY_DISABLED"},{status:503});
   if(new URL(request.url).search)return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
-  const page=await list({prefix,limit:100});
+  const blobs:Awaited<ReturnType<typeof list>>["blobs"]=[];
+  let cursor:string|undefined;
+  let complete=false;
+  for(let pageNumber=0;pageNumber<5;pageNumber++){
+   const page=await list({prefix,limit:100,cursor});
+   blobs.push(...page.blobs);
+   if(!page.hasMore){complete=true;break;}
+   if(!page.cursor||page.cursor===cursor)throw Error("INVENTORY_CURSOR_INVALID");
+   cursor=page.cursor;
+  }
   const now=Date.now();
-  const eligible=page.blobs.filter(blob=>blob.pathname.startsWith(prefix)
+  const eligible=blobs.filter(blob=>blob.pathname.startsWith(prefix)
    &&/^payout-verifications\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/(?:bank|identity)\.(?:pdf|png|jpg)(?:-[a-zA-Z0-9]+)?$/.test(blob.pathname)
    &&Number.isFinite(new Date(blob.uploadedAt).getTime())
    &&now-new Date(blob.uploadedAt).getTime()>=graceMs);
@@ -33,10 +42,10 @@ export async function GET(request:Request){
    const referenced=new Set(rows.map(row=>String(row.path)));
    unreferencedCandidateCount=paths.filter(path=>!referenced.has(path)).length;
   }
-  return privateJson({ok:true,assessmentOnly:true,complete:!page.hasMore,
-   scannedObjectCount:page.blobs.length,ageEligibleCount:eligible.length,
+  return privateJson({ok:true,assessmentOnly:true,complete,
+   scannedObjectCount:blobs.length,ageEligibleCount:eligible.length,
    unreferencedCandidateCount,documentsDeleted:0,deletionAllowed:false,
-   warning:page.hasMore?"PARTIAL_LISTING":"CANDIDATES_NOT_AUTHORIZED_FOR_DELETION"});
+   warning:!complete?"PARTIAL_LISTING":"CANDIDATES_NOT_AUTHORIZED_FOR_DELETION"});
  }catch{
   console.error("Private KYC blob inventory failed");
   return privateJson({ok:false,error:"INVENTORY_FAILED",complete:false,documentsDeleted:0},{status:500});
