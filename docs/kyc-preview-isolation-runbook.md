@@ -10,6 +10,14 @@
 - Neon: 별도 검증 브랜치 `payout-kyc-migration-validation-20261106` (`br-icy-king-a5fv45ua`) 존재. 현재 Preview가 이 브랜치에 연결됐다는 근거는 없음.
 - `PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED`는 분리 여부를 자동 검증하지 않는 운영자 확인 플래그다. Preview API 런타임은 해당 플래그뿐 아니라 배포 브랜치가 `feature/partner-payout-verification`인지, 서로 다른 DB 브랜치 및 Blob 저장소 식별자 네 개가 모두 있는지 확인해야 보호 조건을 통과한다. 이 식별자들은 운영자가 입력한 값이므로 **실제 연결이 분리됐다는 증거가 아니다**.
 
+## 공유 환경변수 분리 시 변경 금지 사항
+
+- 확인된 기존 Vercel 환경변수 ID: `DATABASE_URL` = `mdv1vFYzvdo6GspN` (production + preview), `BLOB_READ_WRITE_TOKEN` = `HBDYlBhZBpYKnCEp` (production + preview + development). 이 ID는 비밀 값이 아닌 관리 식별자다.
+- 기존 레코드의 **값(value)을 수정하거나 upsert로 덮어쓰지 않는다.** 기존 레코드의 target에서 preview를 제거하는 작업은 production 대상 유지 여부와 Preview 대체 변수가 준비됐는지를 검증한 후 별도 승인된 변경으로 수행한다.
+- 신규 Preview 전용 환경변수는 `target=[preview]`와 `gitBranch=feature/partner-payout-verification`으로 범위를 한정한다. 같은 키의 공유 레코드와 충돌 시 어느 값이 우선 적용되는지 확인되기 전에는 생성·활성화하지 않는다.
+- Preview 전용 DB/Blob 자격증명은 로그·문서·커밋·채팅에 기록하지 않는다. 연결 확인은 민감값 대신 브랜치 및 저장소 식별자만 출력한다.
+- Preview 브랜치 제한을 통과해도 실제 연결이 운영 리소스와 같으면 테스트를 중단한다.
+
 ## 실제 통합 테스트 전 필수 확인
 
 1. Preview 전용 Neon DB 브랜치의 연결 문자열을 확인하고, **Preview만** 해당 DB를 사용하도록 분리한다. production의 `DATABASE_URL`은 수정하지 않는다.
