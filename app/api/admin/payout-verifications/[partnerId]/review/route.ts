@@ -45,6 +45,8 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   if(decision==="APPROVED"&&body?.sensitiveDataMasked!==true)return privateJson({ok:false,error:"PRIVACY_MASK_REVIEW_REQUIRED"},{status:400});
   // Do not persist a full Korean resident registration number in rejection messages.
   if(decision==="REJECTED"&&/\b\d{6}\s*[-‐‑‒–—−]?\s*\d{7}\b/.test(reason.normalize("NFKC")))return privateJson({ok:false,error:"SENSITIVE_REASON_DATA"},{status:400});
+  // Rejection notes are displayed to partners; reject control characters and bidi overrides.
+  if(decision==="REJECTED"&&/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u.test(reason))return privateJson({ok:false,error:"INVALID_REJECTION_REASON"},{status:400});
   if(!uuid.test(partnerId)||!["APPROVED","REJECTED"].includes(decision)||reason.length>2000||(decision==="REJECTED"&&!reason)||(decision==="APPROVED"&&reason.length>0))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   const result=await getDb().transaction(async tx=>{
    const locked=await tx.execute(sql`select id from partner_payout_verifications where partner_id=${partnerId} and status='PENDING' for update`);
