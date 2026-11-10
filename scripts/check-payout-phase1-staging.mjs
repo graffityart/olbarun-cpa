@@ -26,7 +26,9 @@ if (db) {
 let base;
 try { base = new URL(process.env.PAYOUT_STAGING_BASE_URL ?? ""); } catch { if (process.env.PAYOUT_STAGING_BASE_URL) errors.push("staging URL is invalid"); }
 if (base && base.protocol !== "https:") errors.push("staging URL must use HTTPS");
-if (base && ["mypickup.kr", "www.mypickup.kr"].includes(base.hostname)) errors.push("production domain is forbidden");
+if (base && (base.hostname.toLowerCase() === "mypickup.kr" || base.hostname.toLowerCase().endsWith(".mypickup.kr"))) errors.push("production domain and its subdomains are forbidden");
+if (base && (base.username || base.password)) errors.push("staging URL must not contain embedded credentials");
+if (base && (base.search || base.hash)) errors.push("staging URL must not include query parameters or fragments");
 if (process.env.PAYOUT_STAGING_SYNTHETIC_DATA_CONFIRMED !== "yes") errors.push("synthetic-only data must be confirmed");
 if (process.env.PAYOUT_STAGING_NOTIFICATIONS_DISABLED !== "yes") errors.push("external notifications must be disabled");
 if (process.env.PAYOUT_STAGING_ISOLATED_DB_CONFIRMED !== "yes") errors.push("isolated DB must be confirmed");
