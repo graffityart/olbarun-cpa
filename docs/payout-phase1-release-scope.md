@@ -26,3 +26,25 @@ Created 2026-11-10 from `main`. This is a **draft-only release branch**; no prod
 - Scope: current release branch adds a payout account-privacy instruction, test invariants, CI and documentation. It does **not** yet port the KYC-feature-branch settlement API changes.
 - **Unverified:** authenticated partner and administrator HTTP end-to-end behavior against an isolated DB; real settlement notification delivery; live user acceptance; production environment readiness.
 - **Decision:** do not merge or deploy to production until those checks and explicit approval are complete. Passing CI is not authorization.
+
+## Authenticated staging acceptance checklist (must be executed before release)
+
+Use dedicated test partner and admin accounts against an **isolated nonproduction database** with synthetic earnings and a disposable notification destination. Do not point this test at production or the shared Preview database.
+
+1. Sign out. Verify partner settlement GET and POST reject unauthenticated requests without revealing account data.
+2. Sign in as partner A; verify GET lists only A's last ten settlements, `Cache-Control: no-store`, and does not expose partner B's settlements.
+3. Submit invalid bank details and an amount different from the entire available balance. Verify no settlement, HOLD earning, or audit record is created.
+4. Submit a valid request. Verify exactly one REQUESTED settlement, its immutable account snapshot, associated settlement items, HOLD earnings, and one audit entry.
+5. Retry the same request and concurrently submit another request. Verify no second active settlement or duplicate earning reservation is created.
+6. Sign in as an unrelated partner. Verify the first partner's settlement cannot be viewed or changed.
+7. Sign in as admin. Verify review preflight, amount and audit checks; approve exactly once. Verify repeated approval is rejected.
+8. Attempt PAID without transfer confirmation. Verify rejection and unchanged APPROVED state.
+9. With synthetic transfer confirmation, mark PAID once. Verify PAID earnings, paid timestamp, one audit entry, and rejected duplicate processing.
+10. In a separate settlement, REJECT a REQUESTED item. Verify HOLD earnings return to AVAILABLE, no payout occurs, and audit is recorded.
+11. Simulate a database failure during an item update; verify transaction rollback leaves settlement and all earnings consistent.
+12. Simulate a network timeout after a successful request; verify the UI locks repeat submission and offers recent-history verification.
+13. Verify admin/partner notification content and delivery in a disposable test channel; do not send to real customers.
+14. Verify KYC documents, KYC admin pages and migrations are absent, and all KYC feature flags remain disabled.
+15. Capture sanitized HTTP status codes, test account identifiers, database row counts and timestamps as evidence. Never commit personal identity documents, full bank account numbers, credentials or database URLs.
+
+**Gate:** CI and source-level checks do not replace the above authenticated acceptance tests. Do not merge or deploy without explicit operator approval.
