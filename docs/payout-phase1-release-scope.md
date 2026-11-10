@@ -19,3 +19,10 @@ Created 2026-11-10 from `main`. This is a **draft-only release branch**; no prod
 - Feature branch `feature/partner-payout-verification`: CI workflow `42767801697` passed.
 - Production schema currently lacks `partner_payout_verifications` and `partner_payout_upload_limits`.
 - Production/Preview environment-variable records for database and Blob are shared; do not run KYC integration tests on Preview before isolation.
+
+## Verification evidence (2026-11-10)
+- Release branch commit `42c0c0fcf71f12a165fb128a65c0a2c5cd72cee9`: Phase 1 payout release safety workflow run [42772664837](https://github.com/graffityart/olbarun-cpa/actions/runs/42772664837) **success**, including disposable PostgreSQL concurrency and rollback tests.
+- Same commit: CPA regression and TypeScript run [42772664350](https://github.com/graffityart/olbarun-cpa/actions/runs/42772664350) **success**; CPA checks run [42772664306](https://github.com/graffityart/olbarun-cpa/actions/runs/42772664306) **success**; Vercel Preview **success**.
+- Scope: current release branch adds a payout account-privacy instruction, test invariants, CI and documentation. It does **not** yet port the KYC-feature-branch settlement API changes.
+- **Unverified:** authenticated partner and administrator HTTP end-to-end behavior against an isolated DB; real settlement notification delivery; live user acceptance; production environment readiness.
+- **Decision:** do not merge or deploy to production until those checks and explicit approval are complete. Passing CI is not authorization.
