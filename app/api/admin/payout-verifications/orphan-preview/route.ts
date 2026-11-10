@@ -1,3 +1,4 @@
+import {isKycPreviewIsolationBlocked} from "@/lib/security/kyc-preview-isolation.mjs";
 import {list} from "@vercel/blob";
 import {sql} from "drizzle-orm";
 import {getDb} from "@/db";
@@ -16,7 +17,7 @@ export async function GET(request:Request){
  try{
   if(process.env.PAYOUT_KYC_ORPHAN_INVENTORY!=="enabled"||process.env.VERCEL_ENV==="production")
    return privateJson({ok:false,error:"INVENTORY_DISABLED"},{status:503});
-  if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
+  if(isKycPreviewIsolationBlocked(process.env))return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
   if(new URL(request.url).search)return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   const blobs:Awaited<ReturnType<typeof list>>["blobs"]=[];
   let cursor:string|undefined;
