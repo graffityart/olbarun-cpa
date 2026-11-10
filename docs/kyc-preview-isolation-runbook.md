@@ -25,7 +25,7 @@
 3. Preview의 DB 호스트/브랜치와 Blob 저장소 ID가 production과 다름을 값 자체를 출력하지 않는 방식으로 검증한다. 별도 브랜치는 운영 DB의 복제 데이터를 포함할 수 있으므로 실제 개인정보를 테스트에 사용하지 않는다.
 4. 위 두 분리를 확인한 후에만 Preview 전용 `PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED=enabled`와 `PAYOUT_KYC_DOCUMENT_UPLOAD=enabled`를 설정한다.
 5. Preview 전용 비밀이 아닌 식별자 `PAYOUT_KYC_PREVIEW_DB_BRANCH_ID`, `PAYOUT_KYC_PRODUCTION_DB_BRANCH_ID`, `PAYOUT_KYC_PREVIEW_BLOB_STORE_ID`, `PAYOUT_KYC_PRODUCTION_BLOB_STORE_ID`를 확인한다. 두 DB 브랜치 ID와 두 Blob 저장소 ID는 각각 달라야 한다. 이 값은 실제 접속 자격증명과 일치하는지 별도 검증해야 하며, ID만 다르게 입력해 통과시키지 않는다.
-6. `npm run check:kyc-preview`로 설정 및 식별자 차이를 검사한다. 이 검사는 **실제 연결 분리를 증명하지 않는다**.
+6. Preview에 실제로 주입되는 Blob 토큰의 저장소 ID를 별도 검증한 뒤 비밀이 아닌 `PAYOUT_KYC_BLOB_TOKEN_STORE_ID`에 기록한다. 이 값은 `PAYOUT_KYC_PREVIEW_BLOB_STORE_ID`와 일치해야 한다. 단, 두 값은 운영자 입력 메타데이터이므로 토큰이 실제로 그 저장소에 연결된다는 증거가 아니다. `npm run check:kyc-preview`로 설정 및 식별자 차이를 검사한다. 이 검사는 **실제 연결 분리를 증명하지 않는다**.
 7. 합성 데이터/가상 파일로 업로드 → 관리자 열람 → 승인/반려 → 재제출 → 정리 검증을 수행한다. 실제 신분증/통장사본은 사용하지 않는다.
 8. Preview 테스트 종료 후 플래그를 다시 비활성화하고, 테스트 데이터/Blob 정리는 참조 및 감사기록을 확인한 뒤 별도 승인된 절차로 처리한다.
 
