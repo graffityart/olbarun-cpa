@@ -48,6 +48,13 @@
 - **판정:** 기본 출금 경로는 기존 운영 DB 스키마와 주요 컬럼 수준에서 호환되지만, 코드 전체·인증·트랜잭션·동시성에 대한 운영 전 검증은 미완료. KYC 활성화 금지.
 - 운영 환경변수 값과 자격증명은 출력·복호화하지 않았으며, 운영 배포/설정 변경도 수행하지 않았음.
 
+## 정산 동시성 자동 테스트 실행 조건 점검 (2026-11-10)
+- `lib/settlement-concurrency.test.mjs`에는 중복 출금 신청 차단, 중복 지급 방지, 실패 시 롤백, 파트너 간 독립성, 반려 시 수익 복원 등의 PostgreSQL 테스트가 구현되어 있다.
+- 이 테스트는 **일반 Preview 빌드에서 DB 통합 검증을 수행하지 않는다.** `SETTLEMENT_TEST_DATABASE_URL`이 없거나 안전조건이 충족되지 않으면 테스트가 `skip`된다.
+- 실행 허용 조건: `NODE_ENV=test`, `SETTLEMENT_TEST_DB_CONFIRM=disposable`, DB명에 test/disposable/ci 포함, 호스트가 localhost/127.0.0.1/::1 중 하나, `DATABASE_URL`과 다른 접속 문자열.
+- 테스트는 임시 테이블을 생성·삭제하므로 **운영 Neon 및 현재 공유 Preview DB에 연결해 실행하면 안 된다**.
+- **운영 릴리스 게이트:** 격리된 로컬 PostgreSQL에서 해당 테스트의 실제 실행 결과(통과/실패/건너뜀)를 기록하기 전까지 정산 동시성 검증 완료로 표시하지 않는다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
