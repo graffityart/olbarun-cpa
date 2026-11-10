@@ -185,6 +185,8 @@ export async function POST(request:Request){
    await reader.cancel().catch(()=>{});
    return privateJson({ok:false,error:"UPLOAD_STREAM_FAILED"},{status:400});
   }finally{reader.releaseLock();}
+  // Reject incomplete or contradictory payload lengths before parsing sensitive files.
+  if(rawLength!==null&&totalBytes!==Number(rawLength))return privateJson({ok:false,error:"CONTENT_LENGTH_MISMATCH"},{status:400});
   const form=await new Request(request.url,{method:"POST",headers:request.headers,body:new Blob(chunks.map(chunk=>new Uint8Array(chunk)))}).formData().catch(()=>null);
   if(!form)return privateJson({ok:false,error:"INVALID_MULTIPART_BODY"},{status:400});
   const allowedFields=new Set(["bankDocument","identityDocument","documentType","bankName","accountNumber","accountHolder","privacyMaskConfirmed"]);
