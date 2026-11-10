@@ -13,6 +13,13 @@
 - 모든 확인은 읽기 전용 SQL로 수행했으며 운영 DB에 마이그레이션을 실행하지 않음.
 - **결론: 현재 운영 DB에 KYC 기능을 즉시 활성화할 수 없음.** 마이그레이션 검증 및 별도 승인 필요.
 
+## 격리 DB 컬럼·제약조건 확인 (2026-11-10)
+- 브랜치: `br-icy-king-a5fv45ua`; 읽기 전용 `information_schema.columns`, `pg_constraint` 조회.
+- `partner_payout_verifications`: 13개 컬럼, 상태 CHECK, 문서 종류 CHECK, 거절 사유 길이 CHECK, 제출 필수값 CHECK, 파트너 UNIQUE, 파트너·관리자 FK 확인.
+- `partner_payout_upload_limits`: 4개 컬럼, `attempt_count >= 0` CHECK, 파트너 FK 및 PK 확인.
+- 이 조회는 테이블 구조만 검증하며 실제 API, 파일 저장, DB 트랜잭션 통합 테스트를 대체하지 않는다.
+- 운영 브랜치에는 두 테이블이 없으므로 KYC 기능 활성화는 보류한다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
