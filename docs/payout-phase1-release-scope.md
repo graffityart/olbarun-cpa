@@ -56,3 +56,16 @@ Use dedicated test partner and admin accounts against an **isolated nonproductio
 - The disposable PostgreSQL suite already includes a simulated audit-persistence failure test that checks settlement `APPROVED`, earning `HOLD`, and zero audit rows after rollback. A redundant follow-up test was removed; do not count duplicate tests as extra independent coverage.
 - Later commits have a successful Vercel Preview, but GitHub Actions results for the latest branch head must be independently confirmed before release.
 - No production merge, deployment, schema migration, environment-variable change, or live payout is authorized by these checks.
+
+## Isolated authenticated testing: mandatory preflight
+
+Neon branch inventory checked on 2026-11-11: `production` is the default branch; `payout-kyc-migration-validation-20261106` is a separate branch but was created from production data. **A database branch is not automatically a synthetic-data environment.** Do not create test partners or trigger notification flows in a production-data clone without first confirming safe data isolation and disabling external effects.
+
+Before any authenticated HTTP test:
+1. Provision a **new empty** PostgreSQL database (or independently scrub all cloned personal/customer records); never reuse production or the shared Preview `DATABASE_URL`.
+2. Provision synthetic partner and administrator identities, synthetic earnings, and an isolated notification sink. Verify email, SMS, webhooks, postbacks, and payout providers cannot contact real recipients.
+3. Deploy a dedicated nonproduction application whose `DATABASE_URL` points only to the synthetic database; confirm the effective runtime value without logging credentials. Use separate storage or disable upload paths.
+4. Confirm all KYC feature flags remain off for phase 1. Do not connect the KYC Blob store or migrate KYC tables as part of this release.
+5. Only then execute the 15 authenticated acceptance checks above, capture redacted evidence, and stop immediately if any external effect or shared-resource connection is detected.
+
+**Status:** The existing Neon validation branch is **not approved** as an isolated synthetic test target. No authenticated HTTP test has been performed. The green CI tests use a disposable localhost PostgreSQL service and do not exercise live application authentication.
