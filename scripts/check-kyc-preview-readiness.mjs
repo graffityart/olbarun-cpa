@@ -13,6 +13,8 @@ export function checkReadiness(env){
   blobConfigured:typeof env.BLOB_READ_WRITE_TOKEN==="string"&&env.BLOB_READ_WRITE_TOKEN.length>0,
   operatorAttestation:env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED==="enabled",
   uploadFeatureEnabled:env.PAYOUT_KYC_DOCUMENT_UPLOAD==="enabled",
+  // The shared production token is explicitly unsafe for Preview KYC uploads.
+  isolatedBlobTokenMetadata:env.PAYOUT_KYC_BLOB_TOKEN_STORE_ID===env.PAYOUT_KYC_PREVIEW_BLOB_STORE_ID&&typeof env.PAYOUT_KYC_BLOB_TOKEN_STORE_ID==="string"&&env.PAYOUT_KYC_BLOB_TOKEN_STORE_ID.length>0,
  };
  // Resource identifiers are operator-provided non-secret metadata, never connection strings.
  const previewDbBranch=env.PAYOUT_KYC_PREVIEW_DB_BRANCH_ID??"";
