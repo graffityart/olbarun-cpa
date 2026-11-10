@@ -8,7 +8,7 @@ const privateJson=(data:unknown,init?:ResponseInit)=>Response.json(data,{...init
 const prefix="payout-verifications/";
 const graceMs=48*60*60*1000;
 
-// Read-only, single-page diagnostic. Never delete objects or return object names.
+// Read-only, bounded multi-page diagnostic. Never delete objects or return object names.
 // A complete result requires a complete listing and a successful DB comparison.
 export async function GET(request:Request){
  const admin=await requireAdmin();
@@ -27,8 +27,10 @@ export async function GET(request:Request){
    if(!page.cursor||page.cursor===cursor)throw Error("INVENTORY_CURSOR_INVALID");
    cursor=page.cursor;
   }
+  const uniqueBlobs=[...new Map(blobs.map(blob=>[blob.pathname,blob])).values()];
+  const duplicateObjectCount=blobs.length-uniqueBlobs.length;
   const now=Date.now();
-  const eligible=blobs.filter(blob=>blob.pathname.startsWith(prefix)
+  const eligible=uniqueBlobs.filter(blob=>blob.pathname.startsWith(prefix)
    &&/^payout-verifications\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/(?:bank|identity)\.(?:pdf|png|jpg)(?:-[a-zA-Z0-9]+)?$/.test(blob.pathname)
    &&Number.isFinite(new Date(blob.uploadedAt).getTime())
    &&now-new Date(blob.uploadedAt).getTime()>=graceMs);
@@ -43,7 +45,7 @@ export async function GET(request:Request){
    unreferencedCandidateCount=paths.filter(path=>!referenced.has(path)).length;
   }
   return privateJson({ok:true,assessmentOnly:true,complete,
-   scannedObjectCount:blobs.length,ageEligibleCount:eligible.length,
+   scannedObjectCount:blobs.length,uniqueObjectCount:uniqueBlobs.length,duplicateObjectCount,ageEligibleCount:eligible.length,
    unreferencedCandidateCount,documentsDeleted:0,deletionAllowed:false,
    warning:!complete?"PARTIAL_LISTING":"CANDIDATES_NOT_AUTHORIZED_FOR_DELETION"});
  }catch{
