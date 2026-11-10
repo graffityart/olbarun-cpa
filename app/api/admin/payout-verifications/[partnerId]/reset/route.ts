@@ -33,6 +33,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   const reason=typeof body?.reason==="string"?body.reason.trim():"";
   // Never store complete resident registration numbers in reset reasons or audit metadata.
   if(/\b\d{6}\s*[-‐‑‒–—−]?\s*\d{7}\b/.test(reason.normalize("NFKC")))return Response.json({ok:false,error:"SENSITIVE_REASON_DATA"},{status:400,headers:{"Cache-Control":"no-store"}});
+  if(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u.test(reason))return Response.json({ok:false,error:"INVALID_REJECTION_REASON"},{status:400,headers:{"Cache-Control":"private, no-store"}});
   if(!uuid.test(partnerId)||!reason||reason.length>2000)return Response.json({ok:false,error:"INVALID_INPUT"},{status:400});
   await getDb().transaction(async tx=>{
    const partnerLock=await tx.execute(sql`select id from partners where id=${partnerId} for update`);
