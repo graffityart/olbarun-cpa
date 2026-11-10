@@ -224,6 +224,11 @@ export async function POST(request:Request){
   }
   const prefix=`payout-verifications/${user.partnerId}/${randomUUID()}`;
   const uploadedPaths:string[]=[];
+  const cleanupUncommitted=async()=>{
+   const results=await Promise.allSettled(uploadedPaths.map(path=>del(path)));
+   const failedCount=results.filter(result=>result.status==="rejected").length;
+   if(failedCount>0)console.error("Uncommitted payout verification blob cleanup incomplete",{failedCount});
+  };
   try{
   const bankBlob=await put(`${prefix}/bank.${bankFormat.ext}`,Buffer.from(bankBytes),{access:"private",contentType:bankFormat.mime,addRandomSuffix:true});
   uploadedPaths.push(bankBlob.pathname);
@@ -235,8 +240,8 @@ export async function POST(request:Request){
    identity_document_blob_path=excluded.identity_document_blob_path,document_type=excluded.document_type,
    submitted_at=now(),reviewed_at=null,reviewed_by=null,rejection_reason=null,verified_account_fingerprint=excluded.verified_account_fingerprint,updated_at=now()
    where partner_payout_verifications.status='NOT_SUBMITTED' or (partner_payout_verifications.status='REJECTED' and (partner_payout_verifications.submitted_at is null or partner_payout_verifications.submitted_at<=now()-interval '10 minutes')) returning id`);
-  if(updated.length!==1){await Promise.allSettled(uploadedPaths.map(path=>del(path)));return privateJson({ok:false,error:"RESUBMISSION_COOLDOWN_OR_ALREADY_SUBMITTED"},{status:409});}
-  }catch(uploadError){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw uploadError;}
+  if(updated.length!==1){await cleanupUncommitted();return privateJson({ok:false,error:"RESUBMISSION_COOLDOWN_OR_ALREADY_SUBMITTED"},{status:409});}
+  }catch(uploadError){await cleanupUncommitted();throw uploadError;}
   // Only delete previously rejected documents after the new submission is committed.
   // A second concurrent request may have won the DB update, so verify the paths
   // are no longer referenced before removing any old private blobs.
