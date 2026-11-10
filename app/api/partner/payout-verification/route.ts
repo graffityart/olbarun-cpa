@@ -8,7 +8,7 @@ import {randomUUID} from "node:crypto";
 export const runtime="nodejs";
 const MAX_BYTES=5*1024*1024;
 // Never allow browsers or intermediate caches to store identity-upload responses.
-const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,headers:{...Object.fromEntries(new Headers(init?.headers)),"Cache-Control":"no-store"}});
+const privateJson:typeof Response.json=(data,init)=>Response.json(data,{...init,headers:{...Object.fromEntries(new Headers(init?.headers)),"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
 function detect(bytes:Uint8Array){
  if(bytes.length>=16&&bytes[0]===0x25&&bytes[1]===0x50&&bytes[2]===0x44&&bytes[3]===0x46&&bytes[4]===0x2d&&bytes[5]>=0x31&&bytes[5]<=0x32&&bytes[6]===0x2e&&bytes[7]>=0x30&&bytes[7]<=0x39){
   // Reject truncated PDFs lacking a terminal EOF marker; this is not a PDF sanitizer.
