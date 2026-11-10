@@ -180,6 +180,10 @@ export async function POST(request:Request){
     if(totalBytes>maxRequestBytes){await reader.cancel().catch(()=>{});return privateJson({ok:false,error:"FILE_SIZE_INVALID"},{status:413});}
     chunks.push(value);
    }
+  }catch{
+   // Client disconnects and malformed upload streams must not expose raw exceptions.
+   await reader.cancel().catch(()=>{});
+   return privateJson({ok:false,error:"UPLOAD_STREAM_FAILED"},{status:400});
   }finally{reader.releaseLock();}
   const form=await new Request(request.url,{method:"POST",headers:request.headers,body:new Blob(chunks.map(chunk=>new Uint8Array(chunk)))}).formData().catch(()=>null);
   if(!form)return privateJson({ok:false,error:"INVALID_MULTIPART_BODY"},{status:400});
