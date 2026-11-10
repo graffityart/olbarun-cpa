@@ -13,6 +13,13 @@ export function checkReadiness(env){
   operatorAttestation:env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED==="enabled",
   uploadFeatureEnabled:env.PAYOUT_KYC_DOCUMENT_UPLOAD==="enabled",
  };
+ // These optional identifiers are operator-provided non-secret metadata, never connection strings.
+ const previewDbBranch=env.PAYOUT_KYC_PREVIEW_DB_BRANCH_ID??"";
+ const productionDbBranch=env.PAYOUT_KYC_PRODUCTION_DB_BRANCH_ID??"";
+ const previewBlobStore=env.PAYOUT_KYC_PREVIEW_BLOB_STORE_ID??"";
+ const productionBlobStore=env.PAYOUT_KYC_PRODUCTION_BLOB_STORE_ID??"";
+ checks.distinctDatabaseBranch= /^br-[a-z0-9-]+$/.test(previewDbBranch)&&/^br-[a-z0-9-]+$/.test(productionDbBranch)&&previewDbBranch!==productionDbBranch;
+ checks.distinctBlobStore= /^store_[a-zA-Z0-9]+$/.test(previewBlobStore)&&/^store_[a-zA-Z0-9]+$/.test(productionBlobStore)&&previewBlobStore!==productionBlobStore;
  const configurationComplete=Object.values(checks).every(Boolean)&&!isKycPreviewIsolationBlocked(env);
  return {configurationComplete,checks,requiresManualIsolationVerification:true};
 }
