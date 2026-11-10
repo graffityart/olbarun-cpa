@@ -62,6 +62,15 @@
 - Vercel Preview도 **success**.
 - 이 결과는 CI 격리 PostgreSQL에서 수행된 자동 테스트를 의미하며, 운영 데이터/인증된 실제 HTTP/KYC Blob 연동 검증을 대체하지 않는다.
 
+## main 대비 변경 범위 및 단계별 릴리스 분리 (2026-11-10)
+- GitHub `main...feature/partner-payout-verification` 비교: 개발 브랜치가 **366 commits ahead, 0 behind**, 변경 파일 **35개** (비교 시점 `4a40ba61`).
+- 기존 정산 경로 변경: `app/api/partner/settlements/route.ts`, `app/api/admin/settlements/[id]/review/route.ts`, `app/partner/settlements/page.tsx`, `components/SettlementRequest.tsx`, `components/SettlementReview.tsx`.
+- 신규 KYC 기능: `app/api/partner/payout-verification/route.ts`, `app/api/admin/payout-verifications/**`, `app/admin/payout-verifications/page.tsx`, `components/PayoutVerification*.tsx`, `db/migrations/0020_*.sql`, `0021_*.sql`.
+- 공통 의존성: `lib/payout-account.ts`, `lib/payout-tax.ts`, `components/PayoutTaxPreview.tsx`, `package.json`, 테스트 및 CI 설정. 파일 단위로 분리할 때 import/기능 플래그 의존성을 반드시 확인한다.
+- **전체 개발 브랜치 병합을 1차 운영 배포로 간주하지 않는다.** 1차 릴리스 후보를 별도 브랜치/PR로 구성하고 CI 및 Vercel Preview를 재검증한 후 승인한다.
+- KYC 업로드/강제 적용은 운영 신규 테이블과 독립 Blob 연결 및 개인정보 접근 검증이 끝날 때까지 비활성화한다.
+- **미완료:** 1차 릴리스 전용 브랜치/PR 생성, 인증된 API E2E, 배포 승인. CI 성공만으로 배포 승인하지 않는다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
