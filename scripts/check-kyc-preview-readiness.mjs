@@ -2,6 +2,8 @@
 // Offline readiness check: never connects to the database, Blob storage or a live API.
 // Presence of credentials does not prove isolation from production.
 import {isKycPreviewIsolationBlocked} from "../lib/security/kyc-preview-isolation.mjs";
+import {fileURLToPath} from "node:url";
+import {resolve} from "node:path";
 
 export function checkReadiness(env){
  const checks={
@@ -11,12 +13,12 @@ export function checkReadiness(env){
   operatorAttestation:env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED==="enabled",
   uploadFeatureEnabled:env.PAYOUT_KYC_DOCUMENT_UPLOAD==="enabled",
  };
- const ready=Object.values(checks).every(Boolean)&&!isKycPreviewIsolationBlocked(env);
- return {ready,checks,requiresManualIsolationVerification:true};
+ const configurationComplete=Object.values(checks).every(Boolean)&&!isKycPreviewIsolationBlocked(env);
+ return {configurationComplete,checks,requiresManualIsolationVerification:true};
 }
 
-if(process.argv[1]&&import.meta.url===new URL("file://"+process.argv[1]).href){
+if(process.argv[1]&&resolve(fileURLToPath(import.meta.url))===resolve(process.argv[1])){
  const result=checkReadiness(process.env);
  process.stdout.write(JSON.stringify(result,null,2)+"\n");
- if(!result.ready)process.exitCode=1;
+ if(!result.configurationComplete)process.exitCode=1;
 }
