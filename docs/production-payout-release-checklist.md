@@ -33,6 +33,13 @@
 5. 테이블·컬럼·제약조건·인덱스 존재 여부를 다시 조회한다.
 6. KYC 업로드 기능은 계속 비활성화하고 일반 출금 기능 회귀 테스트를 완료한 후 별도 활성화를 검토한다.
 
+## 출금 API와 운영 스키마 호환성 검토 (2026-11-10)
+- `app/api/partner/settlements/route.ts` POST는 `PAYOUT_KYC_ENFORCEMENT === "enabled"`인 경우에만 `partner_payout_verifications` 테이블을 조회한다. 기본 정산 신청 경로는 기존 `partners`, `earnings`, `settlements`, `settlement_items`, `audit_logs`를 사용한다.
+- `app/api/admin/settlements/[id]/review/route.ts`는 승인/지급 시 같은 플래그가 활성화된 경우에만 신규 테이블을 조회한다. 플래그를 켜기 전에 마이그레이션 0020 적용이 필수다.
+- **중요:** 운영에서 `PAYOUT_KYC_ENFORCEMENT`가 활성화되어 있는지 실제 Vercel 환경변수 값을 확인해야 한다. 코드 조건만으로 운영의 안전을 보장하지 않는다.
+- 신규 KYC 서류 업로드 API는 별도의 `PAYOUT_KYC_DOCUMENT_UPLOAD` 플래그를 사용한다. 두 플래그를 혼동하지 않는다.
+- 출금 API는 은행 계좌 스냅샷과 수익 항목을 트랜잭션으로 처리하지만, 실제 DB 통합 테스트 및 인증된 HTTP 테스트는 아직 수행하지 않았다.
+
 ## 운영 배포 전 필수 확인
 1. 운영 DB 스키마를 **읽기 전용**으로 확인한다. `0020_partner_payout_verifications.sql`은 `partner_payout_verifications` 테이블, `0021_partner_payout_upload_limits.sql`은 `partner_payout_upload_limits` 테이블을 생성한다. 적용 여부는 테이블·컬럼·제약조건으로 확인한다.
 2. 마이그레이션은 독립 Neon 테스트 브랜치에서 먼저 검증한다. 운영 적용은 별도 승인 후 수행한다.
