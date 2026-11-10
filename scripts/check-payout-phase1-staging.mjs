@@ -16,6 +16,12 @@ if (db) {
   if (!["postgres:", "postgresql:"].includes(db.protocol)) errors.push("staging database must use PostgreSQL");
   if (db.hostname === "localhost" || db.hostname === "127.0.0.1") errors.push("HTTP staging must use a separately provisioned database");
   if (databaseUrl === productionUrl) errors.push("staging database matches application DATABASE_URL");
+  if (productionUrl) {
+    try {
+      const prod = new URL(productionUrl);
+      if (db.hostname.toLowerCase() === prod.hostname.toLowerCase() && db.port === prod.port) errors.push("staging database shares the application database host");
+    } catch { errors.push("application DATABASE_URL cannot be parsed for isolation comparison"); }
+  }
 }
 let base;
 try { base = new URL(process.env.PAYOUT_STAGING_BASE_URL ?? ""); } catch { if (process.env.PAYOUT_STAGING_BASE_URL) errors.push("staging URL is invalid"); }
