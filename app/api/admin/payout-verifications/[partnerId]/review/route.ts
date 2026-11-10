@@ -14,6 +14,9 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
   if(!/^application\/json(?:\s*;\s*charset\s*=\s*utf-8)?\s*$/i.test(request.headers.get("content-type")??""))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
   // Bound even chunked requests without Content-Length before parsing admin review JSON.
   const maxReviewBytes=4096;
+  const rawLength=request.headers.get("content-length");
+  if(rawLength!==null&&(!/^\d+$/.test(rawLength)||!Number.isSafeInteger(Number(rawLength))))return privateJson({ok:false,error:"INVALID_CONTENT_LENGTH"},{status:400});
+  if(rawLength!==null&&Number(rawLength)>maxReviewBytes)return privateJson({ok:false,error:"REVIEW_PAYLOAD_TOO_LARGE"},{status:413});
   const reader=request.body?.getReader();
   if(!reader)return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
   let size=0;
@@ -30,6 +33,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
    await reader.cancel().catch(()=>{});
    return privateJson({ok:false,error:"REVIEW_STREAM_FAILED"},{status:400});
   }finally{reader.releaseLock();}
+  if(rawLength!==null&&size!==Number(rawLength))return privateJson({ok:false,error:"CONTENT_LENGTH_MISMATCH"},{status:400});
   const body=await new Response(new Blob(chunks.map(chunk=>new Uint8Array(chunk)))).json().catch(()=>null),decision=body?.decision,reason=typeof body?.reason==="string"?body.reason.trim():"";
   // Reject nested arrays and primitive JSON before inspecting review fields.
   if(!body||typeof body!=="object"||Array.isArray(body))return privateJson({ok:false,error:"INVALID_INPUT"},{status:400});
