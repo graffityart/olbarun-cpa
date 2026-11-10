@@ -8,12 +8,13 @@ import {resolve} from "node:path";
 export function checkReadiness(env){
  const checks={
   previewEnvironment:env.VERCEL_ENV==="preview",
+  verificationBranch:env.VERCEL_GIT_COMMIT_REF==="feature/partner-payout-verification",
   databaseConfigured:typeof env.DATABASE_URL==="string"&&env.DATABASE_URL.length>0,
   blobConfigured:typeof env.BLOB_READ_WRITE_TOKEN==="string"&&env.BLOB_READ_WRITE_TOKEN.length>0,
   operatorAttestation:env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED==="enabled",
   uploadFeatureEnabled:env.PAYOUT_KYC_DOCUMENT_UPLOAD==="enabled",
  };
- // These optional identifiers are operator-provided non-secret metadata, never connection strings.
+ // Resource identifiers are operator-provided non-secret metadata, never connection strings.
  const previewDbBranch=env.PAYOUT_KYC_PREVIEW_DB_BRANCH_ID??"";
  const productionDbBranch=env.PAYOUT_KYC_PRODUCTION_DB_BRANCH_ID??"";
  const previewBlobStore=env.PAYOUT_KYC_PREVIEW_BLOB_STORE_ID??"";
