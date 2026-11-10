@@ -1,3 +1,4 @@
+import {isKycPreviewIsolationBlocked} from "@/lib/security/kyc-preview-isolation.mjs";
 import {put,del} from "@vercel/blob";
 import {payoutAccountFingerprint,validPayoutAccount} from "@/lib/payout-account";
 import {getDb} from "@/db";
@@ -139,7 +140,7 @@ export async function POST(request:Request){
  if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_UPLOAD_UNAVAILABLE"},{status:503});
  // Preview uploads require a separate, explicitly reviewed storage/DB configuration.
  // This opt-in is a safeguard, not proof of environment isolation.
- if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
+ if(isKycPreviewIsolationBlocked(process.env))return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
  try{
   requireSameOrigin(request);
   const user=await getCurrentUser();
