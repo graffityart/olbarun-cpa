@@ -10,6 +10,7 @@ export async function POST(request:Request,{params}:{params:Promise<{partnerId:s
  try{
   requireSameOrigin(request);
   if(process.env.PAYOUT_KYC_DOCUMENT_UPLOAD!=="enabled")return privateJson({ok:false,error:"DOCUMENT_REVIEW_UNAVAILABLE"},{status:503,headers:{"Cache-Control":"no-store"}});
+  if(process.env.VERCEL_ENV==="preview"&&process.env.PAYOUT_KYC_PREVIEW_ISOLATION_CONFIRMED!=="enabled")return privateJson({ok:false,error:"PREVIEW_ISOLATION_REQUIRED"},{status:503});
   const {partnerId}=await params;
   if(!/^application\/json(?:\s*;\s*charset\s*=\s*utf-8)?\s*$/i.test(request.headers.get("content-type")??""))return privateJson({ok:false,error:"INVALID_CONTENT_TYPE"},{status:415});
   // Bound even chunked requests without Content-Length before parsing admin review JSON.
