@@ -5,6 +5,9 @@ on:
   pull_request:
     paths:
       - "lib/payout-phase1-release.test.mjs"
+      - "lib/settlement-validation.test.mjs"
+      - "lib/settlement-validation.ts"
+      - "docs/payout-phase1-release-scope.md"
       - "app/api/partner/settlements/route.ts"
       - "app/api/admin/settlements/[id]/review/route.ts"
       - "app/partner/settlements/page.tsx"
