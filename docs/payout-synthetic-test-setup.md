@@ -26,3 +26,12 @@ The new database was verified empty (0 public tables). Schema migrations, synthe
 Inspected `db/migrations/0000_initial.sql` on the release branch. It contains 18 `CREATE TABLE IF NOT EXISTS` statements for `users`, `partners`, `advertisers`, `campaigns`, `campaign_rates`, `tracking_links`, `clicks`, `conversions`, `conversion_data`, `advertiser_ledger`, `earnings`, `settlements`, `settlement_items`, `posting_campaigns`, `posting_applications`, `posting_submissions`, `posting_reviews`, and `auth_sessions`. It also enables `pgcrypto` and creates supporting enums/indexes. No `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `DROP`, or `ALTER TABLE` statements were found in this file.
 
 **This is a review of the initial migration only**, not approval to run the entire migration set. Later migrations, enum changes, schema drift and notification dependencies still need review. No DDL has been applied to the synthetic DB.
+
+## Full migration inventory reviewed from CI (2026-11-11)
+
+The successful payout release safety job at commit `b76b910` enumerated **17 SQL files**. The read-only lexical audit flagged two files for human review:
+
+- `0003_posting_finance.sql`: two `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements adding posting submission references to `advertiser_ledger` and `earnings`, followed by unique indexes. This is schema-altering but not a data migration in the reviewed file.
+- `0009_partner_instant_signup.sql`: `UPDATE users u SET status='ACTIVE'` for matching pending partners, then `INSERT INTO audit_logs` from the updated rows. **This is a data-changing migration** and must never run against production as part of synthetic test setup.
+
+The audit is regex-based and is **not** a full SQL parser. Other statements, triggers, or dependency issues may still require manual review. CI passing means the audit ran successfully, not that all migrations were approved. The dedicated Neon synthetic database remains unmodified. Before applying SQL there, validate migration order, schema dependencies, test-project connection isolation, and any required extension/permissions.
