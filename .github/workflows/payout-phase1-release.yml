@@ -52,6 +52,8 @@ jobs:
         run: node --test lib/payout-phase1-release.test.mjs lib/payout-phase1-staging.test.mjs
       - name: Install dependencies
         run: npm install --no-package-lock --no-audit --no-fund
+      - name: Verify minimum payout migration dependencies (static, no SQL execution)
+        run: node scripts/check-payout-minimum-migrations.mjs
       - name: Test synthetic seed safety gates (no database writes)
         run: node --test scripts/seed-payout-synthetic-users.test.mjs
       - name: Test SQL migration audit behavior
