@@ -34,3 +34,11 @@ test("strict mode fails when UPDATE is present", () => {
   assert.equal(r.status, 2);
   assert.equal(r.output.report[0].flaggedOperations[0].line, 2);
 });
+
+test("aliased UPDATE in CTE is flagged in strict mode", () => {
+  const r = run("WITH activated AS (\n UPDATE users u SET status='ACTIVE' WHERE u.status='PENDING' RETURNING u.id\n)\nINSERT INTO audit_logs(action) SELECT 'ACTIVATE' FROM activated;", true);
+  assert.equal(r.status, 2);
+  const ops = r.output.report[0].flaggedOperations.map(x => x.operation);
+  assert.ok(ops.some(x => x.startsWith("UPDATE USERS U SET")));
+  assert.ok(ops.includes("INSERT INTO"));
+});
