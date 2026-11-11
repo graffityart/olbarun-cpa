@@ -85,6 +85,10 @@ try {
     await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${admin.id},'SETTLEMENT_APPROVE','SETTLEMENT',${settlement.id},'CI approve')`;
     const paid = await tx`update settlements set status='PAID',paid_at=now() where id=${settlement.id} and status='APPROVED' returning id`;
     assert.equal(paid.length, 1);
+    const duplicateApproval = await tx`update settlements set status='APPROVED',approved_at=now() where id=${settlement.id} and status='REQUESTED' returning id`;
+    assert.equal(duplicateApproval.length, 0, "Cannot approve an already-paid settlement");
+    const duplicatePayment = await tx`update settlements set status='PAID',paid_at=now() where id=${settlement.id} and status='APPROVED' returning id`;
+    assert.equal(duplicatePayment.length, 0, "Cannot pay a settlement twice");
     await tx`update earnings set status='PAID' where id=${earning.id} and status='HOLD'`;
     await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${admin.id},'SETTLEMENT_PAID','SETTLEMENT',${settlement.id},'CI paid')`;
     await tx`insert into notifications(user_id,type,title,message) values (${user.id},'SETTLEMENT_PAID','CI payout','Synthetic notification only')`;
