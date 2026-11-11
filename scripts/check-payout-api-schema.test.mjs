@@ -118,3 +118,33 @@ test("synthetic fixture preflight is read-only and rejects production targets", 
   }
   assert.doesNotMatch(preflight, /db`\s*(?:insert|update|delete|drop|truncate|alter|create)\b/i);
 });
+
+test("synthetic fixture verifier fails closed before DB connection for unsafe environments", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const base = {
+    PAYOUT_TEST_PROJECT_ID: "orange-salad-93665842",
+    PAYOUT_TEST_ISOLATION_CONFIRMED: "yes",
+    PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech/mypickup_payout_test?sslmode=require",
+    NODE_ENV: "test",
+    VERCEL_ENV: "preview",
+    DATABASE_URL: "",
+  };
+  const cases = [
+    [{ PAYOUT_TEST_PROJECT_ID: "soft-mud-72335385" }, /orange-salad-93665842/],
+    [{ PAYOUT_TEST_ISOLATION_CONFIRMED: "no" }, /yes/],
+    [{ NODE_ENV: "production" }, /production/],
+    [{ VERCEL_ENV: "production" }, /production/],
+    [{ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech/production?sslmode=require" }, /mypickup_payout_test/],
+    [{ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@localhost/mypickup_payout_test?sslmode=require" }, /neon.tech/],
+    [{ DATABASE_URL: "postgresql://prod:fake@synthetic.neon.tech/production?sslmode=require" }, /ERR_ASSERTION|AssertionError/],
+  ];
+  for (const [overrides, expected] of cases) {
+    const result = spawnSync(process.execPath, ["scripts/check-payout-synthetic-fixtures.mjs"], {
+      encoding: "utf8",
+      timeout: 5000,
+      env: { ...process.env, ...base, ...overrides },
+    });
+    assert.notEqual(result.status, 0, "Unsafe configuration must fail");
+    assert.match(result.stderr, expected);
+  }
+});
