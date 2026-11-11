@@ -52,6 +52,8 @@ jobs:
         run: node --test lib/payout-phase1-release.test.mjs lib/payout-phase1-staging.test.mjs
       - name: Install dependencies
         run: npm install --no-package-lock --no-audit --no-fund
+      - name: Test synthetic seed safety gates (no database writes)
+        run: node --test scripts/seed-payout-synthetic-users.test.mjs
       - name: Test SQL migration audit behavior
         run: node --test scripts/audit-payout-migrations.test.mjs
       - name: Inventory SQL migrations (read-only)
