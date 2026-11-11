@@ -52,6 +52,8 @@ jobs:
         run: node --test lib/payout-phase1-release.test.mjs lib/payout-phase1-staging.test.mjs
       - name: Install dependencies
         run: npm install --no-package-lock --no-audit --no-fund
+      - name: Test SQL migration audit behavior
+        run: node --test scripts/audit-payout-migrations.test.mjs
       - name: Inventory SQL migrations (read-only)
         run: npm run db:audit-payout-migrations
       - name: Run existing settlement regression tests
