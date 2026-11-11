@@ -89,7 +89,7 @@ test("partner payout listing and reservation remain scoped to the authenticated 
   const request = read(apiPaths[0]);
   assert.match(request, /eq\(settlements\.partnerId,\s*user\.partnerId/);
   assert.match(request, /eq\(earnings\.partnerId,\s*user\.partnerId/);
-  assert.match(request, /eq\(partners\.id,\s*user\.partnerId/);
+  assert.match(request, /select id from \$\{partners\} where id=\$\{user\.partnerId!\} for update/i);
   assert.match(request, /eq\(earnings\.status,\s*"AVAILABLE"\)/);
   assert.match(request, /eq\(settlements\.partnerId,\s*user\.partnerId\)\)/);
   assert.match(request, /"Cache-Control"\s*:\s*"no-store"/);
