@@ -44,6 +44,30 @@ try {
   for (const table of required) assert.ok(found.has(table), `Missing table ${table}`);
   const indexes = await db`select indexname from pg_indexes where schemaname='public'`;
   assert.ok(indexes.some(x => x.indexname === "settlement_items_settlement_earning_unique"));
+  // Verify that the uniqueness migration actually rejects duplicate settlement/earning pairs.
+  // A rolled-back transaction leaves the disposable database clean.
+  await db.begin(async tx => {
+    const [user] = await tx`insert into users(email,password_hash,role,status) values ('ci-payout@synthetic.invalid','not-a-real-login','PARTNER','ACTIVE') returning id`;
+    const [partner] = await tx`insert into partners(user_id,partner_code,name) values (${user.id},'CI-PAYOUT-PARTNER','CI test') returning id`;
+    const [earning] = await tx`insert into earnings(partner_id,amount,status) values (${partner.id},10000,'AVAILABLE') returning id`;
+    const [settlement] = await tx`insert into settlements(settlement_code,partner_id,requested_amount,deduction_amount,payment_amount,status,bank_account_snapshot) values ('CI-PAYOUT-SETTLEMENT',${partner.id},10000,0,10000,'REQUESTED','{}'::jsonb) returning id`;
+    await tx`insert into settlement_items(settlement_id,earning_id,amount) values (${settlement.id},${earning.id},10000)`;
+    await assert.rejects(
+      tx.savepoint(async sp => {
+        await sp`insert into settlement_items(settlement_id,earning_id,amount) values (${settlement.id},${earning.id},10000)`;
+      }),
+      error => error?.code === "23505",
+      "Duplicate settlement/earning pair must violate unique index",
+    );
+    const [count] = await tx`select count(*)::int as n from settlement_items where settlement_id=${settlement.id}`;
+    assert.equal(count.n, 1, "Failed duplicate insert must not corrupt transaction");
+    throw Object.assign(new Error("EXPECTED_CI_ROLLBACK"), { expectedRollback: true });
+  }).catch(error => {
+    if (!error?.expectedRollback) throw error;
+  });
+  const [rolledBack] = await db`select count(*)::int as n from users where email='ci-payout@synthetic.invalid'`;
+  assert.equal(rolledBack.n, 0, "Rollback must remove all synthetic rows");
+  console.log("Unique settlement item constraint and transaction rollback verified");
   console.log(JSON.stringify({ result: "pass", disposableDatabase: dbName, appliedMigrations: files, requiredTablesVerified: required.length, productionAccess: false }));
 } finally {
   await db.end();
