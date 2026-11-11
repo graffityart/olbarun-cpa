@@ -1,3 +1,4 @@
+import { getValidatedDatabaseUrl } from "@/db";
 import { NextRequest } from "next/server";
 import postgres from "postgres";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -6,7 +7,7 @@ import { requireSameOrigin } from "@/lib/security/origin";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowed=new Map([[".zip",["application/zip","application/x-zip-compressed","application/octet-stream"]],[".pdf",["application/pdf"]],[".jpg",["image/jpeg"]],[".jpeg",["image/jpeg"]],[".png",["image/png"]],[".webp",["image/webp"]]]);
 const maxBytes=5*1024*1024;
-function db(){if(!process.env.DATABASE_URL)throw Error("DATABASE_NOT_READY");return postgres(process.env.DATABASE_URL,{max:1});}
+function db(){return postgres(getValidatedDatabaseUrl(),{max:1});}
 export async function GET(_req:NextRequest,{params}:{params:Promise<{campaignId:string}>}){
  const {campaignId}=await params;if(!uuid.test(campaignId))return Response.json({error:"INVALID_ID"},{status:400});
  const user=await getCurrentUser();if(!user||user.status!=="ACTIVE"||!["ADMIN","SUPER_ADMIN","PARTNER"].includes(user.role))return Response.json({error:"UNAUTHORIZED"},{status:401});
