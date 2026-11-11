@@ -28,6 +28,7 @@ const db = postgres(u.toString(), { max: 1, connect_timeout: 5 });
 const files = [
   "0000_initial.sql",
   "0001_advertiser_users.sql",
+  "0002_notifications.sql",
   "0005_audit_logs.sql",
   "0006_login_attempts.sql",
   "0011_settlement_item_uniqueness.sql",
@@ -40,7 +41,7 @@ try {
   }
   const rows = await db`select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE'`;
   const found = new Set(rows.map(r => r.table_name));
-  const required = ["users", "partners", "advertisers", "advertiser_users", "earnings", "settlements", "settlement_items", "auth_sessions", "audit_logs", "login_attempts"];
+  const required = ["users", "partners", "advertisers", "advertiser_users", "notifications", "earnings", "settlements", "settlement_items", "auth_sessions", "audit_logs", "login_attempts"];
   for (const table of required) assert.ok(found.has(table), `Missing table ${table}`);
   const indexes = await db`select indexname from pg_indexes where schemaname='public'`;
   assert.ok(indexes.some(x => x.indexname === "settlement_items_settlement_earning_unique"));
