@@ -69,3 +69,11 @@ Before any authenticated HTTP test:
 5. Only then execute the 15 authenticated acceptance checks above, capture redacted evidence, and stop immediately if any external effect or shared-resource connection is detected.
 
 **Status:** The existing Neon validation branch is **not approved** as an isolated synthetic test target. No authenticated HTTP test has been performed. The green CI tests use a disposable localhost PostgreSQL service and do not exercise live application authentication.
+
+## Latest release gate verification (2026-11-11)
+
+- Branch head `7eedfb63242c344a3b451dea05bbd1ba64aaf321`: Vercel Preview deployment `dpl_9tmRFC741nMhuYmrKhXCa7RTYSkQ` is READY.
+- GitHub Actions for that exact commit: CPA regression and TypeScript [42932100097](https://github.com/graffityart/olbarun-cpa/actions/runs/42932100097), CPA and settlement tests [42932100145](https://github.com/graffityart/olbarun-cpa/actions/runs/42932100145), CPA checks [42932100150](https://github.com/graffityart/olbarun-cpa/actions/runs/42932100150), and Phase 1 payout release safety [42932100072](https://github.com/graffityart/olbarun-cpa/actions/runs/42932100072) all completed successfully.
+- Confirmed Phase 1 workflow job `phase1` step 8, **PostgreSQL concurrency and rollback tests (disposable CI DB only)**, completed successfully. This covers the new concurrent payout test that asserts one audit event and one earning release.
+- Git comparison against `main`: release branch is 46 commits ahead and zero behind, affecting 12 files at the time of verification. Production remains at `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1`.
+- **Still blocking production:** isolated synthetic-data authenticated HTTP end-to-end checks, notification isolation, environment/schema/feature-flag preflight, and explicit operator approval. CI success does not authorize merge or production deployment.
