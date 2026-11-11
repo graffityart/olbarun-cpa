@@ -13,6 +13,9 @@ assert.ok(url, "Dedicated test database URL required");
 const u = new URL(url);
 assert.ok(["postgres:", "postgresql:"].includes(u.protocol));
 assert.equal(u.pathname, "/mypickup_payout_test");
+assert.ok(u.username && u.password, "Dedicated test DB credentials required");
+assert.equal(u.port, "", "Unexpected test database port");
+assert.ok(!u.hostname.includes("localhost"), "Local/production alias forbidden");
 assert.ok(u.hostname.endsWith(".neon.tech"));
 assert.equal(u.searchParams.get("sslmode"), "require");
 if (process.env.DATABASE_URL) {
