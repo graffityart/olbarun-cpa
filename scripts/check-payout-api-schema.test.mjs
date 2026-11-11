@@ -84,3 +84,18 @@ test("read-only Neon readiness preflight covers every minimum payout table and u
   assert.match(preflight, /PAYOUT_TEST_PROJECT_ID/);
   assert.match(preflight, /missing\.length\s*\|\|\s*!uniqueIndexReady/);
 });
+
+test("partner payout listing and reservation remain scoped to the authenticated partner", () => {
+  const request = read(apiPaths[0]);
+  assert.match(request, /eq\(settlements\.partnerId,\s*user\.partnerId/);
+  assert.match(request, /eq\(earnings\.partnerId,\s*user\.partnerId/);
+  assert.match(request, /eq\(partners\.id,\s*user\.partnerId/);
+  assert.match(request, /eq\(earnings\.status,\s*"AVAILABLE"\)/);
+  assert.match(request, /eq\(settlements\.partnerId,\s*user\.partnerId\)\)/);
+  assert.match(request, /"Cache-Control"\s*:\s*"no-store"/);
+});
+test("payout requests never accept a client-provided partner identifier", () => {
+  const request = read(apiPaths[0]);
+  assert.doesNotMatch(request, /body\.partnerId|body\.userId|body\.settlementId/);
+  assert.match(request, /partnerId\s*:\s*user\.partnerId/);
+});
