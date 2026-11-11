@@ -140,6 +140,14 @@ try {
     const [originalState] = await tx`select status from settlements where id=${settlement.id}`;
     assert.equal(originalState.status, "REJECTED", "Original rejection must remain immutable");
 
+    const [active] = await tx`select count(*)::int as n from settlements where partner_id=${partner.id} and status in ('REQUESTED','APPROVED')`;
+    assert.equal(active.n, 1, "Retry must have exactly one active settlement");
+    const secondReserve = await tx`update earnings set status='HOLD' where id=${earning.id} and status='AVAILABLE' returning id`;
+    assert.equal(secondReserve.length, 0, "Earning cannot be reserved twice");
+    const [originalItem] = await tx`select count(*)::int as n from settlement_items where settlement_id=${settlement.id} and earning_id=${earning.id}`;
+    assert.equal(originalItem.n, 1, "Rejected payout audit history must remain linked to the earning");
+
+
     const [audits] = await tx`select count(*)::int as n from audit_logs where target_id=${settlement.id}`;
     assert.equal(audits.n, 2);
     throw Object.assign(new Error("EXPECTED_CI_REJECT_ROLLBACK"), { expectedRollback: true });
