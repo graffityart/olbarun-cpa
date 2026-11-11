@@ -148,3 +148,31 @@ test("synthetic fixture verifier fails closed before DB connection for unsafe en
     assert.match(result.stderr, expected);
   }
 });
+
+
+test("isolated payout deployment fails closed for production DB runtime", () => {
+  const db = read("db/index.ts");
+  for (const guard of [
+    "PAYOUT_TEST_PROJECT_ID",
+    "PAYOUT_TEST_ISOLATION_CONFIRMED",
+    "PAYOUT_EXTERNAL_EFFECTS_DISABLED",
+    'process.env.VERCEL_ENV === "production"',
+    'target.pathname !== "/mypickup_payout_test"',
+    'target.searchParams.get("sslmode") !== "require"',
+    "PAYOUT_TEST_RUNTIME_ISOLATION_FAILED",
+  ]) assert.ok(db.includes(guard), "Missing runtime guard: " + guard);
+  assert.ok(db.indexOf("PAYOUT_TEST_RUNTIME_ISOLATION_FAILED") < db.indexOf("postgres(connectionString"), "Runtime guard must precede connection");
+});
+
+test("synthetic payout deployment blocks live postbacks and external Blob operations", () => {
+  for (const [path, marker] of [
+    ["app/api/postback/cpa/route.ts", "POSTBACK_DISABLED_IN_PAYOUT_TEST"],
+    ["app/api/campaign-blob-upload/[campaignId]/route.ts", "UPLOAD_DISABLED_IN_PAYOUT_TEST"],
+    ["app/api/campaign-blob-upload/[campaignId]/finalize/route.ts", "UPLOAD_FINALIZE_DISABLED_IN_PAYOUT_TEST"],
+  ]) {
+    const source = read(path);
+    assert.ok(source.includes('process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842"'), "Missing isolation gate: " + path);
+    assert.ok(source.includes(marker), "Missing disabled response: " + path);
+    assert.ok(source.includes("status:503"), "Missing fail-closed status: " + path);
+  }
+});
