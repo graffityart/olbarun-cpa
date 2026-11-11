@@ -17,9 +17,26 @@ Run `npm run db:check-payout-test`. The script checks DB identity and public tab
 5. Only then exercise partner login, earnings availability, request creation, admin review, paid confirmation, concurrent requests, and audit logs using synthetic records. No real transfers.
 6. Never promote this test DB or synthetic credentials into production.
 
-## Status
+## Current verified status (2026-11-11)
 
-The new database was verified empty (0 public tables). Schema migrations, synthetic account seeding, dedicated test runtime, and authenticated HTTP E2E have **not** been performed. Passing unit tests and a read-only probe does not imply that the end-to-end release gate passed.
+- Dedicated Neon project `orange-salad-93665842`, branch `br-royal-cherry-bemnl5l2`, database `mypickup_payout_test`. Production project is different.
+- Six minimum payout migrations were applied in a single transaction (47 individual statements), creating 22 tables. All 11 required payout tables and the `settlement_items_settlement_earning_unique` index were verified.
+- Three `@synthetic.invalid` identities (ADMIN, ADVERTISER, PARTNER) were inserted, with a single advertiser-user link and a single partner-user link. Their `password_hash` values start with `disabled$` and **cannot authenticate** using the app's scrypt password verifier.
+- Two synthetic earnings were inserted for the synthetic partner, 12,000 + 8,000 KRW, both AVAILABLE. No settlement records remain.
+- SQL-level request → approve → paid and request → reject → retry state transitions were exercised inside rollback-only PL/pgSQL blocks. These are **not HTTP API E2E tests**.
+- Read-only fixture integrity preflight is available with `npm run db:check-payout-fixtures`. It needs the dedicated database credentials and environment gates and has not yet been executed from a connected Node runtime.
+- A **dedicated application runtime** has not been provisioned. Existing shared Vercel Preview is not authorized for synthetic testing; its environment may include production credentials. No actual authenticated HTTP payout E2E has been executed.
+- All four GitHub Actions workflows succeeded at commit `352a9cb`.
+
+## HTTP E2E isolation prerequisites
+
+1. Provision a separate application deployment or other disposable Node runtime. Do **not** reuse the existing production Vercel project/Preview without proving complete isolation.
+2. Set that runtime's `DATABASE_URL` to the **dedicated** Neon test database only, and verify `select current_database()` returns `mypickup_payout_test`. Do not display connection strings.
+3. Use separate session secrets and a test-only hostname. Disable external email, SMS, payment, postback, and webhook integrations **in their actual runtime implementations**, not merely with a declaration flag.
+4. Use synthetic identities only. If testing real login, replace their disabled hashes with fresh scrypt hashes and strong, ephemeral credentials through an isolated test setup; never expose credentials in logs or commits.
+5. Exercise unauthorized/other-partner requests, duplicate requests, admin approve/reject, explicit paid confirmation, notification/audit records, and rejection retry. No real bank transfers.
+6. Reset synthetic sessions and settlement records after the test, verify the remaining fixtures, and never promote this environment to production.
+
 
 ## Initial migration static review (2026-11-11)
 
