@@ -20,7 +20,8 @@
     "db:check-payout-test": "node scripts/check-payout-test-db.mjs",
     "db:check-payout-schema": "node scripts/check-payout-test-schema.mjs",
     "db:audit-payout-migrations": "node scripts/audit-payout-migrations.mjs",
-    "db:seed-payout-synthetic": "node scripts/seed-payout-synthetic-users.mjs"
+    "db:seed-payout-synthetic": "node scripts/seed-payout-synthetic-users.mjs",
+    "db:check-payout-fixtures": "node scripts/check-payout-synthetic-fixtures.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.0.0",
