@@ -47,3 +47,30 @@ test("admin payout review requires settlement audit log and state transition col
 test("never include partner activation data migration in minimum payout schema", () => {
   assert.ok(!migrations.includes("0009_partner_instant_signup.sql"));
 });
+
+test("partner payout creation requires active partner session and same-origin protection", () => {
+  const request = read(apiPaths[0]);
+  assert.match(request, /requireSameOrigin\(request\)/);
+  assert.match(request, /getCurrentUser\(\)/);
+  assert.match(request, /user\.role\s*!==\s*"PARTNER"/);
+  assert.match(request, /user\.status\s*!==\s*"ACTIVE"/);
+  assert.match(request, /!user\.partnerId/);
+  assert.match(request, /for update/i);
+  assert.match(request, /SETTLEMENT_ALREADY_PENDING/);
+});
+test("admin payout review requires admin role, origin guard, and explicit transfer confirmation", () => {
+  const review = read(apiPaths[1]);
+  const guards = read("lib/auth/guards.ts");
+  assert.match(review, /requireSameOrigin\(request\)/);
+  assert.match(review, /requireAdmin\(\)/);
+  assert.match(review, /transferConfirmed\s*!==\s*true/);
+  assert.match(review, /for update/i);
+  assert.match(guards, /user\.status\s*!==\s*"ACTIVE"/);
+  assert.match(guards, /user\.role\s*!==\s*"ADMIN"\s*&&\s*user\.role\s*!==\s*"SUPER_ADMIN"/);
+});
+test("admin payout status endpoint rejects non-admin sessions", () => {
+  const status = read(apiPaths[2]);
+  assert.match(status, /getCurrentUser\(\)/);
+  assert.match(status, /\["ADMIN",\s*"SUPER_ADMIN"\]\.includes\(user\.role\)/);
+  assert.match(status, /user\.status\s*!==\s*"ACTIVE"/);
+});
