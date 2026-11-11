@@ -69,6 +69,13 @@ jobs:
           SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
           SETTLEMENT_TEST_DB_CONFIRM: disposable
         run: node --test lib/settlement-concurrency.test.mjs lib/cpa/review-concurrency.test.mjs
+      - name: Apply minimum payout migrations in disposable CI database
+        env:
+          CI: 'true'
+          NODE_ENV: test
+          SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
+          PAYOUT_CI_SCHEMA_CONFIRM: disposable-local-postgres
+        run: node scripts/test-payout-minimum-migrations-ci.mjs
       - name: CPA regression tests
         run: npm run test:cpa
       - name: Posting review regression tests
