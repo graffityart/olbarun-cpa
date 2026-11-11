@@ -25,8 +25,8 @@ try {
   const required = ["users", "partners", "advertisers", "advertiser_users", "notifications", "earnings", "settlements", "settlement_items", "auth_sessions", "audit_logs", "login_attempts"];
   const names = new Set(tables.map(x => x.table_name));
   const missing = required.filter(name => !names.has(name));
-  const indexes = await sql`select indexname from pg_indexes where schemaname='public'`;
-  const uniqueIndexReady = indexes.some(x => x.indexname === "settlement_items_settlement_earning_unique");
+  const indexes = await sql`select indexname, indexdef from pg_indexes where schemaname='public' and tablename='settlement_items'`;
+  const uniqueIndexReady = indexes.some(x => x.indexname === "settlement_items_settlement_earning_unique" && /CREATE\\s+UNIQUE\\s+INDEX/i.test(x.indexdef) && /\\(settlement_id,\\s*earning_id\\)/i.test(x.indexdef));
   console.log(JSON.stringify({ database: identity.name, totalTables: tables.length, requiredTables: required, missingTables: missing, uniqueIndexReady, schemaReady: missing.length === 0 && uniqueIndexReady }));
   if (missing.length || !uniqueIndexReady) process.exitCode = 2;
 } finally {
