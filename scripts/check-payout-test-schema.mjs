@@ -20,11 +20,13 @@ try {
   const [identity] = await sql`select current_database() as name`;
   assert.equal(identity.name, "mypickup_payout_test");
   const tables = await sql`select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by table_name`;
-  const required = ["users", "partners", "earnings", "settlements", "settlement_items", "auth_sessions"];
+  const required = ["users", "partners", "advertisers", "advertiser_users", "notifications", "earnings", "settlements", "settlement_items", "auth_sessions", "audit_logs", "login_attempts"];
   const names = new Set(tables.map(x => x.table_name));
   const missing = required.filter(name => !names.has(name));
-  console.log(JSON.stringify({ database: identity.name, totalTables: tables.length, requiredTables: required, missingTables: missing, schemaReady: missing.length === 0 }));
-  if (missing.length) process.exitCode = 2;
+  const indexes = await sql`select indexname from pg_indexes where schemaname='public'`;
+  const uniqueIndexReady = indexes.some(x => x.indexname === "settlement_items_settlement_earning_unique");
+  console.log(JSON.stringify({ database: identity.name, totalTables: tables.length, requiredTables: required, missingTables: missing, uniqueIndexReady, schemaReady: missing.length === 0 && uniqueIndexReady }));
+  if (missing.length || !uniqueIndexReady) process.exitCode = 2;
 } finally {
   await sql.end();
 }
