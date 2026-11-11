@@ -49,7 +49,7 @@ try {
   await db.begin(async tx => {
     const [user] = await tx`insert into users(email,password_hash,role,status) values ('ci-payout@synthetic.invalid','not-a-real-login','PARTNER','ACTIVE') returning id`;
     const [partner] = await tx`insert into partners(user_id,partner_code,name) values (${user.id},'CI-PAYOUT-PARTNER','CI test') returning id`;
-    const [earning] = await tx`insert into earnings(partner_id,amount,status) values (${partner.id},10000,'AVAILABLE') returning id`;
+    const [earning] = await tx`insert into earnings(partner_id,type,amount,status) values (${partner.id},'CPA',10000,'AVAILABLE') returning id`;
     const [settlement] = await tx`insert into settlements(settlement_code,partner_id,requested_amount,deduction_amount,payment_amount,status,bank_account_snapshot) values ('CI-PAYOUT-SETTLEMENT',${partner.id},10000,0,10000,'REQUESTED','{}'::jsonb) returning id`;
     await tx`insert into settlement_items(settlement_id,earning_id,amount) values (${settlement.id},${earning.id},10000)`;
     await assert.rejects(
