@@ -20,3 +20,9 @@ Run `npm run db:check-payout-test`. The script checks DB identity and public tab
 ## Status
 
 The new database was verified empty (0 public tables). Schema migrations, synthetic account seeding, dedicated test runtime, and authenticated HTTP E2E have **not** been performed. Passing unit tests and a read-only probe does not imply that the end-to-end release gate passed.
+
+## Initial migration static review (2026-11-11)
+
+Inspected `db/migrations/0000_initial.sql` on the release branch. It contains 18 `CREATE TABLE IF NOT EXISTS` statements for `users`, `partners`, `advertisers`, `campaigns`, `campaign_rates`, `tracking_links`, `clicks`, `conversions`, `conversion_data`, `advertiser_ledger`, `earnings`, `settlements`, `settlement_items`, `posting_campaigns`, `posting_applications`, `posting_submissions`, `posting_reviews`, and `auth_sessions`. It also enables `pgcrypto` and creates supporting enums/indexes. No `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `DROP`, or `ALTER TABLE` statements were found in this file.
+
+**This is a review of the initial migration only**, not approval to run the entire migration set. Later migrations, enum changes, schema drift and notification dependencies still need review. No DDL has been applied to the synthetic DB.
