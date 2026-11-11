@@ -108,3 +108,13 @@ test("Neon readiness check verifies the actual unique index definition", () => {
   assert.match(preflight, /earning_id/);
   assert.doesNotMatch(preflight, /CREATE\\\\s\+UNIQUE/);
 });
+
+test("synthetic fixture preflight is read-only and rejects production targets", () => {
+  const preflight = read("scripts/check-payout-synthetic-fixtures.mjs");
+  const packageJson = JSON.parse(read("package.json"));
+  assert.equal(packageJson.scripts["db:check-payout-fixtures"], "node scripts/check-payout-synthetic-fixtures.mjs");
+  for (const required of ["default_transaction_read_only", "PAYOUT_TEST_PROJECT_ID", "PAYOUT_TEST_ISOLATION_CONFIRMED", "NODE_ENV", "VERCEL_ENV", "mypickup_payout_test", "login_disabled"]) {
+    assert.ok(preflight.includes(required), "Missing fixture safety guard: " + required);
+  }
+  assert.doesNotMatch(preflight, /db`\\s*(?:insert|update|delete|drop|truncate|alter|create)\\b/i);
+});
