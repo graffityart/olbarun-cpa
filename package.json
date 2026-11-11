@@ -17,7 +17,8 @@
     "test:posting-review": "node --test lib/posting-review-validation.test.mjs lib/posting-approval-validation.test.mjs",
     "test:all": "npm run test:cpa && npm run test:settlements && npm run test:settlement-concurrency && npm run test:posting-review && npm run test:payout-staging",
     "test:payout-staging": "node --test lib/payout-phase1-staging.test.mjs",
-    "db:check-payout-test": "node scripts/check-payout-test-db.mjs"
+    "db:check-payout-test": "node scripts/check-payout-test-db.mjs",
+    "db:check-payout-schema": "node scripts/check-payout-test-schema.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.0.0",
