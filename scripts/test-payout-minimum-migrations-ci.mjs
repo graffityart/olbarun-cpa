@@ -158,6 +158,31 @@ try {
   assert.equal(rejectRemaining.n, 0, "Rejected payout flow must roll back synthetic rows");
   console.log("Rejected payout restores available earnings, records audit/notification, and rolls back");
 
+  // Confirm the payout queries can be scoped to a single partner, even when both
+  // partners have available earnings. All rows are synthetic and rolled back.
+  await db.begin(async tx => {
+    const users = await tx`insert into users(email,password_hash,role,status) values ('ci-scope-a@synthetic.invalid','disabled','PARTNER','ACTIVE'),('ci-scope-b@synthetic.invalid','disabled','PARTNER','ACTIVE') returning id,email`;
+    const a = users.find(u => u.email === "ci-scope-a@synthetic.invalid");
+    const b = users.find(u => u.email === "ci-scope-b@synthetic.invalid");
+    const [partnerA] = await tx`insert into partners(user_id,partner_code,name) values (${a.id},'CI-SCOPE-A','CI A') returning id`;
+    const [partnerB] = await tx`insert into partners(user_id,partner_code,name) values (${b.id},'CI-SCOPE-B','CI B') returning id`;
+    await tx`insert into earnings(partner_id,type,amount,status) values (${partnerA.id},'CPA',10000,'AVAILABLE'),(${partnerB.id},'CPA',50000,'AVAILABLE')`;
+    const availableA = await tx`select id,amount from earnings where partner_id=${partnerA.id} and status='AVAILABLE'`;
+    assert.equal(availableA.length, 1);
+    assert.equal(availableA[0].amount, 10000, "Partner A must never include partner B earnings");
+    const heldA = await tx`update earnings set status='HOLD' where partner_id=${partnerA.id} and status='AVAILABLE' returning id`;
+    assert.equal(heldA.length, 1);
+    const [stillAvailableB] = await tx`select count(*)::int as n from earnings where partner_id=${partnerB.id} and status='AVAILABLE'`;
+    assert.equal(stillAvailableB.n, 1, "Other partner earnings must stay available");
+    throw Object.assign(new Error("EXPECTED_CI_SCOPE_ROLLBACK"), { expectedRollback: true });
+  }).catch(error => {
+    if (!error?.expectedRollback) throw error;
+  });
+  const [scopeRemaining] = await db`select count(*)::int as n from users where email in ('ci-scope-a@synthetic.invalid','ci-scope-b@synthetic.invalid')`;
+  assert.equal(scopeRemaining.n, 0, "Partner isolation test must leave no synthetic users");
+  console.log("Partner-scoped earnings queries and rollback verified");
+
+
 
   console.log(JSON.stringify({ result: "pass", disposableDatabase: dbName, appliedMigrations: files, requiredTablesVerified: required.length, productionAccess: false }));
 } finally {
