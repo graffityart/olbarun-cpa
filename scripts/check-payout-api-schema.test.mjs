@@ -74,3 +74,13 @@ test("admin payout status endpoint rejects non-admin sessions", () => {
   assert.match(status, /\["ADMIN",\s*"SUPER_ADMIN"\]\.includes\(user\.role\)/);
   assert.match(status, /user\.status\s*!==\s*"ACTIVE"/);
 });
+
+test("read-only Neon readiness preflight covers every minimum payout table and unique index", () => {
+  const preflight = read("scripts/check-payout-test-schema.mjs");
+  const required = ["users", "partners", "advertisers", "advertiser_users", "notifications", "earnings", "settlements", "settlement_items", "auth_sessions", "audit_logs", "login_attempts"];
+  for (const table of required) assert.ok(preflight.includes('"' + table + '"'), "Missing readiness check for " + table);
+  assert.match(preflight, /settlement_items_settlement_earning_unique/);
+  assert.match(preflight, /default_transaction_read_only/);
+  assert.match(preflight, /PAYOUT_TEST_PROJECT_ID/);
+  assert.match(preflight, /missing\.length\s*\|\|\s*!uniqueIndexReady/);
+});
