@@ -69,6 +69,39 @@ try {
   const [rolledBack] = await db`select count(*)::int as n from users where email='ci-payout@synthetic.invalid'`;
   assert.equal(rolledBack.n, 0, "Rollback must remove all synthetic rows");
   console.log("Unique settlement item constraint and transaction rollback verified");
+  // Exercise the payout database state transitions in an isolated rollback-only transaction.
+  // This checks schema constraints and state persistence, not authenticated HTTP handlers.
+  await db.begin(async tx => {
+    const [admin] = await tx`insert into users(email,password_hash,role,status) values ('ci-admin@synthetic.invalid','disabled','ADMIN','ACTIVE') returning id`;
+    const [user] = await tx`insert into users(email,password_hash,role,status) values ('ci-flow@synthetic.invalid','disabled','PARTNER','ACTIVE') returning id`;
+    const [partner] = await tx`insert into partners(user_id,partner_code,name) values (${user.id},'CI-PAYOUT-FLOW','CI flow') returning id`;
+    const [earning] = await tx`insert into earnings(partner_id,type,amount,status) values (${partner.id},'CPA',20000,'AVAILABLE') returning id`;
+    const [settlement] = await tx`insert into settlements(settlement_code,partner_id,requested_amount,deduction_amount,payment_amount,status) values ('CI-PAYOUT-FLOW',${partner.id},20000,0,20000,'REQUESTED') returning id`;
+    await tx`insert into settlement_items(settlement_id,earning_id,amount) values (${settlement.id},${earning.id},20000)`;
+    await tx`update earnings set status='HOLD' where id=${earning.id} and status='AVAILABLE'`;
+    await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${user.id},'SETTLEMENT_REQUEST','SETTLEMENT',${settlement.id},'CI request')`;
+    const approved = await tx`update settlements set status='APPROVED',approved_at=now() where id=${settlement.id} and status='REQUESTED' returning id`;
+    assert.equal(approved.length, 1);
+    await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${admin.id},'SETTLEMENT_APPROVE','SETTLEMENT',${settlement.id},'CI approve')`;
+    const paid = await tx`update settlements set status='PAID',paid_at=now() where id=${settlement.id} and status='APPROVED' returning id`;
+    assert.equal(paid.length, 1);
+    await tx`update earnings set status='PAID' where id=${earning.id} and status='HOLD'`;
+    await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${admin.id},'SETTLEMENT_PAID','SETTLEMENT',${settlement.id},'CI paid')`;
+    await tx`insert into notifications(user_id,type,title,message) values (${user.id},'SETTLEMENT_PAID','CI payout','Synthetic notification only')`;
+    const [state] = await tx`select s.status as settlement_status,e.status as earning_status,s.approved_at,s.paid_at from settlements s join settlement_items i on i.settlement_id=s.id join earnings e on e.id=i.earning_id where s.id=${settlement.id}`;
+    assert.equal(state.settlement_status, "PAID");
+    assert.equal(state.earning_status, "PAID");
+    assert.ok(state.approved_at && state.paid_at);
+    const [audits] = await tx`select count(*)::int as n from audit_logs where target_id=${settlement.id}`;
+    assert.equal(audits.n, 3);
+    throw Object.assign(new Error("EXPECTED_CI_FLOW_ROLLBACK"), { expectedRollback: true });
+  }).catch(error => {
+    if (!error?.expectedRollback) throw error;
+  });
+  const [flowRemaining] = await db`select count(*)::int as n from users where email='ci-flow@synthetic.invalid'`;
+  assert.equal(flowRemaining.n, 0, "Payout flow test must roll back all synthetic rows");
+  console.log("Synthetic payout DB transitions, audit trail, notification storage, and rollback verified");
+
   console.log(JSON.stringify({ result: "pass", disposableDatabase: dbName, appliedMigrations: files, requiredTablesVerified: required.length, productionAccess: false }));
 } finally {
   await db.end();
