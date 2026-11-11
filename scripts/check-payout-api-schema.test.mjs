@@ -99,3 +99,12 @@ test("payout requests never accept a client-provided partner identifier", () => 
   assert.doesNotMatch(request, /body\.partnerId|body\.userId|body\.settlementId/);
   assert.match(request, /partnerId\s*:\s*user\.partnerId/);
 });
+
+test("Neon readiness check verifies the actual unique index definition", () => {
+  const preflight = read("scripts/check-payout-test-schema.mjs");
+  assert.match(preflight, /indexdef/);
+  assert.match(preflight, /CREATE\\s\+UNIQUE\\s\+INDEX/);
+  assert.match(preflight, /settlement_id/);
+  assert.match(preflight, /earning_id/);
+  assert.doesNotMatch(preflight, /CREATE\\\\s\+UNIQUE/);
+});
