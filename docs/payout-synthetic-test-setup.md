@@ -52,3 +52,26 @@ The successful payout release safety job at commit `b76b910` enumerated **17 SQL
 - `0009_partner_instant_signup.sql`: `UPDATE users u SET status='ACTIVE'` for matching pending partners, then `INSERT INTO audit_logs` from the updated rows. **This is a data-changing migration** and must never run against production as part of synthetic test setup.
 
 The audit is regex-based and is **not** a full SQL parser. Other statements, triggers, or dependency issues may still require manual review. CI passing means the audit ran successfully, not that all migrations were approved. The dedicated Neon synthetic database remains unmodified. Before applying SQL there, validate migration order, schema dependencies, test-project connection isolation, and any required extension/permissions.
+
+
+## Verified isolated deployment and next HTTP E2E gate (2026-11-11)
+
+This section supersedes the earlier statement that no dedicated application runtime had been provisioned.
+
+- Isolated Vercel project: `mypickup-payout-test` (`prj_EQz60bBZESUlWzxXgD9EU5HyQDia`), separate from the live `olbarun-cpa` project.
+- The first deployment unexpectedly resolved to target `production` and was canceled (`dpl_7FdbnPUjNXiYGR7UQfQnNs1tnJ2S`). A second deployment (`dpl_HHw6yANtbwCZoc8BEwv61vNuhNi7`) reached READY with `target: null` using release commit `3539c22`.
+- The isolated deployment's `GET /api/health/db` returned HTTP 200 with `database: connected`. This is a live database connectivity check, **not** proof of authenticated payout E2E or of every outbound integration being disabled.
+- The dedicated Neon test database still had three synthetic users, two earnings and zero settlements at the last read-only check.
+- Preview/development environment variables include the dedicated test `DATABASE_URL` and isolation markers. The isolated project's production environment has **no DATABASE_URL** and includes `PAYOUT_TEST_PROJECT_ID` to fail closed if unexpectedly targeted.
+- The synthetic runtime guard in `db/index.ts` rejects production Vercel environment, unexpected database name/host and missing SSL. The CPA postback and both Vercel Blob upload/finalize endpoints return 503 for the isolated test project.
+- **Important limitation:** `PAYOUT_EXTERNAL_EFFECTS_DISABLED=yes` is an assertion, not a universal runtime egress firewall. Verify all relevant integrations before creating login-capable synthetic accounts.
+- Synthetic identities still use disabled password hashes. The authenticated HTTP flow has **not** been run. Never paste a password, database URL, or session token into a GitHub commit, issue, build log, or public endpoint.
+- A source-level regression test was added in commit `657a874`; its GitHub Actions status must be verified separately.
+
+### Remaining test sequence
+
+1. Verify the newest commit's four CI jobs and confirm the deployed commit matches the intended tested revision.
+2. Inventory outbound integration paths (including file/blob, postback, email, payment and webhook) and confirm actual isolation.
+3. Prepare short-lived synthetic-only login credentials using an isolated secret-handling workflow; avoid a publicly documented static test password.
+4. Run authenticated partner request and admin review tests against the isolated hostname; verify negative cases and duplicate-request rejection, then reset test records.
+5. Confirm zero real transfers and no production deployment, then record test results and only propose production release after explicit approval.
