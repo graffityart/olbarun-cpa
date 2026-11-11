@@ -31,3 +31,5 @@ test("rejects production Vercel environment", () => rejected({ VERCEL_ENV: "prod
 test("rejects non-test database name", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech/olbarun_cpa?sslmode=require" }, /mypickup_payout_test/));
 test("rejects shared production database host", () => rejected({ DATABASE_URL: "postgresql://prod:fake@synthetic.neon.tech/production?sslmode=require" }, /Shared DB host forbidden/));
 test("rejects weak password", () => rejected({ PAYOUT_SYNTHETIC_PASSWORD: "short" }, /Strong synthetic password required/));
+test("rejects missing dedicated database credentials", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://synthetic.neon.tech/mypickup_payout_test?sslmode=require" }, /Dedicated test DB credentials required/));
+test("rejects unexpected database port", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech:6543/mypickup_payout_test?sslmode=require" }, /Unexpected test database port/));
