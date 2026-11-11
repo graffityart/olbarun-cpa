@@ -130,6 +130,16 @@ try {
     const [state] = await tx`select s.status as settlement_status,e.status as earning_status from settlements s join settlement_items i on i.settlement_id=s.id join earnings e on e.id=i.earning_id where s.id=${settlement.id}`;
     assert.equal(state.settlement_status, "REJECTED");
     assert.equal(state.earning_status, "AVAILABLE");
+    // A rejected payout must release the earning so a fresh request can reserve it.
+    const [replacement] = await tx`insert into settlements(settlement_code,partner_id,requested_amount,deduction_amount,payment_amount,status) values ('CI-PAYOUT-RETRY',${partner.id},30000,0,30000,'REQUESTED') returning id`;
+    const reheld = await tx`update earnings set status='HOLD' where id=${earning.id} and status='AVAILABLE' returning id`;
+    assert.equal(reheld.length, 1, "Restored earning should be available for a new payout");
+    await tx`insert into settlement_items(settlement_id,earning_id,amount) values (${replacement.id},${earning.id},30000)`;
+    const [retryState] = await tx`select status from earnings where id=${earning.id}`;
+    assert.equal(retryState.status, "HOLD");
+    const [originalState] = await tx`select status from settlements where id=${settlement.id}`;
+    assert.equal(originalState.status, "REJECTED", "Original rejection must remain immutable");
+
     const [audits] = await tx`select count(*)::int as n from audit_logs where target_id=${settlement.id}`;
     assert.equal(audits.n, 2);
     throw Object.assign(new Error("EXPECTED_CI_REJECT_ROLLBACK"), { expectedRollback: true });
