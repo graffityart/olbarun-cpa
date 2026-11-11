@@ -9,6 +9,9 @@ const limits: Record<string, number> = { ".zip":50*1024*1024, ".pdf":20*1024*102
 const mime: Record<string, string[]> = { ".zip":["application/zip","application/x-zip-compressed","application/octet-stream"], ".pdf":["application/pdf"], ".jpg":["image/jpeg"], ".jpeg":["image/jpeg"], ".png":["image/png"], ".webp":["image/webp"] };
 
 export async function POST(req: NextRequest, {params}:{params:Promise<{campaignId:string}>}) {
+ if (process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842") {
+  return Response.json({error:"UPLOAD_FINALIZE_DISABLED_IN_PAYOUT_TEST"},{status:503});
+ }
  try {
   requireSameOrigin(req);
   const user=await getCurrentUser();
