@@ -77,3 +77,12 @@ Before any authenticated HTTP test:
 - Confirmed Phase 1 workflow job `phase1` step 8, **PostgreSQL concurrency and rollback tests (disposable CI DB only)**, completed successfully. This covers the new concurrent payout test that asserts one audit event and one earning release.
 - Git comparison against `main`: release branch is 46 commits ahead and zero behind, affecting 12 files at the time of verification. Production remains at `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1`.
 - **Still blocking production:** isolated synthetic-data authenticated HTTP end-to-end checks, notification isolation, environment/schema/feature-flag preflight, and explicit operator approval. CI success does not authorize merge or production deployment.
+
+## Dedicated synthetic PostgreSQL project provisioned (2026-11-11)
+
+- Neon project `mypickup-payout-test` (`orange-salad-93665842`) created independently of the application production Neon project `olbarun-cpa` (`soft-mud-72335385`).
+- Default branch `synthetic-test` (`br-royal-cherry-bemnl5l2`), database `mypickup_payout_test`, PostgreSQL 18.6, compute 0.25 CU with 300-second idle suspend.
+- Direct read-only SQL verified `current_database() = mypickup_payout_test` and **zero public base tables**. No production data was cloned, and no schema migration, user seeding, payout or notification was executed.
+- **Do not run `scripts/seed-test-users.mjs` unchanged**: it contains fixed `@olbarunad.kr` email addresses. Use reserved invalid domains (e.g. `.invalid`) for synthetic identities and disable all external notification/postback paths before seeding.
+- Next gate: apply reviewed app migrations **only to this test project**, create non-deliverable synthetic identities and earnings, and configure a dedicated test deployment. Never change the existing Preview/Production `DATABASE_URL` because their resources may be shared.
+- The existing `scripts/check-payout-phase1-staging.mjs` validates configuration assertions but does not connect to a database or verify notification isolation. Actual authenticated E2E tests remain blocked until runtime isolation is independently verified.
