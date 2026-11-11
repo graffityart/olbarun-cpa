@@ -4,7 +4,7 @@ import { join } from "node:path";
 const dir = "db/migrations";
 const files = (await readdir(dir)).filter(x => x.endsWith(".sql")).sort();
 if (!files.length) throw new Error("No SQL migrations found");
-const risky = /\b(DROP\s+(?:TABLE|SCHEMA|COLUMN|TYPE|INDEX)|TRUNCATE|DELETE\s+FROM|UPDATE\s+\w+\s+SET|INSERT\s+INTO|ALTER\s+TABLE|CREATE\s+OR\s+REPLACE|GRANT|REVOKE)\b/gi;
+const risky = /\b(DROP\s+(?:TABLE|SCHEMA|COLUMN|TYPE|INDEX)|TRUNCATE|DELETE\s+FROM|UPDATE\s+\w+(?:\s+(?:AS\s+)?\w+)?\s+SET|INSERT\s+INTO|ALTER\s+TABLE|CREATE\s+OR\s+REPLACE|GRANT|REVOKE)\b/gi;
 const report = [];
 for (const file of files) {
   const sql = await readFile(join(dir, file), "utf8");
