@@ -11,6 +11,9 @@ const types = ["application/zip", "application/x-zip-compressed", "application/o
 function db() { if (!process.env.DATABASE_URL) throw Error("DATABASE_NOT_READY"); return postgres(process.env.DATABASE_URL, {max:1}); }
 
 export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:string}>}) {
+ if (process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842") {
+  return Response.json({error:"UPLOAD_DISABLED_IN_PAYOUT_TEST"},{status:503});
+ }
  const {campaignId}=await params;
  if(!uuid.test(campaignId))return Response.json({error:"INVALID_ID"},{status:400});
  try {
