@@ -118,6 +118,11 @@ try {
     await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${user.id},'SETTLEMENT_REQUEST','SETTLEMENT',${settlement.id},'CI request')`;
     const rejected = await tx`update settlements set status='REJECTED' where id=${settlement.id} and status='REQUESTED' returning id`;
     assert.equal(rejected.length, 1);
+    const duplicateReject = await tx`update settlements set status='REJECTED' where id=${settlement.id} and status='REQUESTED' returning id`;
+    assert.equal(duplicateReject.length, 0, "Cannot reject the same payout twice");
+    const approveRejected = await tx`update settlements set status='APPROVED',approved_at=now() where id=${settlement.id} and status='REQUESTED' returning id`;
+    assert.equal(approveRejected.length, 0, "Cannot approve a rejected payout");
+
     const restored = await tx`update earnings set status='AVAILABLE' where id=${earning.id} and status='HOLD' returning id`;
     assert.equal(restored.length, 1);
     await tx`insert into audit_logs(actor_user_id,action,target_type,target_id,summary) values (${admin.id},'SETTLEMENT_REJECT','SETTLEMENT',${settlement.id},'CI rejected')`;
