@@ -7,3 +7,9 @@ export function requireSameOrigin(request: Request) {
   const expected = `${proto}://${host}`;
   if (origin !== expected) throw new Error("INVALID_ORIGIN");
 }
+
+/** Require an explicit matching Origin on cookie-authenticated payout mutations. */
+export function requirePayoutSameOrigin(request: Request) {
+  if (!request.headers.get("origin")) throw new Error("INVALID_ORIGIN");
+  requireSameOrigin(request);
+}
