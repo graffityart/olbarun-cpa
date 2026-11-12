@@ -191,3 +191,13 @@ test("direct PostgreSQL API routes must use validated connection URLs", async ()
     assert.doesNotMatch(source, /postgres\(\s*process\.env\.DATABASE_URL\b/, "Unvalidated direct DB connection: " + path);
   }
 });
+
+test("isolated payout runtime prevents external Blob reads and deletes", () => {
+  const source = read("app/api/posting-materials/[campaignId]/[fileId]/route.ts");
+  const readGate = source.indexOf('if(process.env.PAYOUT_TEST_PROJECT_ID==="orange-salad-93665842")return new Response(null,{status:503});');
+  const blobGet = source.indexOf("await get(file.blob_url");
+  const deleteGate = source.indexOf('if(process.env.PAYOUT_TEST_PROJECT_ID==="orange-salad-93665842")return Response.json({error:"BLOB_DELETE_DISABLED_IN_PAYOUT_TEST"},{status:503});');
+  const blobDelete = source.indexOf("await del(blobs[0].blob_url)");
+  assert.ok(readGate >= 0 && blobGet > readGate, "Blob read must fail closed in payout test runtime");
+  assert.ok(deleteGate >= 0 && blobDelete > deleteGate, "Blob deletion must fail closed in payout test runtime");
+});
