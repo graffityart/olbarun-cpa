@@ -275,3 +275,19 @@ test("payout history and admin status endpoints enforce session roles and privat
   assert.match(admin, /settlementAuditMatches\(/);
   assert.match(admin, /settlementAmountsMatch\(/);
 });
+
+
+test("admin payout review responds with explicit 401 and 403 before database mutation", () => {
+  const review = read("app/api/admin/settlements/[id]/review/route.ts");
+  assert.match(review, /const admin=await getCurrentUser\(\)/);
+  assert.match(review, /if\(!admin\)return Response\.json\(\{ok:false,error:"UNAUTHORIZED"\},\{status:401,headers:privateResponseHeaders\}\)/);
+  assert.match(review, /admin\.status!=="ACTIVE"/);
+  assert.match(review, /admin\.role!=="ADMIN"&&admin\.role!=="SUPER_ADMIN"/);
+  assert.match(review, /error:"FORBIDDEN"\},\{status:403,headers:privateResponseHeaders\}/);
+  assert.match(review, /"Cache-Control":"no-store"/);
+  assert.doesNotMatch(review, /requireAdmin\(\)/);
+  const auth = review.indexOf("const admin=await getCurrentUser()");
+  const forbidden = review.indexOf('error:"FORBIDDEN"');
+  const mutation = review.indexOf("getDb().transaction");
+  assert.ok(auth >= 0 && forbidden > auth && mutation > forbidden, "Authorization must precede payout mutation");
+});
