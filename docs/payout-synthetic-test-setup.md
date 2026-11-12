@@ -139,3 +139,15 @@ The approval/paid and rejection/retry branches require separate resettable fixtu
 - HTTP `GET /api/partner/settlements` through deployment fetch was rejected by the **Vercel Deployment Protection layer**, with 401 `deployment_authentication_required` after redirect. This does not verify application-level 401 behavior.
 - No synthetic login credentials enabled, no HTTP payout mutations, no bank transfers, no production deployment or production DB writes.
 - Remaining blocker: an authorized, project-linked Vercel CLI identity or other short-lived approved Deployment Protection access. Preserve protection and do not expose tokens in source, logs, or chat.
+
+
+## Current protected Preview checkpoint (2026-11-12, commit `5d4980c`)
+
+- Four CI workflows passed for `5d4980ca591120fd0fe16d1ca7195c66f7e4e26b`.
+- Isolated Preview deployment `dpl_DqDXvcrhRdqsMpwGGju1vyHUEFoZ` reached READY (`target: null`), URL `https://mypickup-payout-test-48qyx047m-graffityart9988-2594s-projects.vercel.app`.
+- `GET /api/health/db` returned HTTP 200 with `database: connected` and `x-robots-tag: noindex`.
+- Read-only Neon checks: `mypickup_payout_test`, 0 settlements, 0 settlement items, 2 AVAILABLE earnings, 0 auth sessions.
+- Vercel project settings confirmed `ssoProtection.enabled=true`, `deploymentType=all_except_custom_domains`; password protection disabled. **Do not disable SSO** for test convenience.
+- Next prerequisite: an authorized Vercel identity accessing the isolated Preview and a verified application-level 401 response to an unauthenticated payout GET. Distinguish a Vercel 401 `deployment_authentication_required` from the application's JSON `UNAUTHORIZED` response.
+- Only after verifying isolation and outbound-effect restrictions, provision synthetic-only login credentials and run the HTTP acceptance matrix. Keep cookies, passwords, bypass tokens, and database URLs out of test logs and commits.
+- No authenticated payout HTTP E2E, real payment, production deployment, or production database write has been performed.
