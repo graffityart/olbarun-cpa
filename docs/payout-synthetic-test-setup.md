@@ -110,3 +110,21 @@ This section supersedes the earlier statement that no dedicated application runt
 The approval/paid and rejection/retry branches require separate resettable fixtures. Execute sequentially in a dedicated test database; never run them against production. Avoid using real account numbers: use clearly synthetic values only. Record HTTP status, application error code, settlement count, earning statuses, audit count and cleanup result. A protected deployment's `deployment_authentication_required` response does **not** satisfy any of the above application assertions.
 
 **Current status:** Acceptance matrix prepared, not yet executed. Synthetic accounts still have disabled password hashes.
+
+
+## Protected Preview execution environment check (2026-11-12)
+
+- Latest CI-verified revision: `85957bf22b9b852805bbfe08accf93225e3f3414`; all four GitHub Actions workflows succeeded.
+- Isolated Vercel Preview deployment: `dpl_GNVTsHoBWceHhziE5WiT7yk8krMv`, `target: null`, READY. The `/api/health/db` endpoint returned HTTP 200 and `database: connected`; response included `X-Robots-Tag: noindex`.
+- Isolated Neon database `mypickup_payout_test`: two AVAILABLE earnings, zero settlements, zero settlement items and zero authentication sessions at the checkpoint.
+- A temporary, nonpersistent Vercel Sandbox was created under the isolated test project with outbound access restricted to `*.vercel.app` and `api.vercel.com`. The universal sandbox image had `curl` but **no `vercel` / `vc` CLI**. The sandbox was stopped after the check; no authentication secrets were installed.
+- The deployment-fetch integration still encounters Vercel Deployment Protection for the payout API. This is a protection-layer blocker, not a successful application authorization test.
+
+### Next safe HTTP validation procedure
+
+1. On a machine or sandbox with an **authorized Vercel CLI session**, confirm `vercel whoami` and that the linked project is the isolated `mypickup-payout-test` project, **not** the live production project. Do not store Vercel credentials in the repository or logs.
+2. Keep Deployment Protection enabled. Call the **full isolated Preview URL** with `vercel curl https://mypickup-payout-test-ezgkqhjxv-graffityart9988-2594s-projects.vercel.app/api/partner/settlements -i` to distinguish Vercel SSO from the application's expected unauthenticated HTTP 401.
+3. Before enabling login-capable synthetic users, audit runtime outbound effects and verify the isolated DB guard and environment variables. Never use production credentials, real bank details, or external transfers.
+4. Run the documented HTTP acceptance matrix only after authorized access is confirmed. Capture status codes and sanitized database counts; keep session cookies and passwords out of output. Reset fixtures afterward.
+
+**Do not claim HTTP E2E completion until application-generated responses have been observed through authenticated Deployment Protection access.**
