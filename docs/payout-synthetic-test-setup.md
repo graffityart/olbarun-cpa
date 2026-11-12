@@ -85,3 +85,28 @@ This section supersedes the earlier statement that no dedicated application runt
 - Read-only SQL verified three synthetic users (ADMIN, ADVERTISER, PARTNER) all retain `disabled$` password hashes; the isolated DB has two AVAILABLE earnings, zero settlements, and zero auth sessions.
 - Keep Deployment Protection enabled. For authenticated HTTP tests, use an authorized `vercel curl` session scoped to this test project (or a short-lived same-project Trusted Sources development token); do not create a public protection bypass or weaken project access.
 - Only after protection-layer access works, enable temporary synthetic credentials through a secret-safe procedure and execute isolated API E2E. Do not mistake a 401 from Vercel SSO for a 401 from the application.
+
+
+## Authenticated payout HTTP E2E acceptance matrix
+
+**Prerequisites:** Use only the isolated `mypickup-payout-test` Preview and `mypickup_payout_test` Neon database. Authenticate through Vercel Deployment Protection using an authorized project-scoped session. Confirm `PAYOUT_EXTERNAL_EFFECTS_DISABLED=yes` and audit all outbound integrations before enabling synthetic login credentials. Never send credentials or session cookies to logs. Verify database identity and fixture counts immediately before and after the test.
+
+| Case | Request | Expected result |
+| --- | --- | --- |
+| Unauthenticated history | `GET /api/partner/settlements` | Application HTTP 401 `UNAUTHORIZED` (not Vercel SSO 401) |
+| Unauthenticated application | `POST /api/partner/settlements` | Application HTTP 401 with a valid same-origin header |
+| Partner malformed bank account | POST amount 20000, invalid account number | HTTP 400 `INVALID_INPUT`; no settlement |
+| Partner partial available amount | POST amount 12000 with 20000 AVAILABLE | HTTP 409 `REQUEST_FULL_AVAILABLE_AMOUNT`; no settlement |
+| Partner full amount | POST amount 20000 and valid synthetic bank details | HTTP 201, one REQUESTED settlement, two HOLD earnings, two settlement items and request audit |
+| Duplicate partner application | Repeat POST while REQUESTED | HTTP 409 `SETTLEMENT_ALREADY_PENDING`; no duplicate settlement |
+| Non-admin review | POST `/api/admin/settlements/{id}/review` as partner | Forbidden; no state transition |
+| Admin missing transfer confirmation | POST `{action:"PAID"}` without `transferConfirmed:true` | HTTP 400 `TRANSFER_CONFIRMATION_REQUIRED`; no mutation |
+| Admin approve | POST `{action:"APPROVE"}` | APPROVED; HOLD earnings unchanged; approval audit |
+| Admin repeat approval | Repeat APPROVE | HTTP 409 `INVALID_STATUS`; no duplicate audit |
+| Admin paid after verified synthetic confirmation | POST `{action:"PAID",transferConfirmed:true}` | PAID settlement and earnings; payment audit. **Never use real bank transfer.** |
+| Rejection branch | Fresh isolated fixture: REQUESTED then REJECT | REJECTED settlement; earnings restored to AVAILABLE; rejection audit |
+| Retry after rejection | Fresh fixture: reapply full available amount | New REQUESTED settlement; no duplicate earning association in same settlement |
+
+The approval/paid and rejection/retry branches require separate resettable fixtures. Execute sequentially in a dedicated test database; never run them against production. Avoid using real account numbers: use clearly synthetic values only. Record HTTP status, application error code, settlement count, earning statuses, audit count and cleanup result. A protected deployment's `deployment_authentication_required` response does **not** satisfy any of the above application assertions.
+
+**Current status:** Acceptance matrix prepared, not yet executed. Synthetic accounts still have disabled password hashes.
