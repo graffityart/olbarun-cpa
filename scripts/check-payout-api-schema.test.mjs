@@ -50,7 +50,7 @@ test("never include partner activation data migration in minimum payout schema",
 
 test("partner payout creation requires active partner session and same-origin protection", () => {
   const request = read(apiPaths[0]);
-  assert.match(request, /requireSameOrigin\(request\)/);
+  assert.match(request, /requirePayoutSameOrigin\(request\)/);
   assert.match(request, /getCurrentUser\(\)/);
   assert.match(request, /user\.role\s*!==\s*"PARTNER"/);
   assert.match(request, /user\.status\s*!==\s*"ACTIVE"/);
@@ -61,7 +61,7 @@ test("partner payout creation requires active partner session and same-origin pr
 test("admin payout review requires admin role, origin guard, and explicit transfer confirmation", () => {
   const review = read(apiPaths[1]);
   const guards = read("lib/auth/guards.ts");
-  assert.match(review, /requireSameOrigin\(request\)/);
+  assert.match(review, /requirePayoutSameOrigin\(request\)/);
   assert.match(review, /requireAdmin\(\)/);
   assert.match(review, /transferConfirmed\s*!==\s*true/);
   assert.match(review, /for update/i);
