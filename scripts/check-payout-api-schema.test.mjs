@@ -217,3 +217,14 @@ test("payout API enforces role, origin and transfer confirmation before writes",
   assert.ok(review.includes("for update"), "Admin review must lock settlement");
   assert.ok(review.includes('eq(settlements.status,"APPROVED")'), "Paid transition must only update approved settlements");
 });
+
+
+test("payout notifications stay in the isolated database without external delivery", () => {
+  const notifications = read("lib/notifications.ts");
+  assert.match(notifications, /getDb\(\)\.insert\(notifications\)/);
+  assert.doesNotMatch(notifications, /\bfetch\s*\(|\baxios\b|\bnodemailer\b|\bresend\b|\btwilio\b|\bsendgrid\b|\bhttps?\.request\s*\(/i);
+  const partner = read("app/api/partner/settlements/route.ts");
+  const admin = read("app/api/admin/settlements/[id]/review/route.ts");
+  assert.match(partner, /notifyAdmins\(/);
+  assert.match(admin, /notifyUser\(/);
+});
