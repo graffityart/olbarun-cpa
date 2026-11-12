@@ -201,3 +201,19 @@ test("isolated payout runtime prevents external Blob reads and deletes", () => {
   assert.ok(readGate >= 0 && blobGet > readGate, "Blob read must fail closed in payout test runtime");
   assert.ok(deleteGate >= 0 && blobDelete > deleteGate, "Blob deletion must fail closed in payout test runtime");
 });
+
+
+test("payout API enforces role, origin and transfer confirmation before writes", () => {
+  const request = read("app/api/partner/settlements/route.ts");
+  const review = read("app/api/admin/settlements/[id]/review/route.ts");
+  assert.ok(request.includes("requireSameOrigin(request)"), "Partner payout request must validate origin");
+  assert.ok(request.includes('user.role!=="PARTNER"'), "Payout request must be partner-only");
+  assert.ok(request.includes("for update"), "Payout request must lock earnings before reserving them");
+  assert.ok(request.includes('status:"HOLD"'), "Payout request must reserve earnings");
+  assert.ok(review.includes("requireSameOrigin(request)"), "Admin review must validate origin");
+  assert.ok(review.includes("await requireAdmin()"), "Admin review must enforce admin role");
+  assert.ok(review.includes('action==="PAID"&&body.transferConfirmed!==true'), "Paid transition requires explicit transfer confirmation");
+  assert.ok(review.indexOf('action==="PAID"&&body.transferConfirmed!==true') < review.indexOf("getDb().transaction"), "Transfer confirmation must precede DB mutation");
+  assert.ok(review.includes("for update"), "Admin review must lock settlement");
+  assert.ok(review.includes('eq(settlements.status,"APPROVED")'), "Paid transition must only update approved settlements");
+});
