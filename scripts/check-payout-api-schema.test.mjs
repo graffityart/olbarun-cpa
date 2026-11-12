@@ -238,3 +238,22 @@ test("payout mutations reject missing Origin instead of silently allowing it", (
     assert.match(read(path), /requirePayoutSameOrigin\(request\)/);
   }
 });
+
+test("payout Origin guard rejects missing and mismatched origins at runtime", async () => {
+  const source = read("lib/security/origin.ts").replaceAll("request: Request", "request");
+  const { requirePayoutSameOrigin } = await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
+  const request = (origin, host = "preview.example.test", proto = "https") => ({
+    headers: new Headers({
+      host,
+      "x-forwarded-host": host,
+      "x-forwarded-proto": proto,
+      ...(origin === null ? {} : { origin }),
+    }),
+  });
+  assert.throws(() => requirePayoutSameOrigin(request(null)), /INVALID_ORIGIN/);
+  assert.throws(() => requirePayoutSameOrigin(request("")), /INVALID_ORIGIN/);
+  assert.throws(() => requirePayoutSameOrigin(request("https://attacker.example.test")), /INVALID_ORIGIN/);
+  assert.throws(() => requirePayoutSameOrigin(request("http://preview.example.test")), /INVALID_ORIGIN/);
+  assert.throws(() => requirePayoutSameOrigin(request("https://preview.example.test:444")), /INVALID_ORIGIN/);
+  assert.doesNotThrow(() => requirePayoutSameOrigin(request("https://preview.example.test")));
+});
