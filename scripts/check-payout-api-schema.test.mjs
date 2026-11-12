@@ -176,3 +176,18 @@ test("synthetic payout deployment blocks live postbacks and external Blob operat
     assert.ok(source.includes("status:503"), "Missing fail-closed status: " + path);
   }
 });
+
+
+test("direct PostgreSQL API routes must use validated connection URLs", async () => {
+  const { readdirSync, statSync } = await import("node:fs");
+  const walk = directory => readdirSync(directory).flatMap(name => {
+    const path = directory + "/" + name;
+    return statSync(path).isDirectory() ? walk(path) : path.endsWith(".ts") ? [path] : [];
+  });
+  for (const path of [...walk("app/api"), ...walk("lib")]) {
+    const source = read(path);
+    if (!/from\s+["']postgres["']/.test(source)) continue;
+    assert.ok(source.includes("getValidatedDatabaseUrl"), "Direct postgres import must use validated DB URL: " + path);
+    assert.doesNotMatch(source, /postgres\(\s*process\.env\.DATABASE_URL\b/, "Unvalidated direct DB connection: " + path);
+  }
+});
