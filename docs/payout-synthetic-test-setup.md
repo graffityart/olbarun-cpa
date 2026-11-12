@@ -75,3 +75,13 @@ This section supersedes the earlier statement that no dedicated application runt
 3. Prepare short-lived synthetic-only login credentials using an isolated secret-handling workflow; avoid a publicly documented static test password.
 4. Run authenticated partner request and admin review tests against the isolated hostname; verify negative cases and duplicate-request rejection, then reset test records.
 5. Confirm zero real transfers and no production deployment, then record test results and only propose production release after explicit approval.
+
+
+## Protected Preview API verification checkpoint (2026-11-12)
+
+- Latest verified isolated Preview deployment: `dpl_28akfamzcARvkn4rMLN4zGe2fkbi`, commit `589f552`, `target: null`, READY.
+- `GET /api/health/db` returned HTTP 200 with `database: connected`.
+- A protected `GET /api/partner/settlements` request via the deployment fetch integration failed at Vercel's authentication layer with `deployment_authentication_required`. **This is not an application-level payout authorization result**.
+- Read-only SQL verified three synthetic users (ADMIN, ADVERTISER, PARTNER) all retain `disabled$` password hashes; the isolated DB has two AVAILABLE earnings, zero settlements, and zero auth sessions.
+- Keep Deployment Protection enabled. For authenticated HTTP tests, use an authorized `vercel curl` session scoped to this test project (or a short-lived same-project Trusted Sources development token); do not create a public protection bypass or weaken project access.
+- Only after protection-layer access works, enable temporary synthetic credentials through a secret-safe procedure and execute isolated API E2E. Do not mistake a 401 from Vercel SSO for a 401 from the application.
