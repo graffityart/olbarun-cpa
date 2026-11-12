@@ -291,3 +291,16 @@ test("admin payout review responds with explicit 401 and 403 before database mut
   const mutation = review.indexOf("getDb().transaction");
   assert.ok(auth >= 0 && forbidden > auth && mutation > forbidden, "Authorization must precede payout mutation");
 });
+
+
+test("partner payout POST distinguishes missing session from forbidden partner access", () => {
+  const source = read("app/api/partner/settlements/route.ts");
+  const post = source.slice(source.indexOf("export async function POST("), source.indexOf("export async function GET("));
+  assert.match(post, /if\(!user\)return Response\.json\(\{ok:false,error:"UNAUTHORIZED"\},\{status:401,headers:privateResponseHeaders\}\)/);
+  assert.match(post, /user\.role!=="PARTNER"\|\|user\.status!=="ACTIVE"\|\|!user\.partnerId/);
+  assert.match(post, /error:"FORBIDDEN"\},\{status:403,headers:privateResponseHeaders\}/);
+  const auth = post.indexOf("const user=await getCurrentUser()");
+  const forbidden = post.indexOf('error:"FORBIDDEN"');
+  const mutation = post.indexOf("getDb().transaction");
+  assert.ok(auth >= 0 && forbidden > auth && mutation > forbidden, "Partner role validation must precede payout mutation");
+});
