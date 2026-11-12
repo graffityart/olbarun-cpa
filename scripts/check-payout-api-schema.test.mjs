@@ -257,3 +257,21 @@ test("payout Origin guard rejects missing and mismatched origins at runtime", as
   assert.throws(() => requirePayoutSameOrigin(request("https://preview.example.test:444")), /INVALID_ORIGIN/);
   assert.doesNotThrow(() => requirePayoutSameOrigin(request("https://preview.example.test")));
 });
+
+
+test("payout history and admin status endpoints enforce session roles and private responses", () => {
+  const partner = read("app/api/partner/settlements/route.ts");
+  const admin = read("app/api/admin/settlements/[id]/status/route.ts");
+  assert.match(partner, /export async function GET\(\)/);
+  assert.match(partner, /user\.role\s*!==\s*"PARTNER"/);
+  assert.match(partner, /user\.status\s*!==\s*"ACTIVE"/);
+  assert.match(partner, /eq\(settlements\.partnerId,user\.partnerId\)/);
+  assert.match(partner, /"Cache-Control":\s*"no-store"/);
+  assert.match(admin, /export async function GET\(/);
+  assert.match(admin, /if \(!user\).*"UNAUTHORIZED"/);
+  assert.match(admin, /user\.status !== "ACTIVE"/);
+  assert.match(admin, /\["ADMIN", "SUPER_ADMIN"\]\.includes\(user\.role\)/);
+  assert.match(admin, /"Cache-Control": "no-store"/);
+  assert.match(admin, /settlementAuditMatches\(/);
+  assert.match(admin, /settlementAmountsMatch\(/);
+});
