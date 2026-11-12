@@ -128,3 +128,14 @@ The approval/paid and rejection/retry branches require separate resettable fixtu
 4. Run the documented HTTP acceptance matrix only after authorized access is confirmed. Capture status codes and sanitized database counts; keep session cookies and passwords out of output. Reset fixtures afterward.
 
 **Do not claim HTTP E2E completion until application-generated responses have been observed through authenticated Deployment Protection access.**
+
+
+## Latest isolated Preview verification (2026-11-12, after `f2f60d9`)
+
+- All four GitHub Actions workflows for `f2f60d9e11355864da9b934e8648f7aad390097c` completed successfully.
+- Isolated Preview deployment `dpl_3s1kL5GaPEwctJ1YrQEujjZKbd8y` reached READY, with `target: null`. URL: `https://mypickup-payout-test-8897rs7ik-graffityart9988-2594s-projects.vercel.app`.
+- HTTP `GET /api/health/db` returned 200 with `database: connected`; response contained `x-robots-tag: noindex`.
+- Read-only Neon verification: `current_database()=mypickup_payout_test`, settlements 0, settlement items 0, AVAILABLE earnings 2, auth sessions 0.
+- HTTP `GET /api/partner/settlements` through deployment fetch was rejected by the **Vercel Deployment Protection layer**, with 401 `deployment_authentication_required` after redirect. This does not verify application-level 401 behavior.
+- No synthetic login credentials enabled, no HTTP payout mutations, no bank transfers, no production deployment or production DB writes.
+- Remaining blocker: an authorized, project-linked Vercel CLI identity or other short-lived approved Deployment Protection access. Preserve protection and do not expose tokens in source, logs, or chat.
