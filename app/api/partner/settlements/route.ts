@@ -11,7 +11,8 @@ export async function POST(request:Request){try{requirePayoutSameOrigin(request)
 
 export async function GET(){
  const user=await getCurrentUser();
- if(!user||user.role!=="PARTNER"||user.status!=="ACTIVE"||!user.partnerId)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401,headers:{"Cache-Control":"no-store"}});
+ if(!user)return Response.json({ok:false,error:"UNAUTHORIZED"},{status:401,headers:privateResponseHeaders});
+ if(user.role!=="PARTNER"||user.status!=="ACTIVE"||!user.partnerId)return Response.json({ok:false,error:"FORBIDDEN"},{status:403,headers:privateResponseHeaders});
  try{
   const rows=await getDb().select({settlementCode:settlements.settlementCode,status:settlements.status,requestedAmount:settlements.requestedAmount,requestedAt:settlements.requestedAt}).from(settlements).where(eq(settlements.partnerId,user.partnerId)).orderBy(desc(settlements.requestedAt)).limit(10);
   return Response.json({ok:true,settlements:rows},{headers:{"Cache-Control":"no-store"}});
