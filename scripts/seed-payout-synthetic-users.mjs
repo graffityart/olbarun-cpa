@@ -37,9 +37,11 @@ try {
   // Refuse credential rotation while any test payout or session is active.
   const [state] = await sql`select
     (select count(*)::int from settlements) as settlement_count,
-    (select count(*)::int from auth_sessions) as session_count`;
+    (select count(*)::int from auth_sessions) as session_count,
+    (select count(*)::int from users where email not like '%@synthetic.invalid') as non_synthetic_user_count`;
   assert.equal(state.settlement_count, 0, "Synthetic password seeding requires zero settlements");
   assert.equal(state.session_count, 0, "Synthetic password seeding requires zero active sessions");
+  assert.equal(state.non_synthetic_user_count, 0, "Synthetic password seeding forbids non-synthetic users");
   const hash = hashPassword(password);
   await sql.begin(async tx => {
     for (const [email, role] of [["payout-admin@synthetic.invalid", "ADMIN"], ["payout-advertiser@synthetic.invalid", "ADVERTISER"], ["payout-partner@synthetic.invalid", "PARTNER"]]) {
