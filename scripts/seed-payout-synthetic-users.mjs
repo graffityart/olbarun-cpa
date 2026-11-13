@@ -34,6 +34,12 @@ try {
   const required = ["users", "partners", "advertisers", "advertiser_users"];
   const tables = await sql`select table_name from information_schema.tables where table_schema='public' and table_name in ('users','partners','advertisers','advertiser_users')`;
   assert.deepEqual(tables.map(x => x.table_name).sort(), required.sort(), "Required schema is incomplete");
+  // Refuse credential rotation while any test payout or session is active.
+  const [state] = await sql`select
+    (select count(*)::int from settlements) as settlement_count,
+    (select count(*)::int from auth_sessions) as session_count`;
+  assert.equal(state.settlement_count, 0, "Synthetic password seeding requires zero settlements");
+  assert.equal(state.session_count, 0, "Synthetic password seeding requires zero active sessions");
   const hash = hashPassword(password);
   await sql.begin(async tx => {
     for (const [email, role] of [["payout-admin@synthetic.invalid", "ADMIN"], ["payout-advertiser@synthetic.invalid", "ADVERTISER"], ["payout-partner@synthetic.invalid", "PARTNER"]]) {
