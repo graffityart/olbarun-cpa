@@ -41,12 +41,15 @@ test("credential seeding checks for existing settlements and sessions before upd
   const settlementCheck = source.indexOf("(select count(*)::int from settlements)");
   const sessionCheck = source.indexOf("(select count(*)::int from auth_sessions)");
   const nonSyntheticCheck = source.indexOf("from users where email not like");
+  const unrelatedEarningsCheck = source.indexOf("from earnings where partner_id not in");
   const settlementGate = source.indexOf('assert.equal(state.settlement_count, 0');
   const sessionGate = source.indexOf('assert.equal(state.session_count, 0');
   const nonSyntheticGate = source.indexOf('assert.equal(state.non_synthetic_user_count, 0');
+  const unrelatedEarningsGate = source.indexOf('assert.equal(state.unrelated_earning_count, 0');
   const write = source.indexOf("await sql.begin(async tx =>");
   assert.ok(settlementCheck >= 0 && sessionCheck >= 0, "Both database counts must be checked");
   assert.ok(settlementGate > settlementCheck && sessionGate > sessionCheck, "Counts must be enforced");
   assert.ok(nonSyntheticCheck >= 0 && nonSyntheticGate > nonSyntheticCheck, "Non-synthetic users must be rejected");
-  assert.ok(write > settlementGate && write > sessionGate && write > nonSyntheticGate, "All gates must precede credential writes");
+  assert.ok(unrelatedEarningsCheck >= 0 && unrelatedEarningsGate > unrelatedEarningsCheck, "Unrelated earnings must be rejected");
+  assert.ok(write > settlementGate && write > sessionGate && write > nonSyntheticGate && write > unrelatedEarningsGate, "All gates must precede credential writes");
 });
