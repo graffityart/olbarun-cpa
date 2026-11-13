@@ -38,10 +38,12 @@ try {
   const [state] = await sql`select
     (select count(*)::int from settlements) as settlement_count,
     (select count(*)::int from auth_sessions) as session_count,
-    (select count(*)::int from users where email not like '%@synthetic.invalid') as non_synthetic_user_count`;
+    (select count(*)::int from users where email not like '%@synthetic.invalid') as non_synthetic_user_count,
+    (select count(*)::int from earnings where partner_id not in (select id from partners where partner_code = 'SYNTH-PAYOUT-PARTNER')) as unrelated_earning_count`;
   assert.equal(state.settlement_count, 0, "Synthetic password seeding requires zero settlements");
   assert.equal(state.session_count, 0, "Synthetic password seeding requires zero active sessions");
   assert.equal(state.non_synthetic_user_count, 0, "Synthetic password seeding forbids non-synthetic users");
+  assert.equal(state.unrelated_earning_count, 0, "Synthetic password seeding forbids unrelated earnings");
   const hash = hashPassword(password);
   await sql.begin(async tx => {
     for (const [email, role] of [["payout-admin@synthetic.invalid", "ADMIN"], ["payout-advertiser@synthetic.invalid", "ADVERTISER"], ["payout-partner@synthetic.invalid", "PARTNER"]]) {
