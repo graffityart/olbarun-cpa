@@ -328,3 +328,15 @@ test("payout history and status responses never expose bank account snapshots or
   assert.match(history, /settlementCode:settlements\.settlementCode/);
   assert.match(admin, /status: settlements\.status/);
 });
+
+
+test("isolated Preview HTTP smoke remains read-only and validates application responses", () => {
+  const source = read("scripts/check-payout-preview-http.mjs");
+  assert.match(source, /PAYOUT_TEST_ISOLATION_CONFIRMED/);
+  assert.match(source, /mypickup-payout-test-/);
+  assert.match(source, /response\.status, 401/);
+  assert.match(source, /cache-control/);
+  assert.match(source, /redirect: "manual"/);
+  assert.doesNotMatch(source, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
+  assert.doesNotMatch(source, /fetch\([^\n]*mypickup\.kr/);
+});
