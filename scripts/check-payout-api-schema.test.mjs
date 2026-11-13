@@ -304,3 +304,14 @@ test("partner payout POST distinguishes missing session from forbidden partner a
   const mutation = post.indexOf("getDb().transaction");
   assert.ok(auth >= 0 && forbidden > auth && mutation > forbidden, "Partner role validation must precede payout mutation");
 });
+
+
+test("partner payout history GET distinguishes unauthenticated from forbidden roles", () => {
+  const source = read("app/api/partner/settlements/route.ts");
+  const get = source.slice(source.indexOf("export async function GET("));
+  assert.match(get, /if\(!user\)return Response\.json\(\{ok:false,error:"UNAUTHORIZED"\},\{status:401,headers:privateResponseHeaders\}\)/);
+  assert.match(get, /user\.role!=="PARTNER"\|\|user\.status!=="ACTIVE"\|\|!user\.partnerId/);
+  assert.match(get, /error:"FORBIDDEN"\},\{status:403,headers:privateResponseHeaders\}/);
+  assert.match(get, /eq\(settlements\.partnerId,user\.partnerId\)/);
+  assert.ok(get.indexOf('error:"FORBIDDEN"') < get.indexOf("getDb().select"), "Role check must precede payout history query");
+});
