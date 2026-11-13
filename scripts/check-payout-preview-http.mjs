@@ -26,7 +26,7 @@ for (const [path, expected] of cases) {
     headers, redirect: "manual", signal: AbortSignal.timeout(15000),
   });
   assert.equal(response.status, 401, `${path}: expected application 401; got ${response.status}. Check Vercel Authentication access.`);
-  assert.match(response.headers.get("content-type") ?? "", /application\\/json/, `${path}: expected application JSON, not Vercel protection page`);
+  assert.match(response.headers.get("content-type") ?? "", /application\/json/, `${path}: expected application JSON, not Vercel protection page`);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/, `${path}: private response must not be cached`);
   const body = await response.json();
   assert.deepEqual(body, { ok: false, error: expected }, `${path}: unexpected application response`);
