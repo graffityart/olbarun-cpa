@@ -337,6 +337,10 @@ test("isolated Preview HTTP smoke remains read-only and validates application re
   assert.match(source, /response\.status, 401/);
   assert.match(source, /cache-control/);
   assert.match(source, /redirect: "manual"/);
-  assert.doesNotMatch(source, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
+  assert.match(source, /method: "POST"/);
+  assert.match(source, /origin: url.origin/);
+  assert.match(source, /response.status, 401/);
+  assert.doesNotMatch(source, /method:\\s*["'](?:PUT|PATCH|DELETE)["']/);
+  assert.doesNotMatch(source, /olbarun_session|authorization:|cookie:/i);
   assert.doesNotMatch(source, /fetch\([^\n]*mypickup\.kr/);
 });
