@@ -33,3 +33,17 @@ test("rejects shared production database host", () => rejected({ DATABASE_URL: "
 test("rejects weak password", () => rejected({ PAYOUT_SYNTHETIC_PASSWORD: "short" }, /Strong synthetic password required/));
 test("rejects missing dedicated database credentials", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://synthetic.neon.tech/mypickup_payout_test?sslmode=require" }, /Dedicated test DB credentials required/));
 test("rejects unexpected database port", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech:6543/mypickup_payout_test?sslmode=require" }, /Unexpected test database port/));
+
+
+test("credential seeding checks for existing settlements and sessions before updating users", async () => {
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync(script, "utf8");
+  const settlementCheck = source.indexOf("(select count(*)::int from settlements)");
+  const sessionCheck = source.indexOf("(select count(*)::int from auth_sessions)");
+  const settlementGate = source.indexOf('assert.equal(state.settlement_count, 0');
+  const sessionGate = source.indexOf('assert.equal(state.session_count, 0');
+  const write = source.indexOf("await sql.begin(async tx =>");
+  assert.ok(settlementCheck >= 0 && sessionCheck >= 0, "Both database counts must be checked");
+  assert.ok(settlementGate > settlementCheck && sessionGate > sessionCheck, "Counts must be enforced");
+  assert.ok(write > settlementGate && write > sessionGate, "Both gates must precede credential writes");
+});
