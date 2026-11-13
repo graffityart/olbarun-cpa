@@ -315,3 +315,16 @@ test("partner payout history GET distinguishes unauthenticated from forbidden ro
   assert.match(get, /eq\(settlements\.partnerId,user\.partnerId\)/);
   assert.ok(get.indexOf('error:"FORBIDDEN"') < get.indexOf("getDb().select"), "Role check must precede payout history query");
 });
+
+
+test("payout history and status responses never expose bank account snapshots or session secrets", () => {
+  const partner = read("app/api/partner/settlements/route.ts");
+  const history = partner.slice(partner.indexOf("export async function GET("));
+  const admin = read("app/api/admin/settlements/[id]/status/route.ts");
+  for (const [label, source] of [["partner history", history], ["admin status", admin]]) {
+    assert.doesNotMatch(source, /bankAccountSnapshot|accountNumber|tokenHash|passwordHash|select\(\)/, `${label} must select only non-sensitive fields`);
+    assert.match(source, /"Cache-Control"(?::"no-store"|: "no-store")|headers:privateResponseHeaders/, `${label} must not be cached`);
+  }
+  assert.match(history, /settlementCode:settlements\.settlementCode/);
+  assert.match(admin, /status: settlements\.status/);
+});
