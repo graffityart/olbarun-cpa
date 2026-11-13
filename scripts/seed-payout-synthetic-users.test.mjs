@@ -40,10 +40,13 @@ test("credential seeding checks for existing settlements and sessions before upd
   const source = readFileSync(script, "utf8");
   const settlementCheck = source.indexOf("(select count(*)::int from settlements)");
   const sessionCheck = source.indexOf("(select count(*)::int from auth_sessions)");
+  const nonSyntheticCheck = source.indexOf("from users where email not like");
   const settlementGate = source.indexOf('assert.equal(state.settlement_count, 0');
   const sessionGate = source.indexOf('assert.equal(state.session_count, 0');
+  const nonSyntheticGate = source.indexOf('assert.equal(state.non_synthetic_user_count, 0');
   const write = source.indexOf("await sql.begin(async tx =>");
   assert.ok(settlementCheck >= 0 && sessionCheck >= 0, "Both database counts must be checked");
   assert.ok(settlementGate > settlementCheck && sessionGate > sessionCheck, "Counts must be enforced");
-  assert.ok(write > settlementGate && write > sessionGate, "Both gates must precede credential writes");
+  assert.ok(nonSyntheticCheck >= 0 && nonSyntheticGate > nonSyntheticCheck, "Non-synthetic users must be rejected");
+  assert.ok(write > settlementGate && write > sessionGate && write > nonSyntheticGate, "All gates must precede credential writes");
 });
