@@ -22,7 +22,8 @@
     "db:audit-payout-migrations": "node scripts/audit-payout-migrations.mjs",
     "db:seed-payout-synthetic": "node scripts/seed-payout-synthetic-users.mjs",
     "db:check-payout-fixtures": "node scripts/check-payout-synthetic-fixtures.mjs",
-    "test:synthetic-seed": "node --test scripts/seed-payout-synthetic-users.test.mjs"
+    "test:synthetic-seed": "node --test scripts/seed-payout-synthetic-users.test.mjs",
+    "test:payout-preview-http": "node scripts/check-payout-preview-http.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.0.0",
