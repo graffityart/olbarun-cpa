@@ -32,4 +32,22 @@ for (const [path, expected] of cases) {
   assert.deepEqual(body, { ok: false, error: expected }, `${path}: unexpected application response`);
   console.log(`PASS ${path}: unauthenticated, private JSON`);
 }
-console.log("Read-only payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
+const mutationCases = [
+  "/api/partner/settlements",
+  "/api/admin/settlements/00000000-0000-4000-8000-000000000000/review",
+];
+for (const path of mutationCases) {
+  const response = await fetch(new URL(path, url), {
+    method: "POST",
+    headers: { ...headers, origin: url.origin, "content-type": "application/json" },
+    body: JSON.stringify({ action: "APPROVE", amount: 1 }),
+    redirect: "manual",
+    signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(response.status, 401, `${path}: unauthenticated POST must return application 401`);
+  assert.match(response.headers.get("content-type") ?? "", /application\/json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
+  console.log(`PASS ${path}: unauthenticated POST blocked before database mutation`);
+}
+console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
