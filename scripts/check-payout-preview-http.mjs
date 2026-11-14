@@ -21,12 +21,12 @@ function assertApplicationResponse(response, path) {
   const contentType = response.headers.get("content-type") ?? "";
   const redirectLocation = response.headers.get("location") ?? "";
   const isProtectionPage = response.status === 302 || response.status === 307 ||
-    /text\\/html/i.test(contentType) || /_vercel_sso|vercel\\.com\\/login/i.test(redirectLocation);
+    /text\/html/i.test(contentType) || /_vercel_sso|vercel\.com\/login/i.test(redirectLocation);
   assert.ok(!isProtectionPage,
     `${path}: Vercel Deployment Protection intercepted the request. Use authorized Preview access; do not disable SSO.`);
   assert.equal(response.status, 401,
     `${path}: expected application 401; got ${response.status}`);
-  assert.match(contentType, /application\\/json/,
+  assert.match(contentType, /application\/json/,
     `${path}: expected application JSON`);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/,
     `${path}: private response must not be cached`);
