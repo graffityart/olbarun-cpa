@@ -162,3 +162,13 @@ The approval/paid and rejection/retry branches require separate resettable fixtu
 - Never treat a successful static test, a health endpoint response, or a Vercel protection 401 as a passing payout HTTP E2E result.
 - Next gate: use an authorized, narrowly scoped Preview access method without disabling SSO or committing a bypass secret. Confirm application JSON 401 on both GET and POST; then inventory outbound integrations before enabling synthetic-only logins and running the authenticated acceptance matrix.
 - No live production deployment, synthetic password activation, bank transfer, or authenticated payout HTTP E2E was performed at this checkpoint.
+
+
+## Latest isolated runtime and fixture verification (2026-11-14, commit `961aca2`)
+
+- Four GitHub Actions workflows passed for `961aca2e326e07b4ec4d6325d8b75f6a632418d3`.
+- Dedicated Preview deployment `dpl_HtBGqnraunGSaGi9dUioq1oNXsdc` reached READY with `target: null`: `https://mypickup-payout-test-8ns0hhvng-graffityart9988-2594s-projects.vercel.app`.
+- `GET /api/health/db` returned HTTP 200, `database: connected`, and `x-robots-tag: noindex`.
+- Read-only Neon queries against project `orange-salad-93665842`, branch `br-royal-cherry-bemnl5l2`, database `mypickup_payout_test`: three synthetic users, zero non-synthetic users, zero login-enabled users, two AVAILABLE earnings, zero settlements, zero authentication sessions.
+- No synthetic password rotation or database write occurred. The application payout HTTP smoke and authenticated E2E are **not yet verified**, because the Preview remains behind Vercel Authentication and no synthetic login is enabled.
+- Required before operational release: authorized protected-Preview API access, an audited external-effect boundary, synthetic-only authenticated request/review E2E, migration/rollback rehearsal, and explicit production approval.
