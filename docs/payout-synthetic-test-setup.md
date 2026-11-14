@@ -151,3 +151,14 @@ The approval/paid and rejection/retry branches require separate resettable fixtu
 - Next prerequisite: an authorized Vercel identity accessing the isolated Preview and a verified application-level 401 response to an unauthenticated payout GET. Distinguish a Vercel 401 `deployment_authentication_required` from the application's JSON `UNAUTHORIZED` response.
 - Only after verifying isolation and outbound-effect restrictions, provision synthetic-only login credentials and run the HTTP acceptance matrix. Keep cookies, passwords, bypass tokens, and database URLs out of test logs and commits.
 - No authenticated payout HTTP E2E, real payment, production deployment, or production database write has been performed.
+
+
+## Current isolated Preview checkpoint (2026-11-14, commit `a516ad3`)
+
+- GitHub Actions: CPA checks, CPA regression and TypeScript, CPA and settlement tests, and Phase 1 payout release safety all succeeded for `a516ad361089aacc587af2d2e790e0d03a5a0f98`.
+- Isolated Preview deployment `dpl_B4b1Z6YurP73HqmeBqvBMZKMFZEM` is READY with `target: null`, URL `https://mypickup-payout-test-ampkn4uz9-graffityart9988-2594s-projects.vercel.app`.
+- `GET /api/health/db` returned HTTP 200 with `database: connected` and `x-robots-tag: noindex`.
+- The read-only/unauthenticated HTTP smoke script now checks both GET authorization and POST authorization for payout request/admin review. **The script has not been executed successfully against the protected Preview.** A deployment fetch for the payout API was stopped by Vercel Authentication (`deployment_authentication_required`), not by the application.
+- Never treat a successful static test, a health endpoint response, or a Vercel protection 401 as a passing payout HTTP E2E result.
+- Next gate: use an authorized, narrowly scoped Preview access method without disabling SSO or committing a bypass secret. Confirm application JSON 401 on both GET and POST; then inventory outbound integrations before enabling synthetic-only logins and running the authenticated acceptance matrix.
+- No live production deployment, synthetic password activation, bank transfer, or authenticated payout HTTP E2E was performed at this checkpoint.
