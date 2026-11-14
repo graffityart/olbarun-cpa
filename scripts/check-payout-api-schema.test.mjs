@@ -330,7 +330,7 @@ test("payout history and status responses never expose bank account snapshots or
 });
 
 
-test("isolated Preview HTTP smoke remains read-only and validates application responses", () => {
+test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validates application responses", () => {
   const source = read("scripts/check-payout-preview-http.mjs");
   assert.match(source, /PAYOUT_TEST_ISOLATION_CONFIRMED/);
   assert.match(source, /mypickup-payout-test-/);
