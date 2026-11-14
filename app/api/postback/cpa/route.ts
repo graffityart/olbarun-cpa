@@ -6,6 +6,10 @@ import { clicks } from "@/db/schema";
 
 /** Server-to-server CPA postback. Configure CPA_POSTBACK_SECRET on Vercel and give it only to trusted advertisers. */
 export async function POST(request:NextRequest){
+  // A synthetic payout runtime must never accept live advertiser postbacks.
+  if (process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842") {
+    return Response.json({ok:false,error:"POSTBACK_DISABLED_IN_PAYOUT_TEST"},{status:503});
+  }
   const length=Number(request.headers.get("content-length")??0);
   if(length>8192)return Response.json({ok:false,error:"PAYLOAD_TOO_LARGE"},{status:413});
   const supplied=request.headers.get("x-cpa-postback-secret")??"";

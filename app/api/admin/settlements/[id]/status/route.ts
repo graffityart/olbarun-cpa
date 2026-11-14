@@ -6,17 +6,18 @@ import { auditLogs, settlementItems, settlements } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
+const privateResponseHeaders = { "Cache-Control": "no-store" };
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser();
-    if (!user) return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    if (!user) return Response.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401, headers: privateResponseHeaders });
     if (user.status !== "ACTIVE" || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
-      return Response.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+      return Response.json({ ok: false, error: "FORBIDDEN" }, { status: 403, headers: privateResponseHeaders });
     }
     const { id } = await params;
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-      return Response.json({ ok: false, error: "INVALID_ID" }, { status: 400 });
+      return Response.json({ ok: false, error: "INVALID_ID" }, { status: 400, headers: privateResponseHeaders });
     }
     const [row] = await getDb().select({
       status: settlements.status,
@@ -26,7 +27,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       approvedAt: settlements.approvedAt,
       paidAt: settlements.paidAt,
     }).from(settlements).where(eq(settlements.id, id)).limit(1);
-    if (!row) return Response.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    if (!row) return Response.json({ ok: false, error: "NOT_FOUND" }, { status: 404, headers: privateResponseHeaders });
     const audit = await getDb().select({ action: auditLogs.action }).from(auditLogs)
       .where(and(eq(auditLogs.targetType, "SETTLEMENT"), eq(auditLogs.targetId, id),
         inArray(auditLogs.action, ["SETTLEMENT_APPROVE", "SETTLEMENT_PAID", "SETTLEMENT_REJECT"])))
@@ -35,9 +36,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const items = await getDb().select({ amount: settlementItems.amount, earningId: settlementItems.earningId }).from(settlementItems)
       .where(eq(settlementItems.settlementId, id));
     const amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
-    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: privateResponseHeaders });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
-    return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500 });
+    return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500, headers: privateResponseHeaders });
   }
 }

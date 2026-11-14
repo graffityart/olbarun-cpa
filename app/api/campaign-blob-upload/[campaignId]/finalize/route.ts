@@ -1,3 +1,4 @@
+import { getValidatedDatabaseUrl } from "@/db";
 import { NextRequest } from "next/server";
 import { head } from "@vercel/blob";
 import postgres from "postgres";
@@ -9,6 +10,9 @@ const limits: Record<string, number> = { ".zip":50*1024*1024, ".pdf":20*1024*102
 const mime: Record<string, string[]> = { ".zip":["application/zip","application/x-zip-compressed","application/octet-stream"], ".pdf":["application/pdf"], ".jpg":["image/jpeg"], ".jpeg":["image/jpeg"], ".png":["image/png"], ".webp":["image/webp"] };
 
 export async function POST(req: NextRequest, {params}:{params:Promise<{campaignId:string}>}) {
+ if (process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842") {
+  return Response.json({error:"UPLOAD_FINALIZE_DISABLED_IN_PAYOUT_TEST"},{status:503});
+ }
  try {
   requireSameOrigin(req);
   const user=await getCurrentUser();
@@ -23,8 +27,7 @@ export async function POST(req: NextRequest, {params}:{params:Promise<{campaignI
   const filename=metadata.pathname.split("/").pop()?.replace(/-[a-zA-Z0-9]{12,}(?=\.[^.]+$)/,"").slice(0,180)??"";
   const ext=filename.toLowerCase().match(/\.[^.]+$/)?.[0]??"";
   if(!limits[ext]||metadata.size<=0||metadata.size>limits[ext]||!mime[ext].includes(metadata.contentType))return Response.json({error:"INVALID_FILE"},{status:400});
-  if(!process.env.DATABASE_URL)throw Error("DATABASE_NOT_READY");
-  const sql=postgres(process.env.DATABASE_URL,{max:1});
+  const sql=postgres(getValidatedDatabaseUrl(),{max:1});
   try {
    const rows=await sql`insert into campaign_blob_materials(campaign_id,filename,mime_type,file_size,blob_url)
     select id,${filename},${metadata.contentType},${metadata.size},${url} from campaigns
