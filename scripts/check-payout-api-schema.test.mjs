@@ -332,6 +332,12 @@ test("payout history and status responses never expose bank account snapshots or
 
 test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validates application responses", () => {
   const source = read("scripts/check-payout-preview-http.mjs");
+  assert.match(source, /\/api\/health\/db/);
+  assert.match(source, /healthResponse\.status, 200/);
+  assert.match(source, /health\.database, "connected"/);
+  assert.match(source, /x-robots-tag/);
+  assert.match(source, /noindex/);
+  assert.match(source, /Vercel Deployment Protection intercepted/);
   assert.match(source, /PAYOUT_TEST_ISOLATION_CONFIRMED/);
   assert.match(source, /mypickup-payout-test-/);
   assert.match(source, /response\.status, 401/);
