@@ -82,6 +82,10 @@ for (const path of mutationCases) {
     redirect: "manual",
     signal: AbortSignal.timeout(15000),
   });
+  const contentType = response.headers.get("content-type") ?? "";
+  const location = response.headers.get("location") ?? "";
+  assert.ok(response.status !== 302 && response.status !== 307 && !/text\/html/i.test(contentType) && !/_vercel_sso|vercel\.com\/login/i.test(location),
+    `${path}: Vercel Deployment Protection intercepted cross-origin POST; application CSRF validation was not tested`);
   assert.equal(response.status, 403, `${path}: cross-origin POST must be forbidden`);
   assert.match(response.headers.get("content-type") ?? "", /application\/json/);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
