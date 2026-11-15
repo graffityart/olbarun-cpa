@@ -32,6 +32,18 @@ function assertApplicationResponse(response, path) {
     `${path}: private response must not be cached`);
 }
 
+const healthResponse = await fetch(new URL("/api/health/db", url), {
+  headers, redirect: "manual", signal: AbortSignal.timeout(15000),
+});
+assert.equal(healthResponse.status, 200, "Dedicated Preview database health must return HTTP 200");
+assert.match(healthResponse.headers.get("content-type") ?? "", /application\/json/);
+assert.match(healthResponse.headers.get("x-robots-tag") ?? "", /noindex/i,
+  "Dedicated Preview must remain excluded from search indexing");
+const health = await healthResponse.json();
+assert.equal(health.ok, true, "Dedicated Preview health must report success");
+assert.equal(health.database, "connected", "Dedicated Preview must use a connected database");
+console.log("PASS /api/health/db: dedicated Preview database connected and noindex");
+
 const cases = [
   ["/api/partner/settlements", "UNAUTHORIZED"],
   ["/api/admin/settlements/00000000-0000-4000-8000-000000000000/status", "UNAUTHORIZED"],
