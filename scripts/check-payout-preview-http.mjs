@@ -73,4 +73,19 @@ for (const path of mutationCases) {
   assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
   console.log(`PASS ${path}: unauthenticated POST blocked before database mutation`);
 }
+// Reject cross-site payout mutations before authentication or any database write.
+for (const path of mutationCases) {
+  const response = await fetch(new URL(path, url), {
+    method: "POST",
+    headers: { ...headers, origin: "https://cross-origin.invalid", "content-type": "application/json" },
+    body: JSON.stringify({ action: "APPROVE", amount: 1 }),
+    redirect: "manual",
+    signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(response.status, 403, `${path}: cross-origin POST must be forbidden`);
+  assert.match(response.headers.get("content-type") ?? "", /application\/json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
+  console.log(`PASS ${path}: cross-origin POST rejected`);
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
