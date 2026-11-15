@@ -89,10 +89,10 @@ for (const path of mutationCases) {
   });
   const contentType = response.headers.get("content-type") ?? "";
   const location = response.headers.get("location") ?? "";
-  assert.ok(response.status !== 302 && response.status !== 307 && !/text\\/html/i.test(contentType) && !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+  assert.ok(response.status !== 302 && response.status !== 307 && !/text\/html/i.test(contentType) && !/_vercel_sso|vercel\.com\/login/i.test(location),
     `${path}: Vercel Deployment Protection intercepted missing-Origin POST`);
   assert.equal(response.status, 403, `${path}: missing-Origin POST must be forbidden`);
-  assert.match(contentType, /application\\/json/);
+  assert.match(contentType, /application\/json/);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
   assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
   console.log(`PASS ${path}: missing-Origin POST rejected`);
