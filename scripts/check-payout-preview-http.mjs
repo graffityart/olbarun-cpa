@@ -12,6 +12,11 @@ assert.equal(url.hash, "", "Preview URL must not contain a fragment");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes");
 assert.notEqual(process.env.VERCEL_ENV, "production");
+assert.equal(process.env.PAYOUT_EXTERNAL_EFFECTS_DISABLED, "yes",
+  "Payout Preview smoke must explicitly disable external effects");
+assert.equal(process.env.PAYOUT_PREVIEW_READ_ONLY, "yes",
+  "Explicit read-only smoke consent is required");
+
 
 const headers = { accept: "application/json" };
 if (process.env.PAYOUT_PREVIEW_BYPASS_TOKEN) {
