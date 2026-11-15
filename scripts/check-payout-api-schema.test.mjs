@@ -348,6 +348,8 @@ test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validate
   assert.match(source, /method: "POST"/);
   assert.match(source, /origin: url.origin/);
   assert.match(source, /cross-origin POST must be forbidden/);
+  assert.match(source, /missing-Origin POST must be forbidden/);
+  assert.match(source, /missing-Origin POST rejected/);
   assert.match(source, /https:\/\/cross-origin\.invalid/);
   assert.match(source, /error: "INVALID_ORIGIN"/);
   assert.match(source, /response.status, 401/);
