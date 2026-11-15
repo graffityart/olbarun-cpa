@@ -15,7 +15,7 @@
     "test:settlement-concurrency": "node --test lib/settlement-concurrency.test.mjs",
     "db:check-cpa-duplicates": "node scripts/check-cpa-accounting-duplicates.mjs",
     "test:posting-review": "node --test lib/posting-review-validation.test.mjs lib/posting-approval-validation.test.mjs",
-    "test:all": "npm run test:cpa && npm run test:settlements && npm run test:settlement-concurrency && npm run test:posting-review && npm run test:payout-staging && npm run test:synthetic-seed && npm run test:origin",
+    "test:all": "npm run test:cpa && npm run test:settlements && npm run test:settlement-concurrency && npm run test:posting-review && npm run test:payout-staging && npm run test:synthetic-seed && npm run test:origin && npm run test:auth-password",
     "test:payout-staging": "node --test lib/payout-phase1-staging.test.mjs",
     "db:check-payout-test": "node scripts/check-payout-test-db.mjs",
     "db:check-payout-schema": "node scripts/check-payout-test-schema.mjs",
@@ -24,7 +24,8 @@
     "db:check-payout-fixtures": "node scripts/check-payout-synthetic-fixtures.mjs",
     "test:synthetic-seed": "node --test scripts/seed-payout-synthetic-users.test.mjs",
     "test:payout-preview-http": "node scripts/check-payout-preview-http.mjs",
-    "test:origin": "node --test lib/security/origin.test.mjs"
+    "test:origin": "node --test lib/security/origin.test.mjs",
+    "test:auth-password": "node --test lib/auth/password.test.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.0.0",
