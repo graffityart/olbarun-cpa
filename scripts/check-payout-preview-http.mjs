@@ -187,4 +187,23 @@ for (const [label, payload] of [
   assert.equal(response.headers.get("set-cookie"), null);
   console.log(`PASS /api/auth/login: ${label} rejected without session`);
 }
+// Credentials must be strings; reject JSON type confusion without querying users.
+for (const [label, payload] of [
+  ["numeric email", { email: 123, password: "invalid" }],
+  ["array email", { email: ["test@example.invalid"], password: "invalid" }],
+  ["object password", { email: "test@example.invalid", password: {} }],
+  ["numeric password", { email: "test@example.invalid", password: 123 }],
+]) {
+  const response = await fetch(new URL("/api/auth/login", url), {
+    method: "POST",
+    headers: { ...headers, origin: url.origin, "content-type": "application/json" },
+    body: JSON.stringify(payload), redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(response.status, 400, `login ${label} must be invalid input`);
+  assert.match(response.headers.get("content-type") ?? "", /application.json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: "INVALID_INPUT" });
+  assert.equal(response.headers.get("set-cookie"), null);
+  console.log(`PASS /api/auth/login: ${label} rejected without session`);
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
