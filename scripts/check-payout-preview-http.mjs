@@ -42,6 +42,8 @@ const healthResponse = await fetch(new URL("/api/health/db", url), {
 });
 assert.equal(healthResponse.status, 200, "Dedicated Preview database health must return HTTP 200");
 assert.match(healthResponse.headers.get("content-type") ?? "", /application\/json/);
+assert.match(healthResponse.headers.get("cache-control") ?? "", /(?:^|,\s*)no-store(?:\s*,|$)/i,
+  "Dedicated Preview health responses must never be cached");
 assert.match(healthResponse.headers.get("x-robots-tag") ?? "", /noindex/i,
   "Dedicated Preview must remain excluded from search indexing");
 const health = await healthResponse.json();
