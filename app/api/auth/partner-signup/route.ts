@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const phone = String(body.phone ?? "").trim();
     const memberType = String(body.memberType ?? "INDIVIDUAL");
 
-    if (!email || email.length>320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length>128 || !name || name.length>100 || phone.length>40 || !["INDIVIDUAL","SOLE_PROPRIETOR","CORPORATION"].includes(memberType)) {
+    if (!email || email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length>128 || !name || name.length>100 || phone.length>40 || !["INDIVIDUAL","SOLE_PROPRIETOR","CORPORATION"].includes(memberType)) {
       return Response.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
     }
 
