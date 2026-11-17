@@ -118,4 +118,31 @@ for (const path of mutationCases) {
   assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
   console.log(`PASS ${path}: cross-origin POST rejected`);
 }
+// Also reject opaque browser origins and deceptive same-site lookalikes.
+for (const [label, origin] of [
+  ["opaque sandbox origin", "null"],
+  ["lookalike subdomain", `${url.origin}.attacker.invalid`],
+  ["unexpected port", `${url.origin}:8443`],
+]) {
+  for (const path of mutationCases) {
+    const response = await fetch(new URL(path, url), {
+      method: "POST",
+      headers: { ...headers, origin, "content-type": "application/json" },
+      body: JSON.stringify({ action: "APPROVE", amount: 1 }),
+      redirect: "manual",
+      signal: AbortSignal.timeout(15000),
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+    const location = response.headers.get("location") ?? "";
+    assert.ok(response.status !== 302 && response.status !== 307 &&
+      !/text\\/html/i.test(contentType) &&
+      !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+      `${path}: Deployment Protection intercepted ${label} POST`);
+    assert.equal(response.status, 403, `${path}: ${label} POST must be forbidden`);
+    assert.match(contentType, /application\\/json/);
+    assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+    assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
+    console.log(`PASS ${path}: ${label} rejected`);
+  }
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
