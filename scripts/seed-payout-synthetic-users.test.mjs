@@ -53,3 +53,10 @@ test("credential seeding checks for existing settlements and sessions before upd
   assert.ok(unrelatedEarningsCheck >= 0 && unrelatedEarningsGate > unrelatedEarningsCheck, "Unrelated earnings must be rejected");
   assert.ok(write > settlementGate && write > sessionGate && write > nonSyntheticGate && write > unrelatedEarningsGate, "All gates must precede credential writes");
 });
+
+// These cases must fail during configuration validation, before any DB connection.
+test("rejects missing isolation confirmation", () => rejected({ PAYOUT_TEST_ISOLATION_CONFIRMED: "no" }, /yes/));
+test("rejects missing synthetic password", () => rejected({ PAYOUT_SYNTHETIC_PASSWORD: "" }, /Strong synthetic password required/));
+test("rejects missing dedicated database URL", () => rejected({ PAYOUT_TEST_DATABASE_URL: "" }, /Dedicated test database URL required/));
+test("rejects non-TLS test database URL", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.neon.tech/mypickup_payout_test?sslmode=disable" }, /require/));
+test("rejects non-Neon database host", () => rejected({ PAYOUT_TEST_DATABASE_URL: "postgresql://test:fake@synthetic.example.com/mypickup_payout_test?sslmode=require" }, /neon.tech/));
