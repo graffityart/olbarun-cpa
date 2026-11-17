@@ -59,7 +59,7 @@ const missingLoginOrigin = await fetch(new URL("/api/auth/login", url), {
   redirect: "manual", signal: AbortSignal.timeout(15000),
 });
 assert.equal(missingLoginOrigin.status, 403, "Missing-Origin login must be rejected");
-assert.match(missingLoginOrigin.headers.get("content-type") ?? "", /application\\/json/);
+assert.ok((missingLoginOrigin.headers.get("content-type") ?? "").includes("application/json"));
 assert.match(missingLoginOrigin.headers.get("cache-control") ?? "", /no-store/);
 assert.equal(missingLoginOrigin.headers.get("set-cookie"), null, "Rejected login must not create a session");
 assert.deepEqual(await missingLoginOrigin.json(), { ok: false, error: "INVALID_ORIGIN" });
