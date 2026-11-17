@@ -78,6 +78,20 @@ for (const path of [
   assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
   console.log(`PASS ${path}: forged session rejected`);
 }
+// Malformed session cookies must not reach the authenticated payout handlers.
+for (const [label, token] of [
+  ["short token", "abc"],
+  ["nonhex token", "z".repeat(64)],
+  ["oversized token", "f".repeat(256)],
+]) {
+  const response = await fetch(new URL("/api/partner/settlements", url), {
+    headers: { ...headers, cookie: `olbarun_session=${token}` },
+    redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assertApplicationResponse(response, "/api/partner/settlements");
+  assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
+  console.log(`PASS /api/partner/settlements: ${label} rejected`);
+}
 const mutationCases = [
   "/api/partner/settlements",
   "/api/admin/settlements/00000000-0000-4000-8000-000000000000/review",
