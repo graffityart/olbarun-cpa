@@ -92,6 +92,24 @@ for (const [label, token] of [
   assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
   console.log(`PASS /api/partner/settlements: ${label} rejected`);
 }
+// Malformed cookies must also be rejected on state-changing payout requests.
+for (const [label, token] of [
+  ["short token", "abc"],
+  ["nonhex token", "z".repeat(64)],
+  ["oversized token", "f".repeat(256)],
+]) {
+  const path = "/api/partner/settlements";
+  const response = await fetch(new URL(path, url), {
+    method: "POST",
+    headers: { ...headers, cookie: `olbarun_session=${token}`, origin: url.origin, "content-type": "application/json" },
+    body: JSON.stringify({ amount: 1, bankName: "TEST", accountNumber: "123456", accountHolder: "TEST" }),
+    redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assertApplicationResponse(response, path);
+  assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
+  assert.equal(response.headers.get("set-cookie"), null);
+  console.log(`PASS ${path}: malformed ${label} cannot create payout`);
+}
 const mutationCases = [
   "/api/partner/settlements",
   "/api/admin/settlements/00000000-0000-4000-8000-000000000000/review",
