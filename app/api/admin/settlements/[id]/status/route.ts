@@ -43,7 +43,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const earningsVerified = expectedEarningStatus !== null && linkedEarnings.length === items.length && items.every(item => linkedEarnings.some(earning => earning.id === item.earningId && earning.amount === item.amount && earning.partnerId === row.partnerId && earning.status === expectedEarningStatus));
     amountVerified = amountVerified && earningsVerified;
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: privateResponseHeaders });
-    }, { isolationLevel: "repeatable read", readOnly: true });
+    }, { isolationLevel: "repeatable read" });
   } catch (error) {
     console.error("Settlement status lookup failed", error);
     return Response.json({ ok: false, error: "STATUS_LOOKUP_FAILED" }, { status: 500, headers: privateResponseHeaders });
