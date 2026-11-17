@@ -29,7 +29,7 @@ export async function destroySession() {
 export async function getCurrentUser() {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const now = new Date();
   const rows = await getDb().select({ id: users.id, email: users.email, role: users.role, status: users.status, partnerId: partners.id, partnerCode: partners.partnerCode, partnerName: partners.name })
     .from(authSessions)
