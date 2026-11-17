@@ -135,11 +135,11 @@ for (const [label, origin] of [
     const contentType = response.headers.get("content-type") ?? "";
     const location = response.headers.get("location") ?? "";
     assert.ok(response.status !== 302 && response.status !== 307 &&
-      !/text\\/html/i.test(contentType) &&
-      !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+      !/text\/html/i.test(contentType) &&
+      !/_vercel_sso|vercel\.com\/login/i.test(location),
       `${path}: Deployment Protection intercepted ${label} POST`);
     assert.equal(response.status, 403, `${path}: ${label} POST must be forbidden`);
-    assert.match(contentType, /application\\/json/);
+    assert.match(contentType, /application\/json/);
     assert.match(response.headers.get("cache-control") ?? "", /no-store/);
     assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
     console.log(`PASS ${path}: ${label} rejected`);
