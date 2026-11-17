@@ -169,4 +169,22 @@ for (const [label, origin, expectedStatus, expectedError] of [
   assert.equal(response.headers.get("set-cookie"), null, "Invalid login must not create a session");
   console.log(`PASS /api/auth/login: ${label} rejected without session cookie`);
 }
+// Invalid login JSON must never produce a 500, create a session, or touch credentials.
+for (const [label, payload] of [
+  ["malformed JSON", "{"],
+  ["JSON null", "null"],
+  ["JSON array", "[]"],
+]) {
+  const response = await fetch(new URL("/api/auth/login", url), {
+    method: "POST",
+    headers: { ...headers, origin: url.origin, "content-type": "application/json" },
+    body: payload, redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(response.status, 400, `login ${label} must be invalid input`);
+  assert.match(response.headers.get("content-type") ?? "", /application.json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: "INVALID_INPUT" });
+  assert.equal(response.headers.get("set-cookie"), null);
+  console.log(`PASS /api/auth/login: ${label} rejected without session`);
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
