@@ -94,6 +94,19 @@ for (const path of mutationCases) {
   assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
   console.log(`PASS ${path}: unauthenticated POST blocked before database mutation`);
 }
+// A forged cookie must never authorize a payout mutation, even with a valid Origin.
+for (const path of mutationCases) {
+  const response = await fetch(new URL(path, url), {
+    method: "POST",
+    headers: { ...headers, cookie: forgedCookie, origin: url.origin, "content-type": "application/json" },
+    body: JSON.stringify({ action: "APPROVE", amount: 1 }),
+    redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assertApplicationResponse(response, path);
+  assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
+  assert.equal(response.headers.get("set-cookie"), null, "Forged session must not be replaced");
+  console.log(`PASS ${path}: forged session cannot mutate payout data`);
+}
 // Missing Origin must be rejected for cookie-authenticated payout mutations.
 for (const path of mutationCases) {
   const response = await fetch(new URL(path, url), {
