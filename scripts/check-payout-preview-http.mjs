@@ -145,4 +145,28 @@ for (const [label, origin] of [
     console.log(`PASS ${path}: ${label} rejected`);
   }
 }
+// Login CSRF checks use intentionally invalid empty credentials: no session or DB writes.
+for (const [label, origin, expectedStatus, expectedError] of [
+  ["missing Origin", null, 403, "INVALID_ORIGIN"],
+  ["foreign Origin", "https://cross-origin.invalid", 403, "INVALID_ORIGIN"],
+  ["matching Origin with invalid input", url.origin, 400, "INVALID_INPUT"],
+]) {
+  const loginHeaders = { ...headers, "content-type": "application/json" };
+  if (origin !== null) loginHeaders.origin = origin;
+  const response = await fetch(new URL("/api/auth/login", url), {
+    method: "POST", headers: loginHeaders, body: "{}", redirect: "manual",
+    signal: AbortSignal.timeout(15000),
+  });
+  const contentType = response.headers.get("content-type") ?? "";
+  const location = response.headers.get("location") ?? "";
+  assert.ok(![302, 307].includes(response.status) && !/text\\/html/i.test(contentType) &&
+    !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+    `/api/auth/login: Deployment Protection intercepted ${label}`);
+  assert.equal(response.status, expectedStatus, `login ${label}: unexpected status`);
+  assert.match(contentType, /application\\/json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: expectedError });
+  assert.equal(response.headers.get("set-cookie"), null, "Invalid login must not create a session");
+  console.log(`PASS /api/auth/login: ${label} rejected without session cookie`);
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
