@@ -23,7 +23,7 @@ try {
   await db`set default_transaction_read_only = on`;
   const [identity] = await db`select current_database() as name`;
   assert.equal(identity.name, "mypickup_payout_test");
-  const users = await db`select email, role::text as role, status::text as status, password_hash ~ '^scrypt\\$[0-9a-f]{32}\\$[0-9a-f]{128} from users where email in ('payout-admin@synthetic.invalid','payout-advertiser@synthetic.invalid','payout-partner@synthetic.invalid')`;
+  const users = await db`select email, role::text as role, status::text as status, (left(password_hash,7)='scrypt$' and length(password_hash)=168) as password_format_valid from users where email in ('payout-admin@synthetic.invalid','payout-advertiser@synthetic.invalid','payout-partner@synthetic.invalid')`;
   const roles = new Map(users.map(x => [x.email, x]));
   for (const [email, role] of [["payout-admin@synthetic.invalid","ADMIN"],["payout-advertiser@synthetic.invalid","ADVERTISER"],["payout-partner@synthetic.invalid","PARTNER"]]) {
     assert.equal(roles.get(email)?.role, role, `Missing or mismatched ${role}`);
