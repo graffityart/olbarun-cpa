@@ -30,6 +30,10 @@ try {
     assert.equal(roles.get(email)?.status, "ACTIVE");
     assert.equal(roles.get(email)?.password_format_valid, true, "Synthetic credentials must use the expected scrypt hash format");
   }
+  const [sessionSafety] = await db`select count(*)::int as total,
+    count(*) filter (where u.id is null or u.email not like '%@synthetic.invalid')::int as unsafe
+    from auth_sessions s left join users u on u.id=s.user_id`;
+  assert.equal(sessionSafety.unsafe, 0, "Non-synthetic or orphaned auth sessions are forbidden in payout test fixtures");
   const [relations] = await db`select
     (select count(*)::int from advertiser_users au join users u on au.user_id=u.id join advertisers a on a.id=au.advertiser_id where u.email='payout-advertiser@synthetic.invalid' and a.advertiser_code='SYNTH-PAYOUT-ADV') as advertiser_links,
     (select count(*)::int from partners p join users u on u.id=p.user_id where u.email='payout-partner@synthetic.invalid' and p.partner_code='SYNTH-PAYOUT-PARTNER') as partner_links`;
@@ -44,7 +48,7 @@ try {
   assert.equal(funds.available, 2);
   const [settlement] = await db`select count(*)::int as count from settlements s join partners p on p.id=s.partner_id where p.partner_code='SYNTH-PAYOUT-PARTNER'`;
   assert.equal(settlement.count, 0, "Synthetic payout should not leave live settlement records");
-  console.log(JSON.stringify({ database: identity.name, syntheticUsers: users.length, passwordFormatValid: true, advertiserLinks: relations.advertiser_links, partnerLinks: relations.partner_links, earningCount: funds.count, availableAmount: funds.total, settlements: settlement.count, readOnly: true }));
+  console.log(JSON.stringify({ database: identity.name, syntheticUsers: users.length, passwordFormatValid: true, syntheticSessionCount: sessionSafety.total, advertiserLinks: relations.advertiser_links, partnerLinks: relations.partner_links, earningCount: funds.count, availableAmount: funds.total, settlements: settlement.count, readOnly: true }));
 } finally {
   await db.end();
 }
