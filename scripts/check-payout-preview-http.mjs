@@ -64,6 +64,20 @@ for (const [path, expected] of cases) {
   assert.deepEqual(body, { ok: false, error: expected }, `${path}: unexpected application response`);
   console.log(`PASS ${path}: unauthenticated, private JSON`);
 }
+// Forged session cookies must not grant access to payout data.
+const forgedCookie = "olbarun_session=" + "f".repeat(64);
+for (const path of [
+  "/api/partner/settlements",
+  "/api/admin/settlements/00000000-0000-4000-8000-000000000000/status",
+]) {
+  const response = await fetch(new URL(path, url), {
+    headers: { ...headers, cookie: forgedCookie },
+    redirect: "manual", signal: AbortSignal.timeout(15000),
+  });
+  assertApplicationResponse(response, path);
+  assert.deepEqual(await response.json(), { ok: false, error: "UNAUTHORIZED" });
+  console.log(`PASS ${path}: forged session rejected`);
+}
 const mutationCases = [
   "/api/partner/settlements",
   "/api/admin/settlements/00000000-0000-4000-8000-000000000000/review",
