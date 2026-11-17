@@ -38,8 +38,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     let amountVerified = hasUniqueSettlementEarnings(items.map(item => item.earningId)) && settlementAmountsMatch(items.map(item => item.amount), row.requestedAmount, row.paymentAmount, row.deductionAmount);
     const linkedEarnings = items.length ? await getDb().select({ id: earnings.id, status: earnings.status, amount: earnings.amount, partnerId: earnings.partnerId }).from(earnings).where(inArray(earnings.id, items.map(item => item.earningId))) : [];
     const [owner] = await getDb().select({ partnerId: settlements.partnerId }).from(settlements).where(eq(settlements.id, id)).limit(1);
-    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : "HOLD";
-    const earningsVerified = linkedEarnings.length === items.length && items.every(item => linkedEarnings.some(earning => earning.id === item.earningId && earning.amount === item.amount && earning.partnerId === owner?.partnerId && earning.status === expectedEarningStatus));
+    const expectedEarningStatus = row.status === "PAID" ? "PAID" : row.status === "REJECTED" ? "AVAILABLE" : row.status === "REQUESTED" || row.status === "APPROVED" ? "HOLD" : null;
+    const earningsVerified = expectedEarningStatus !== null && linkedEarnings.length === items.length && items.every(item => linkedEarnings.some(earning => earning.id === item.earningId && earning.amount === item.amount && earning.partnerId === owner?.partnerId && earning.status === expectedEarningStatus));
     amountVerified = amountVerified && earningsVerified;
     return Response.json({ ok: true, status: row.status, approvedAt: row.approvedAt, paidAt: row.paidAt, auditVerified, amountVerified }, { headers: privateResponseHeaders });
   } catch (error) {
