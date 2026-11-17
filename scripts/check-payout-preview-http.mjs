@@ -51,6 +51,20 @@ assert.equal(health.ok, true, "Dedicated Preview health must report success");
 assert.equal(health.database, "connected", "Dedicated Preview must use a connected database");
 console.log("PASS /api/health/db: dedicated Preview database connected and noindex");
 
+// Login must reject requests without an Origin before touching credentials or sessions.
+const missingLoginOrigin = await fetch(new URL("/api/auth/login", url), {
+  method: "POST",
+  headers: { ...headers, "content-type": "application/json" },
+  body: JSON.stringify({}),
+  redirect: "manual", signal: AbortSignal.timeout(15000),
+});
+assert.equal(missingLoginOrigin.status, 403, "Missing-Origin login must be rejected");
+assert.match(missingLoginOrigin.headers.get("content-type") ?? "", /application\\/json/);
+assert.match(missingLoginOrigin.headers.get("cache-control") ?? "", /no-store/);
+assert.equal(missingLoginOrigin.headers.get("set-cookie"), null, "Rejected login must not create a session");
+assert.deepEqual(await missingLoginOrigin.json(), { ok: false, error: "INVALID_ORIGIN" });
+console.log("PASS /api/auth/login: missing Origin rejected without session cookie");
+
 const cases = [
   ["/api/partner/settlements", "UNAUTHORIZED"],
   ["/api/admin/settlements/00000000-0000-4000-8000-000000000000/status", "UNAUTHORIZED"],
