@@ -24,6 +24,7 @@ assert.ok(target.username && target.password);
 assert.equal(target.port, "");
 const expectedHost = process.env.PAYOUT_TEST_EXPECTED_HOST;
 assert.ok(expectedHost && expectedHost.endsWith(".neon.tech"), "Expected isolated branch hostname required");
+assert.equal(expectedHost, "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech", "Expected host must be the verified isolated branch");
 assert.equal(target.hostname, expectedHost, "Refusing to seed a different Neon branch host");
 
 const password = process.env.PAYOUT_ADDITIVE_TEST_PASSWORD;
