@@ -292,11 +292,11 @@ for (const [label, origin] of [
   });
   const contentType = response.headers.get("content-type") ?? "";
   const location = response.headers.get("location") ?? "";
-  assert.ok(![302, 307].includes(response.status) && !/text\\/html/i.test(contentType) &&
-    !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+  assert.ok(![302, 307].includes(response.status) && !/text\/html/i.test(contentType) &&
+    !/_vercel_sso|vercel\.com\/login/i.test(location),
     `/api/auth/logout: Deployment Protection intercepted ${label}`);
   assert.equal(response.status, 403, `logout ${label}: expected 403`);
-  assert.match(contentType, /application\\/json/);
+  assert.match(contentType, /application\/json/);
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
   assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
   assert.equal(response.headers.get("set-cookie"), null, "Rejected logout must not alter cookies");
