@@ -48,8 +48,11 @@ try {
     const [partner] = await tx`insert into users(email,password_hash,role,status,email_verified_at,updated_at)
       values ('integration-partner@synthetic.invalid',${passwordHash},'PARTNER'::user_role,'ACTIVE'::user_status,now(),now()) returning id`;
     assert.ok(admin.id && partner.id);
-    await tx`insert into partners(user_id,partner_code,name,member_type,grade,approved_at,updated_at)
-      values (${partner.id},'SYNTH-PAYOUT-INTEGRATION','Isolated integration partner','INDIVIDUAL','NEW',now(),now())`;
+    const [integrationPartner] = await tx`insert into partners(user_id,partner_code,name,member_type,grade,approved_at,updated_at)
+      values (${partner.id},'SYNTH-PAYOUT-INTEGRATION','Isolated integration partner','INDIVIDUAL','NEW',now(),now()) returning id`;
+    await tx`insert into earnings(partner_id,type,amount,status,description)
+      values (${integrationPartner.id},'CPA',12000,'AVAILABLE','Synthetic isolated integration earning A'),
+             (${integrationPartner.id},'CPA',8000,'AVAILABLE','Synthetic isolated integration earning B')`;
   });
   console.log("Created additive synthetic integration identities; existing sessions and users preserved");
 } finally {
