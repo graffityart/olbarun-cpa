@@ -279,4 +279,27 @@ for (const [label, payload] of [
   assert.equal(response.headers.get("set-cookie"), null);
   console.log(`PASS /api/auth/login: ${label} rejected without session`);
 }
+// Logout CSRF regression: reject missing or foreign Origin without touching sessions.
+for (const [label, origin] of [
+  ["missing Origin", null],
+  ["foreign Origin", "https://cross-origin.invalid"],
+]) {
+  const logoutHeaders = { ...headers, "content-type": "application/json" };
+  if (origin !== null) logoutHeaders.origin = origin;
+  const response = await fetch(new URL("/api/auth/logout", url), {
+    method: "POST", headers: logoutHeaders, redirect: "manual",
+    signal: AbortSignal.timeout(15000),
+  });
+  const contentType = response.headers.get("content-type") ?? "";
+  const location = response.headers.get("location") ?? "";
+  assert.ok(![302, 307].includes(response.status) && !/text\\/html/i.test(contentType) &&
+    !/_vercel_sso|vercel\\.com\\/login/i.test(location),
+    `/api/auth/logout: Deployment Protection intercepted ${label}`);
+  assert.equal(response.status, 403, `logout ${label}: expected 403`);
+  assert.match(contentType, /application\\/json/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.deepEqual(await response.json(), { ok: false, error: "INVALID_ORIGIN" });
+  assert.equal(response.headers.get("set-cookie"), null, "Rejected logout must not alter cookies");
+  console.log(`PASS /api/auth/logout: ${label} rejected without session mutation`);
+}
 console.log("Unauthenticated payout Preview HTTP smoke checks passed; no login, settlement, or database writes performed.");
