@@ -15,8 +15,8 @@ const base = {
   PAYOUT_TEST_ISOLATION_CONFIRMED: "yes",
   PAYOUT_EXTERNAL_EFFECTS_DISABLED: "yes",
   PAYOUT_ADDITIVE_SEED_CONFIRM: "isolated-additive-only",
-  PAYOUT_TEST_DATABASE_URL: "postgresql://fake:fake@integration-test.neon.tech/mypickup_payout_test?sslmode=require",
-  PAYOUT_TEST_EXPECTED_HOST: "integration-test.neon.tech",
+  PAYOUT_TEST_DATABASE_URL: "postgresql://fake:fake@ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech/mypickup_payout_test?sslmode=require",
+  PAYOUT_TEST_EXPECTED_HOST: "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech",
   PAYOUT_ADDITIVE_TEST_PASSWORD: "synthetic-integration-only-strong",
 };
 function mustReject(overrides, pattern) {
@@ -31,10 +31,10 @@ test("additive seed rejects production runtime", () => mustReject({ NODE_ENV: "p
 test("additive seed rejects production Vercel", () => mustReject({ VERCEL_ENV: "production" }, /production/));
 test("additive seed requires isolated confirmation", () => mustReject({ PAYOUT_ADDITIVE_SEED_CONFIRM: "no" }, /isolated-additive-only/));
 test("additive seed rejects external effects", () => mustReject({ PAYOUT_EXTERNAL_EFFECTS_DISABLED: "no" }, /yes/));
-test("additive seed rejects mismatched DB host", () => mustReject({ PAYOUT_TEST_EXPECTED_HOST: "other.neon.tech" }, /different Neon branch host/));
+test("additive seed rejects mismatched DB host", () => mustReject({ PAYOUT_TEST_EXPECTED_HOST: "other.neon.tech" }, /Expected host must be the verified isolated branch/));
 test("additive seed rejects application DB URL", () => mustReject({ DATABASE_URL: "postgresql://fake:fake@prod.neon.tech/production?sslmode=require" }, /Do not seed/));
 test("additive seed rejects weak passwords", () => mustReject({ PAYOUT_ADDITIVE_TEST_PASSWORD: "short" }, /strong additive/));
-test("additive seed rejects non-test database", () => mustReject({ PAYOUT_TEST_DATABASE_URL: "postgresql://fake:fake@integration-test.neon.tech/production?sslmode=require" }, /mypickup_payout_test/));
+test("additive seed rejects non-test database", () => mustReject({ PAYOUT_TEST_DATABASE_URL: "postgresql://fake:fake@ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech/production?sslmode=require" }, /mypickup_payout_test/));
 test("additive seed never modifies existing sessions or passwords", () => {
   const source = readFileSync(script, "utf8");
   assert.doesNotMatch(source, /delete\s+from\s+auth_sessions|update\s+users\s+set|on\s+conflict\s*\(/i);
