@@ -41,4 +41,7 @@ test("additive seed never modifies existing sessions or passwords", () => {
   assert.match(source, /already_seeded/);
   assert.match(source, /assert\.equal\(state\.already_seeded, 0/);
   assert.match(source, /sql\.begin\(async tx =>/);
+  assert.match(source, /insert into earnings\(partner_id,type,amount,status,description\)/);
+  assert.match(source, /12000,\x27AVAILABLE\x27/);
+  assert.match(source, /8000,\x27AVAILABLE\x27/);
 });
