@@ -2,6 +2,7 @@ import { destroySession } from "@/lib/auth/session";
 import { requireSameOrigin } from "@/lib/security/origin";
 export async function POST(request:Request){
  try{
+  if(!request.headers.get("origin"))throw new Error("INVALID_ORIGIN");
   requireSameOrigin(request);
   await destroySession();
   // Native header/mobile forms navigate; fetch callers retain the JSON contract.
