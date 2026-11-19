@@ -11,7 +11,7 @@ assert.equal(process.env.PAYOUT_EXTERNAL_EFFECTS_DISABLED, "yes");
 assert.equal(process.env.PAYOUT_ADDITIVE_SEED_CONFIRM, "isolated-additive-only");
 assert.notEqual(process.env.NODE_ENV, "production");
 assert.notEqual(process.env.VERCEL_ENV, "production");
-assert.equal(process.env.DATABASE_URL, undefined, "Do not seed from the application DATABASE_URL");
+assert.ok(!process.env.DATABASE_URL, "Do not seed from the application DATABASE_URL");
 
 const url = process.env.PAYOUT_TEST_DATABASE_URL;
 assert.ok(url, "Isolated DB URL required");
