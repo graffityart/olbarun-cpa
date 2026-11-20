@@ -354,6 +354,7 @@ test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validate
   assert.match(source, /error: "INVALID_ORIGIN"/);
   assert.match(source, /response.status, 401/);
   assert.doesNotMatch(source, /method:\s*["'](?:PUT|PATCH|DELETE)["']/);
-  assert.match(source, /const forgedCookie = "olbarun_session="/);\n  assert.doesNotMatch(source, /process\\.env\\.(?:SESSION_COOKIE|AUTHORIZATION|PAYOUT_TEST_LOGIN_PASSWORD)/i);
+  assert.match(source, /const forgedCookie = "olbarun_session="/);
+  assert.doesNotMatch(source, /process\.env\.(?:SESSION_COOKIE|AUTHORIZATION|PAYOUT_TEST_LOGIN_PASSWORD)/i);
   assert.doesNotMatch(source, /fetch\([^\n]*mypickup\.kr/);
 });
