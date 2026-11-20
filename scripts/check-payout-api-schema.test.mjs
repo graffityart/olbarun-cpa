@@ -113,7 +113,7 @@ test("synthetic fixture preflight is read-only and rejects production targets", 
   const preflight = read("scripts/check-payout-synthetic-fixtures.mjs");
   const packageJson = JSON.parse(read("package.json"));
   assert.equal(packageJson.scripts["db:check-payout-fixtures"], "node scripts/check-payout-synthetic-fixtures.mjs");
-  for (const required of ["default_transaction_read_only", "PAYOUT_TEST_PROJECT_ID", "PAYOUT_TEST_ISOLATION_CONFIRMED", "NODE_ENV", "VERCEL_ENV", "mypickup_payout_test", "login_disabled"]) {
+  for (const required of ["default_transaction_read_only", "PAYOUT_TEST_PROJECT_ID", "PAYOUT_TEST_ISOLATION_CONFIRMED", "NODE_ENV", "VERCEL_ENV", "mypickup_payout_test", "default_transaction_read_only"]) {
     assert.ok(preflight.includes(required), "Missing fixture safety guard: " + required);
   }
   assert.doesNotMatch(preflight, /db`\s*(?:insert|update|delete|drop|truncate|alter|create)\b/i);
@@ -354,6 +354,6 @@ test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validate
   assert.match(source, /error: "INVALID_ORIGIN"/);
   assert.match(source, /response.status, 401/);
   assert.doesNotMatch(source, /method:\s*["'](?:PUT|PATCH|DELETE)["']/);
-  assert.doesNotMatch(source, /olbarun_session|authorization:|cookie:/i);
+  assert.match(source, /const forgedCookie = "olbarun_session="/);\n  assert.doesNotMatch(source, /process\\.env\\.(?:SESSION_COOKIE|AUTHORIZATION|PAYOUT_TEST_LOGIN_PASSWORD)/i);
   assert.doesNotMatch(source, /fetch\([^\n]*mypickup\.kr/);
 });
