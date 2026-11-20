@@ -1,3 +1,4 @@
+import { getValidatedDatabaseUrl } from "@/db";
 import { NextRequest } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -8,9 +9,12 @@ import {head} from "@vercel/blob";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const maxBytes = 50 * 1024 * 1024;
 const types = ["application/zip", "application/x-zip-compressed", "application/octet-stream", "application/pdf", "image/jpeg", "image/png", "image/webp"];
-function db() { if (!process.env.DATABASE_URL) throw Error("DATABASE_NOT_READY"); return postgres(process.env.DATABASE_URL, {max:1}); }
+function db() { return postgres(getValidatedDatabaseUrl(), {max:1}); }
 
 export async function POST(req:NextRequest,{params}:{params:Promise<{campaignId:string}>}) {
+ if (process.env.PAYOUT_TEST_PROJECT_ID === "orange-salad-93665842") {
+  return Response.json({error:"UPLOAD_DISABLED_IN_PAYOUT_TEST"},{status:503});
+ }
  const {campaignId}=await params;
  if(!uuid.test(campaignId))return Response.json({error:"INVALID_ID"},{status:400});
  try {

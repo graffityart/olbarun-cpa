@@ -1,0 +1,86 @@
+name: Phase 1 payout release safety
+on:
+  push:
+    branches: [release/payout-phase1-20261110]
+  pull_request:
+    paths:
+      - "lib/payout-phase1-release.test.mjs"
+      - "lib/payout-phase1-staging.test.mjs"
+      - "scripts/check-payout-phase1-staging.mjs"
+      - "lib/settlement-validation.test.mjs"
+      - "lib/settlement-validation.ts"
+      - "docs/payout-phase1-release-scope.md"
+      - "app/api/partner/settlements/route.ts"
+      - "app/api/admin/settlements/[id]/review/route.ts"
+      - "app/partner/settlements/page.tsx"
+      - "components/SettlementRequest.tsx"
+      - "components/SettlementReview.tsx"
+      - "app/api/admin/settlements/[id]/status/route.ts"
+      - "lib/settlement-concurrency.test.mjs"
+      - "lib/cpa/review-concurrency.test.mjs"
+      - "package.json"
+      - "db/migrations/**"
+      - "app/api/**/payout-verification/**"
+      - ".github/workflows/payout-phase1-release.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phase1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: settlement_test
+          POSTGRES_PASSWORD: settlement_test_password
+          POSTGRES_DB: settlement_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U settlement_test -d settlement_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check KYC exclusion boundary
+        run: node --test lib/payout-phase1-release.test.mjs lib/payout-phase1-staging.test.mjs
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Verify minimum payout migration dependencies (static, no SQL execution)
+        run: node scripts/check-payout-minimum-migrations.mjs
+      - name: Check payout API and migration schema dependencies
+        run: node --test scripts/check-payout-api-schema.test.mjs
+      - name: Test synthetic seed safety gates (no database writes)
+        run: node --test scripts/seed-payout-synthetic-users.test.mjs
+      - name: Test SQL migration audit behavior
+        run: node --test scripts/audit-payout-migrations.test.mjs
+      - name: Inventory SQL migrations (read-only)
+        run: npm run db:audit-payout-migrations
+      - name: Run existing settlement regression tests
+        run: npm run test:settlements
+      - name: PostgreSQL concurrency and rollback tests (disposable CI DB only)
+        env:
+          CI: 'true'
+          NODE_ENV: test
+          SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
+          SETTLEMENT_TEST_DB_CONFIRM: disposable
+        run: node --test lib/settlement-concurrency.test.mjs lib/cpa/review-concurrency.test.mjs
+      - name: Apply minimum payout migrations in disposable CI database
+        env:
+          CI: 'true'
+          NODE_ENV: test
+          SETTLEMENT_TEST_DATABASE_URL: postgresql://settlement_test:settlement_test_password@localhost:5432/settlement_ci
+          PAYOUT_CI_SCHEMA_CONFIRM: disposable-local-postgres
+        run: node scripts/test-payout-minimum-migrations-ci.mjs
+      - name: CPA regression tests
+        run: npm run test:cpa
+      - name: Posting review regression tests
+        run: npm run test:posting-review
+      - name: Typecheck
+        run: npm run typecheck

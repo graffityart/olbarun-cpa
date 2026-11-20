@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/db";
 
 export const dynamic = "force-dynamic";
+const healthHeaders = { "Cache-Control": "no-store" };
 
 export async function GET() {
   try {
@@ -14,7 +15,7 @@ export async function GET() {
       service: "olbarun-cpa",
       database: "connected",
       databaseTime: row?.database_time ?? null,
-    });
+    }, { headers: healthHeaders });
   } catch (error) {
     console.error("Database health check failed", error);
 
@@ -24,7 +25,7 @@ export async function GET() {
         service: "olbarun-cpa",
         database: "disconnected",
       },
-      { status: 503 },
+      { status: 503, headers: healthHeaders },
     );
   }
 }

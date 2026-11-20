@@ -22,14 +22,14 @@ export async function createSession(userId: string, meta?: { userAgent?: string 
 export async function destroySession() {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
-  if (token) await getDb().delete(authSessions).where(eq(authSessions.tokenHash, hashToken(token)));
+  if (token && /^[0-9a-f]{64}$/.test(token)) await getDb().delete(authSessions).where(eq(authSessions.tokenHash, hashToken(token)));
   store.set(COOKIE_NAME, "", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 0 });
 }
 
 export async function getCurrentUser() {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const now = new Date();
   const rows = await getDb().select({ id: users.id, email: users.email, role: users.role, status: users.status, partnerId: partners.id, partnerCode: partners.partnerCode, partnerName: partners.name })
     .from(authSessions)

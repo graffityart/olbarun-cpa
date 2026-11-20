@@ -39,6 +39,8 @@ export function isValidSettlementReviewRequest(value: unknown): value is {action
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const request = value as Record<string, unknown>;
   if (request.action !== "APPROVE" && request.action !== "PAID" && request.action !== "REJECT") return false;
+  const allowedKeys = request.action === "PAID" ? ["action", "transferConfirmed"] : ["action"];
+  if (Object.keys(request).some(key => !allowedKeys.includes(key))) return false;
   return request.action !== "PAID" || request.transferConfirmed === true;
 }
 
