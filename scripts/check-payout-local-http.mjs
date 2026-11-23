@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 
 // Safe, unauthenticated smoke test for a locally running Next.js server.
 // Never sends credentials, real cookies, or payout requests with valid input.
@@ -6,6 +6,13 @@ const base = new URL(process.env.PAYOUT_LOCAL_HTTP_URL ?? 'http://127.0.0.1:3219
 assert.equal(base.hostname, '127.0.0.1');
 assert.equal(base.protocol, 'http:');
 assert.equal(base.pathname, '/');
+assert.equal(base.username, '');
+assert.equal(base.password, '');
+assert.equal(base.search, '');
+assert.equal(base.hash, '');
+assert.ok(base.port, 'An explicit local test port is required');
+assert.notEqual(base.port, '80');
+assert.notEqual(base.port, '443');
 const checks = [
   { label: 'login missing origin', path: '/api/auth/login', method: 'POST', status: 403, error: 'INVALID_ORIGIN' },
   { label: 'login foreign origin', path: '/api/auth/login', method: 'POST', origin: 'https://foreign.invalid', status: 403, error: 'INVALID_ORIGIN' },
