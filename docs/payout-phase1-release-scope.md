@@ -95,3 +95,13 @@ Before any authenticated HTTP test:
 - Vercel created a READY Preview deployment from the PR branch; this does not imply production readiness. Production is still on `main` commit `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1` at the time of inspection.
 - Vercel environment-variable inventory shows `DATABASE_URL` configured for both Preview and Production, but encrypted values were not inspected; isolation is not established. Production Neon project access is not available through the currently connected Neon integration, so production schema state remains unverified.
 - Keep KYC excluded and preserve the no-production-writes rule. Release remains blocked pending production schema/environment verification and explicit approval.
+
+## Verification update (2026-11-23, commit 6d8969c)
+
+- The four reviewed local commits (`49d7579`, `0f4d750`, `733f1f6`, `6d8969c`) were pushed together to `fix/payout-origin-test-crlf-20261123`; the draft PR #83 remains unmerged.
+- GitHub Actions on `6d8969cb7656162ee28b134f392a806bf5f601d9` all completed successfully: CPA checks 45126973472, CPA and settlement tests 45126973535, and Phase 1 payout release safety 45126973576.
+- Vercel Preview `dpl_Fm768NS1BmxWNDvoyRpT17FNd38v` is READY for this commit. Production remains at `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1`; no production merge or deployment occurred.
+- Authenticated HTTP tests against disposable localhost PostgreSQL 16 now cover valid and invalid partner requests, concurrent duplicate rejection, APPROVE/PAID and REJECT lifecycles, earning release, and audit consistency. The HTTP test exited 0. These tests did not use Vercel Preview or production data.
+- All 26 database-backed settlement/concurrency/rollback tests passed against a separate disposable localhost PostgreSQL 16 instance, with zero skipped. TypeScript and the five release preflight tests also passed.
+- Vercel metadata shows one `DATABASE_URL` variable targeted at both `production` and `preview`. Its secret value was not decrypted; therefore Preview/Production database isolation is **not proven**. Do not perform authenticated write tests on the shared Preview deployment or assume the dedicated synthetic Neon project is wired to it.
+- Remaining release gates: establish isolated Preview DB and external-effect isolation, verify production schema and migration state through authorized read-only access, complete UI/notification acceptance checks, and obtain explicit production approval. Do not enable KYC as part of phase 1.
