@@ -19,7 +19,7 @@ try {
   assert.ok(identity.version >= 160000, 'PostgreSQL 16+ required');
   const existing = await sql`select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE'`;
   assert.equal(existing.length, 0, 'Seeding is permitted only on a completely empty disposable database');
-  for (const file of ['0000_initial.sql', '0001_advertiser_users.sql', '0002_notifications.sql', '0005_audit_logs.sql', '0006_login_attempts.sql', '0011_settlement_item_uniqueness.sql']) {
+  for (const file of ['0000_initial.sql', '0001_advertiser_users.sql', '0002_notifications.sql', '0003_posting_finance.sql', '0005_audit_logs.sql', '0006_login_attempts.sql', '0011_settlement_item_uniqueness.sql']) {
     await sql.unsafe(await readFile(`db/migrations/${file}`, 'utf8'));
   }
   const salt = randomBytes(16).toString('hex');
