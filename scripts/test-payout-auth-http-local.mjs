@@ -45,6 +45,27 @@ try {
   assert.equal(before.n, 0, 'Invalid requests must not create settlements');
   const [availableBefore] = await sql`select count(*)::int as n from earnings where status='AVAILABLE'`;
   assert.equal(availableBefore.n, 1, 'Invalid requests must not reserve earnings');
+  // Disposable fixture only: fail settlement item persistence after reservation starts.
+  // The transaction must roll back the settlement, earning HOLD, and audit entry.
+  const [auditBeforeFailure] = await sql`select count(*)::int as n from audit_logs where target_type='SETTLEMENT'`;
+  await sql.unsafe(`create function local_fail_settlement_item_insert() returns trigger language plpgsql as $$ begin raise exception 'synthetic payout rollback'; end; $$`);
+  try {
+    await sql.unsafe(`create trigger local_fail_settlement_item_insert before insert on settlement_items for each row execute function local_fail_settlement_item_insert()`);
+    const failed = await post('/api/partner/settlements', partner, payload);
+    assert.equal(failed.status, 500, JSON.stringify(failed));
+    assert.equal(failed.data.error, 'CREATE_FAILED');
+    const [rollbackSettlements] = await sql`select count(*)::int as n from settlements`;
+    const [rollbackItems] = await sql`select count(*)::int as n from settlement_items`;
+    const [rollbackEarnings] = await sql`select count(*)::int as n from earnings where status='AVAILABLE'`;
+    const [rollbackAudits] = await sql`select count(*)::int as n from audit_logs where target_type='SETTLEMENT'`;
+    assert.equal(rollbackSettlements.n, 0, 'Failed request must roll back settlement');
+    assert.equal(rollbackItems.n, 0, 'Failed request must roll back settlement items');
+    assert.equal(rollbackEarnings.n, 1, 'Failed request must restore AVAILABLE earnings');
+    assert.equal(rollbackAudits.n, auditBeforeFailure.n, 'Failed request must roll back settlement audit');
+  } finally {
+    await sql.unsafe('drop trigger if exists local_fail_settlement_item_insert on settlement_items');
+    await sql.unsafe('drop function if exists local_fail_settlement_item_insert()');
+  }
   const concurrent = await Promise.all([post('/api/partner/settlements', partner, payload), post('/api/partner/settlements', partner, payload)]);
   assert.deepEqual(concurrent.map(item => item.status).sort((a, b) => a - b), [201, 409], JSON.stringify(concurrent));
   const request = concurrent.find(item => item.status === 201);
