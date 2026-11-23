@@ -33,9 +33,25 @@ try {
   const payload = { amount: 20000, bankName: 'Synthetic Bank', accountNumber: '1234567890', accountHolder: 'Synthetic Partner' };
   const forbidden = await post('/api/partner/settlements', admin, payload);
   assert.equal(forbidden.status, 403, JSON.stringify(forbidden));
-  const request = await post('/api/partner/settlements', partner, payload);
-  assert.equal(request.status, 201, JSON.stringify(request));
+  for (const invalid of [
+    { ...payload, accountNumber: '123abc456' },
+    { ...payload, accountHolder: '' },
+    { ...payload, amount: 10000 },
+  ]) {
+    const rejected = await post('/api/partner/settlements', partner, invalid);
+    assert.equal(rejected.status, invalid.amount === 10000 ? 409 : 400, JSON.stringify(rejected));
+  }
+  const [before] = await sql`select count(*)::int as n from settlements`;
+  assert.equal(before.n, 0, 'Invalid requests must not create settlements');
+  const [availableBefore] = await sql`select count(*)::int as n from earnings where status='AVAILABLE'`;
+  assert.equal(availableBefore.n, 1, 'Invalid requests must not reserve earnings');
+  const concurrent = await Promise.all([post('/api/partner/settlements', partner, payload), post('/api/partner/settlements', partner, payload)]);
+  assert.deepEqual(concurrent.map(item => item.status).sort((a, b) => a - b), [201, 409], JSON.stringify(concurrent));
+  const request = concurrent.find(item => item.status === 201);
+  assert.ok(request?.data?.settlementCode);
   assert.equal((await post('/api/partner/settlements', partner, payload)).status, 409);
+  const [afterConcurrent] = await sql`select count(*)::int as n from settlements`;
+  assert.equal(afterConcurrent.n, 1, 'Concurrent requests must create exactly one settlement');
   const [settlement] = await sql`select id, status from settlements where settlement_code=${request.data.settlementCode}`;
   assert.equal(settlement.status, 'REQUESTED');
   const path = `/api/admin/settlements/${settlement.id}/review`;
