@@ -39,6 +39,10 @@ for (const [name, changes] of [
   ['production domain', { PAYOUT_STAGING_BASE_URL: 'https://mypickup.kr/' }],
   ['insecure database', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test?sslmode=disable' }],
   ['localhost database', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@127.0.0.1:5432/payout_test' }],
+  ['missing TLS mode', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test' }],
+  ['weak TLS mode', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test?sslmode=prefer' }],
+  ['missing database name', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/?sslmode=require' }],
+  ['database URL fragment', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test?sslmode=require#secret' }],
   ['missing administrator', { PAYOUT_STAGING_TEST_ADMIN_ID: '' }],
 ]) {
   test(`staging preflight blocks ${name}`, () => {

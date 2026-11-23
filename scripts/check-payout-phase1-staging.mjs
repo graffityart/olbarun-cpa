@@ -14,7 +14,9 @@ let db;
 try { db = new URL(databaseUrl); } catch { if (databaseUrl) errors.push("staging database URL is invalid"); }
 if (db) {
   if (db.username === "" || db.password === "") errors.push("staging database credentials are required");
-  if (db.searchParams.get("sslmode") === "disable") errors.push("staging database must not disable TLS");
+  if (!["require", "verify-ca", "verify-full"].includes(db.searchParams.get("sslmode"))) errors.push("staging database must explicitly require TLS");
+  if (db.hash) errors.push("staging database URL must not contain a fragment");
+  if (!db.pathname || db.pathname === "/") errors.push("staging database name is required");
   if (!["postgres:", "postgresql:"].includes(db.protocol)) errors.push("staging database must use PostgreSQL");
   if (db.hostname === "localhost" || db.hostname === "127.0.0.1") errors.push("HTTP staging must use a separately provisioned database");
   if (databaseUrl === productionUrl) errors.push("staging database matches application DATABASE_URL");
