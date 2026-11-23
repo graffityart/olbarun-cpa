@@ -30,6 +30,8 @@ if (db) {
 let base;
 try { base = new URL(process.env.PAYOUT_STAGING_BASE_URL ?? ""); } catch { if (process.env.PAYOUT_STAGING_BASE_URL) errors.push("staging URL is invalid"); }
 if (base && base.pathname !== "/") errors.push("staging base URL must have root path");
+if (base && (!base.hostname.startsWith("mypickup-payout-test-") || !base.hostname.endsWith(".vercel.app"))) errors.push("staging must use a dedicated payout test Vercel hostname");
+if (base && base.port) errors.push("staging must use standard HTTPS port");
 if (base && base.protocol !== "https:") errors.push("staging URL must use HTTPS");
 if (base && (base.hostname.toLowerCase() === "mypickup.kr" || base.hostname.toLowerCase().endsWith(".mypickup.kr"))) errors.push("production domain and its subdomains are forbidden");
 if (base && (base.username || base.password)) errors.push("staging URL must not contain embedded credentials");
