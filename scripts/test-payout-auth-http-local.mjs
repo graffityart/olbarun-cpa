@@ -52,5 +52,23 @@ try {
   assert.deepEqual(audits.map(row => row.action), ['SETTLEMENT_REQUEST', 'SETTLEMENT_APPROVE', 'SETTLEMENT_PAID']);
   const [count] = await sql`select count(*)::int as total from settlement_items where settlement_id=${settlement.id}`;
   assert.equal(count.total, 1);
-  console.log('PASS synthetic authenticated payout HTTP lifecycle');
+  // A second synthetic earning verifies the independent REJECT lifecycle.
+  const [syntheticPartner] = await sql`select id from partners where partner_code='LOCAL-AUTH-PARTNER'`;
+  assert.ok(syntheticPartner?.id, 'Synthetic fixture partner must exist');
+  await sql`insert into earnings(partner_id,type,amount,status) values (${syntheticPartner.id},'CPA',15000,'AVAILABLE')`;
+  const rejectPayload = { ...payload, amount: 15000 };
+  const rejectRequest = await post('/api/partner/settlements', partner, rejectPayload);
+  assert.equal(rejectRequest.status, 201, JSON.stringify(rejectRequest));
+  const [rejectedSettlement] = await sql`select id,status from settlements where settlement_code=${rejectRequest.data.settlementCode}`;
+  assert.equal(rejectedSettlement.status, 'REQUESTED');
+  const rejectPath = `/api/admin/settlements/${rejectedSettlement.id}/review`;
+  assert.equal((await post(rejectPath, admin, { action: 'REJECT' })).status, 200);
+  assert.equal((await post(rejectPath, admin, { action: 'REJECT' })).status, 409);
+  assert.equal((await post(rejectPath, admin, { action: 'APPROVE' })).status, 409);
+  const [rejectedState] = await sql`select s.status as settlement_status,e.status as earning_status from settlements s join settlement_items i on i.settlement_id=s.id join earnings e on e.id=i.earning_id where s.id=${rejectedSettlement.id}`;
+  assert.equal(rejectedState.settlement_status, 'REJECTED');
+  assert.equal(rejectedState.earning_status, 'AVAILABLE');
+  const rejectedAudits = await sql`select action from audit_logs where target_type='SETTLEMENT' and target_id=${rejectedSettlement.id} order by created_at,id`;
+  assert.deepEqual(rejectedAudits.map(row => row.action), ['SETTLEMENT_REQUEST', 'SETTLEMENT_REJECT']);
+  console.log('PASS synthetic authenticated payout HTTP paid and rejected lifecycles');
 } finally { await sql.end(); }
