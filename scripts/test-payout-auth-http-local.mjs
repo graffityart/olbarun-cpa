@@ -15,12 +15,15 @@ assert.ok(password?.length >= 16);
 async function login(email) {
   const response = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { origin: base, 'content-type': 'application/json' }, body: JSON.stringify({ email, password }), signal: AbortSignal.timeout(10000) });
   assert.equal(response.status, 200, `Login failed: ${email} ${await response.text()}`);
+  assert.match(response.headers.get('cache-control') ?? '', /no-store/i);
   const cookie = response.headers.get('set-cookie')?.split(';')[0];
   assert.ok(cookie?.startsWith('olbarun_session='));
   return cookie;
 }
 async function post(path, cookie, payload) {
   const response = await fetch(base + path, { method: 'POST', headers: { origin: base, cookie, 'content-type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(10000) });
+  assert.match(response.headers.get('cache-control') ?? '', /no-store/i);
+  assert.equal(response.headers.get('set-cookie'), null, 'Payout API must not issue session cookies');
   const data = await response.json();
   return { status: response.status, data };
 }
