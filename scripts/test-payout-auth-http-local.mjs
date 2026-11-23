@@ -27,11 +27,16 @@ async function post(path, cookie, payload) {
 try {
   const partner = await login('local-partner@synthetic.invalid');
   const admin = await login('local-admin@synthetic.invalid');
-  const request = await post('/api/partner/settlements', partner, { amount: 20000, bankName: 'Synthetic Bank', accountNumber: '1234567890', accountHolder: 'Synthetic Partner' });
+  const payload = { amount: 20000, bankName: 'Synthetic Bank', accountNumber: '1234567890', accountHolder: 'Synthetic Partner' };
+  const forbidden = await post('/api/partner/settlements', admin, payload);
+  assert.equal(forbidden.status, 403, JSON.stringify(forbidden));
+  const request = await post('/api/partner/settlements', partner, payload);
   assert.equal(request.status, 201, JSON.stringify(request));
+  assert.equal((await post('/api/partner/settlements', partner, payload)).status, 409);
   const [settlement] = await sql`select id, status from settlements where settlement_code=${request.data.settlementCode}`;
   assert.equal(settlement.status, 'REQUESTED');
   const path = `/api/admin/settlements/${settlement.id}/review`;
+  assert.equal((await post(path, partner, { action: 'APPROVE' })).status, 403);
   assert.equal((await post(path, admin, { action: 'PAID' })).status, 400);
   assert.equal((await post(path, admin, { action: 'APPROVE' })).status, 200);
   assert.equal((await post(path, admin, { action: 'APPROVE' })).status, 409);
@@ -40,5 +45,9 @@ try {
   const [state] = await sql`select s.status as settlement_status,e.status as earning_status from settlements s join settlement_items i on i.settlement_id=s.id join earnings e on e.id=i.earning_id where s.id=${settlement.id}`;
   assert.equal(state.settlement_status, 'PAID');
   assert.equal(state.earning_status, 'PAID');
+  const audits = await sql`select action from audit_logs where target_type='SETTLEMENT' and target_id=${settlement.id} order by created_at, id`;
+  assert.deepEqual(audits.map(row => row.action), ['SETTLEMENT_REQUEST', 'SETTLEMENT_APPROVE', 'SETTLEMENT_PAID']);
+  const [count] = await sql`select count(*)::int as total from settlement_items where settlement_id=${settlement.id}`;
+  assert.equal(count.total, 1);
   console.log('PASS synthetic authenticated payout HTTP lifecycle');
 } finally { await sql.end(); }
