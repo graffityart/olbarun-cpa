@@ -39,6 +39,7 @@ if (base && (base.username || base.password)) errors.push("staging URL must not 
 if (base && (base.search || base.hash)) errors.push("staging URL must not include query parameters or fragments");
 if (process.env.PAYOUT_STAGING_SYNTHETIC_DATA_CONFIRMED !== "yes") errors.push("synthetic-only data must be confirmed");
 if (process.env.PAYOUT_STAGING_NOTIFICATIONS_DISABLED !== "yes") errors.push("external notifications must be disabled");
+if (process.env.PAYOUT_EXTERNAL_EFFECTS_DISABLED !== "yes") errors.push("all external payout effects must be explicitly disabled");
 if (process.env.PAYOUT_STAGING_ISOLATED_DB_CONFIRMED !== "yes") errors.push("isolated DB must be confirmed");
 if (process.env.PAYOUT_KYC_ENFORCEMENT === "enabled" || process.env.PAYOUT_KYC_DOCUMENT_UPLOAD === "enabled") errors.push("KYC flags must remain disabled");
 if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") errors.push("do not run staging preflight in production");
