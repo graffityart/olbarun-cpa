@@ -29,6 +29,7 @@ test('staging preflight accepts only explicitly attested synthetic configuration
 });
 for (const [name, changes] of [
   ['same database URL', { PAYOUT_STAGING_DATABASE_URL: baseline.DATABASE_URL }],
+  ['missing production database comparison', { DATABASE_URL: '' }],
   ['shared database host', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@production.example.invalid:5432/payout_test?sslmode=require' }],
   ['shared host on another port', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@production.example.invalid:6543/payout_test?sslmode=require' }],
   ['production environment', { VERCEL_ENV: 'production' }],

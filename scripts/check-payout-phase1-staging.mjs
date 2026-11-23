@@ -10,6 +10,7 @@ const errors = [];
 for (const key of required) if (!process.env[key]) errors.push(`${key} is required`);
 const databaseUrl = process.env.PAYOUT_STAGING_DATABASE_URL ?? "";
 const productionUrl = process.env.DATABASE_URL ?? "";
+if (!productionUrl) errors.push("application DATABASE_URL is required for staging isolation comparison");
 let db;
 try { db = new URL(databaseUrl); } catch { if (databaseUrl) errors.push("staging database URL is invalid"); }
 if (db) {
