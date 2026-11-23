@@ -23,7 +23,7 @@ if (db) {
   if (productionUrl) {
     try {
       const prod = new URL(productionUrl);
-      if (db.hostname.toLowerCase() === prod.hostname.toLowerCase() && db.port === prod.port) errors.push("staging database shares the application database host");
+      if (db.hostname.toLowerCase() === prod.hostname.toLowerCase()) errors.push("staging database shares the application database host");
     } catch { errors.push("application DATABASE_URL cannot be parsed for isolation comparison"); }
   }
 }
