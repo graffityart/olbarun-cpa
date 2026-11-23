@@ -16,6 +16,8 @@ assert.notEqual(base.port, '443');
 const checks = [
   { label: 'login missing origin', path: '/api/auth/login', method: 'POST', status: 403, error: 'INVALID_ORIGIN' },
   { label: 'login foreign origin', path: '/api/auth/login', method: 'POST', origin: 'https://foreign.invalid', status: 403, error: 'INVALID_ORIGIN' },
+  { label: 'logout missing origin', path: '/api/auth/logout', method: 'POST', status: 403, error: 'INVALID_ORIGIN' },
+  { label: 'logout foreign origin', path: '/api/auth/logout', method: 'POST', origin: 'https://foreign.invalid', status: 403, error: 'INVALID_ORIGIN' },
   { label: 'payout missing origin', path: '/api/partner/settlements', method: 'POST', status: 403, error: 'INVALID_ORIGIN' },
   { label: 'payout foreign origin', path: '/api/partner/settlements', method: 'POST', origin: 'https://foreign.invalid', status: 403, error: 'INVALID_ORIGIN' },
   { label: 'partner malformed session', path: '/api/partner/settlements', cookie: 'olbarun_session=invalid', status: 401, error: 'UNAUTHORIZED' },
