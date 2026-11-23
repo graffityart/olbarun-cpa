@@ -9,6 +9,9 @@ assert.ok(url.hostname.endsWith(".vercel.app"), "Only Vercel Preview host is per
 assert.equal(url.pathname, "/", "Use deployment root URL only");
 assert.equal(url.search, "", "Preview URL must not contain a query");
 assert.equal(url.hash, "", "Preview URL must not contain a fragment");
+assert.equal(url.username, "", "Preview URL must not embed credentials");
+assert.equal(url.password, "", "Preview URL must not embed credentials");
+assert.equal(url.port, "", "Preview URL must use standard HTTPS port");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes");
 assert.notEqual(process.env.VERCEL_ENV, "production");
