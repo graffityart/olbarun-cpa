@@ -4,6 +4,9 @@ import { randomBytes, scryptSync } from 'node:crypto';
 import postgres from 'postgres';
 const url = new URL(process.env.SETTLEMENT_TEST_DATABASE_URL ?? '');
 assert.equal(process.env.PAYOUT_LOCAL_AUTH_TEST_CONFIRM, 'disposable-only');
+assert.equal(process.env.NODE_ENV, 'test');
+assert.notEqual(process.env.VERCEL_ENV, 'production');
+assert.equal(url.protocol, 'postgresql:');
 assert.equal(url.hostname, '127.0.0.1');
 assert.equal(url.port, '55441');
 assert.equal(url.pathname, '/payout_auth_test');
@@ -11,6 +14,11 @@ const password = process.env.PAYOUT_LOCAL_SYNTHETIC_PASSWORD;
 assert.ok(password?.length >= 16);
 const sql = postgres(url.toString(), { max: 1 });
 try {
+  const [identity] = await sql`select current_database() as name, current_setting('server_version_num')::int as version`;
+  assert.equal(identity.name, 'payout_auth_test');
+  assert.ok(identity.version >= 160000, 'PostgreSQL 16+ required');
+  const existing = await sql`select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE'`;
+  assert.equal(existing.length, 0, 'Seeding is permitted only on a completely empty disposable database');
   for (const file of ['0000_initial.sql', '0001_advertiser_users.sql', '0002_notifications.sql', '0005_audit_logs.sql', '0006_login_attempts.sql', '0011_settlement_item_uniqueness.sql']) {
     await sql.unsafe(await readFile(`db/migrations/${file}`, 'utf8'));
   }
