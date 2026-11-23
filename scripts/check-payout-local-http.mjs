@@ -37,4 +37,23 @@ for (const check of checks) {
   assert.deepEqual(await response.json(), { ok: false, error: check.error }, check.label);
   console.log(`PASS ${check.label}`);
 }
-console.log(`PASS ${checks.length} local unauthenticated payout HTTP guards; no database writes`);
+const invalidLogins = [
+  ['malformed JSON', '{'],
+  ['null JSON', 'null'],
+  ['array JSON', '[]'],
+  ['numeric email', JSON.stringify({ email: 123, password: 'invalid' })],
+  ['object password', JSON.stringify({ email: 'test@synthetic.invalid', password: {} })],
+];
+for (const [label, body] of invalidLogins) {
+  const response = await fetch(new URL('/api/auth/login', base), {
+    method: 'POST',
+    headers: { origin: base.origin, 'content-type': 'application/json' },
+    body, redirect: 'manual', signal: AbortSignal.timeout(10000),
+  });
+  assert.equal(response.status, 400, label);
+  assert.match(response.headers.get('cache-control') ?? '', /no-store/, label);
+  assert.equal(response.headers.get('set-cookie'), null, label);
+  assert.deepEqual(await response.json(), { ok: false, error: 'INVALID_INPUT' }, label);
+  console.log(`PASS ${label}`);
+}
+console.log(`PASS ${checks.length + invalidLogins.length} local unauthenticated HTTP checks; no database writes`);
