@@ -39,6 +39,9 @@ for (const [label, overrides] of [
   ['external effects not disabled', { PAYOUT_EXTERNAL_EFFECTS_DISABLED: 'no' }],
   ['read-only consent missing', { PAYOUT_PREVIEW_READ_ONLY: '' }],
   ['production runtime', { VERCEL_ENV: 'production' }],
+  ['missing preview runtime', { VERCEL_ENV: '' }],
+  ['development runtime', { VERCEL_ENV: 'development' }],
+  ['production Node runtime', { NODE_ENV: 'production' }],
 ]) {
   test(`preview smoke rejects ${label} before network access`, () => {
     const result = check(safe, overrides);

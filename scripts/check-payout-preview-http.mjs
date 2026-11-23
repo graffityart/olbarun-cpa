@@ -14,7 +14,8 @@ assert.equal(url.password, "", "Preview URL must not embed credentials");
 assert.equal(url.port, "", "Preview URL must use standard HTTPS port");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes");
-assert.notEqual(process.env.VERCEL_ENV, "production");
+assert.equal(process.env.VERCEL_ENV, "preview", "Payout Preview smoke requires VERCEL_ENV=preview");
+assert.notEqual(process.env.NODE_ENV, "production", "Do not run payout Preview smoke in a production Node environment");
 assert.equal(process.env.PAYOUT_EXTERNAL_EFFECTS_DISABLED, "yes",
   "Payout Preview smoke must explicitly disable external effects");
 assert.equal(process.env.PAYOUT_PREVIEW_READ_ONLY, "yes",
