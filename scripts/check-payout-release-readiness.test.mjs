@@ -38,4 +38,18 @@ test('preflight fails closed when authentication test lacks production guard', (
   });
   assert.notEqual(result.code, 0);
 });
+test('preflight fails when payout rejection audit coverage is removed', () => {
+  const result = fixture(dir => {
+    const path = join(dir, 'scripts/test-payout-auth-http-local.mjs');
+    writeFileSync(path, requireText(path).replaceAll('SETTLEMENT_REJECT', 'REMOVED_REJECTION_AUDIT'));
+  });
+  assert.notEqual(result.code, 0);
+});
+test('preflight fails when concurrent request coverage is removed', () => {
+  const result = fixture(dir => {
+    const path = join(dir, 'scripts/test-payout-auth-http-local.mjs');
+    writeFileSync(path, requireText(path).replace('Promise.all', 'Promise.resolve'));
+  });
+  assert.notEqual(result.code, 0);
+});
 function requireText(path) { return readFileSync(path, 'utf8'); }
