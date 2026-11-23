@@ -82,5 +82,9 @@ jobs:
         run: npm run test:cpa
       - name: Posting review regression tests
         run: npm run test:posting-review
+      - name: Validate authenticated payout fixture safety and schema parity
+        run: npm run test:payout-auth-local-guards && npm run test:payout-auth-fixture-schema
+      - name: Validate payout release preflight regression tests
+        run: npm run test:payout-release-preflight
       - name: Typecheck
         run: npm run typecheck
