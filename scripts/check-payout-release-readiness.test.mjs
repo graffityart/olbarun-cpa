@@ -52,4 +52,18 @@ test('preflight fails when concurrent request coverage is removed', () => {
   });
   assert.notEqual(result.code, 0);
 });
+test('preflight fails when payout HTTP rollback coverage is removed', () => {
+  const result = fixture(dir => {
+    const path = join(dir, 'scripts/test-payout-auth-http-local.mjs');
+    writeFileSync(path, requireText(path).replaceAll('local_fail_settlement_item_insert', 'REMOVED_ROLLBACK_INJECTION'));
+  });
+  assert.notEqual(result.code, 0);
+});
+test('preflight fails when payout HTTP rollback audit assertion is removed', () => {
+  const result = fixture(dir => {
+    const path = join(dir, 'scripts/test-payout-auth-http-local.mjs');
+    writeFileSync(path, requireText(path).replace('Failed request must roll back settlement audit', 'REMOVED_ROLLBACK_AUDIT'));
+  });
+  assert.notEqual(result.code, 0);
+});
 function requireText(path) { return readFileSync(path, 'utf8'); }
