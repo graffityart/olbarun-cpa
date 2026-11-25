@@ -4,7 +4,7 @@ const base = process.env.PAYOUT_PREVIEW_URL;
 assert.ok(base, "PAYOUT_PREVIEW_URL is required");
 const url = new URL(base);
 assert.equal(url.protocol, "https:", "HTTPS Preview required");
-assert.ok(url.hostname.startsWith("mypickup-payout-test-"), "Only dedicated payout Preview deployments are permitted");
+assert.equal(url.hostname, "mypickup-payout-integration-isolated-3cun8dibg.vercel.app", "Only the verified dedicated payout Preview deployment is permitted");
 assert.ok(url.hostname.endsWith(".vercel.app"), "Only Vercel Preview host is permitted");
 assert.equal(url.pathname, "/", "Use deployment root URL only");
 assert.equal(url.search, "", "Preview URL must not contain a query");

@@ -1,10 +1,10 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
 const baseline = {
   PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic-only@isolated-test.example.invalid:5432/payout_test?sslmode=require',
-  PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-test-synthetic.vercel.app/',
+  PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-integration-isolated-3cun8dibg.vercel.app/',
   PAYOUT_STAGING_TEST_PARTNER_ID: 'synthetic-partner',
   PAYOUT_STAGING_TEST_ADMIN_ID: 'synthetic-admin',
   PAYOUT_STAGING_SYNTHETIC_DATA_CONFIRMED: 'yes',
@@ -43,8 +43,8 @@ for (const [name, changes] of [
   ['KYC enabled', { PAYOUT_KYC_DOCUMENT_UPLOAD: 'enabled' }],
   ['production domain', { PAYOUT_STAGING_BASE_URL: 'https://mypickup.kr/' }],
   ['shared application preview', { PAYOUT_STAGING_BASE_URL: 'https://olbarun-38gku51dk-graffityart9988-2594s-projects.vercel.app/' }],
-  ['nonstandard staging port', { PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-test-synthetic.vercel.app:8443/' }],
-  ['lookalike hostname', { PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-test-synthetic.vercel.app.evil.invalid/' }],
+  ['nonstandard staging port', { PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-integration-isolated-3cun8dibg.vercel.app:8443/' }],
+  ['lookalike hostname', { PAYOUT_STAGING_BASE_URL: 'https://mypickup-payout-integration-isolated-3cun8dibg.vercel.app.evil.invalid/' }],
   ['insecure database', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test?sslmode=disable' }],
   ['localhost database', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@127.0.0.1:5432/payout_test' }],
   ['missing TLS mode', { PAYOUT_STAGING_DATABASE_URL: 'postgresql://synthetic:synthetic@isolated-test.example.invalid:5432/payout_test' }],

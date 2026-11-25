@@ -1,8 +1,8 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
-const safe = 'https://mypickup-payout-test-synthetic.vercel.app/';
+const safe = 'https://mypickup-payout-integration-isolated-3cun8dibg.vercel.app/';
 function check(url, overrides = {}) {
   return spawnSync(process.execPath, ['scripts/check-payout-preview-http.mjs'], {
     env: {
@@ -19,12 +19,14 @@ function check(url, overrides = {}) {
   });
 }
 for (const [label, url] of [
-  ['embedded credentials', 'https://user:password@mypickup-payout-test-synthetic.vercel.app/'],
-  ['nonstandard port', 'https://mypickup-payout-test-synthetic.vercel.app:8443/'],
+  ['embedded credentials', 'https://user:password@mypickup-payout-integration-isolated-3cun8dibg.vercel.app/'],
+  ['nonstandard port', 'https://mypickup-payout-integration-isolated-3cun8dibg.vercel.app:8443/'],
+  ['unverified payout preview', 'https://mypickup-payout-test-synthetic.vercel.app/'],
+  ['shared application preview', 'https://olbarun-q8i6vf3ns-graffityart9988-2594s-projects.vercel.app/'],
   ['production domain', 'https://mypickup.kr/'],
   ['query string', `${safe}?secret=1`],
   ['fragment', `${safe}#secret`],
-  ['non-HTTPS scheme', 'http://mypickup-payout-test-synthetic.vercel.app/'],
+  ['non-HTTPS scheme', 'http://mypickup-payout-integration-isolated-3cun8dibg.vercel.app/'],
 ]) {
   test(`preview smoke rejects ${label} before network access`, () => {
     const result = check(url);
