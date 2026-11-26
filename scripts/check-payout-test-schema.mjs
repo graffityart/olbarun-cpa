@@ -9,7 +9,7 @@ assert.ok(["postgres:", "postgresql:"].includes(u.protocol), "Postgres required"
 assert.equal(u.pathname, "/mypickup_payout_test", "Wrong test database");
 assert.ok(u.username && u.password, "Dedicated test DB credentials required");
 assert.equal(u.port, "", "Unexpected test database port");
-assert.ok(u.hostname.endsWith(".neon.tech"), "Neon hostname required");
+assert.ok(["ep-dry-frog-berkq3yn.c-9.us-east-2.aws.neon.tech", "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech"].includes(u.hostname), "Neon hostname required");
 assert.equal(u.searchParams.get("sslmode"), "require", "TLS required");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes");

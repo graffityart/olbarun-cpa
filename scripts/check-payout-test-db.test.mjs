@@ -13,3 +13,18 @@ for (const host of ['ep-unrelated.neon.tech', 'ep-summer-tree-beon5nsf.c-9.us-ea
     assert.match(result.stderr, /Verified isolated Neon endpoint required/);
   });
 }
+
+
+for (const script of ['check-payout-test-schema.mjs', 'check-payout-synthetic-fixtures.mjs']) {
+  for (const host of ['ep-unrelated.neon.tech', 'ep-summer-tree-beon5nsf.c-9.us-east-2.aws.neon.tech']) {
+    test(`${script} rejects unapproved host ${host}`, () => {
+      const result = spawnSync(process.execPath, [`scripts/${script}`], {
+        env: { ...process.env, NODE_ENV: 'test', VERCEL_ENV: 'preview', DATABASE_URL: '', PAYOUT_TEST_PROJECT_ID: 'orange-salad-93665842', PAYOUT_TEST_ISOLATION_CONFIRMED: 'yes', PAYOUT_TEST_DATABASE_URL: `postgresql://fake:fake@${host}/mypickup_payout_test?sslmode=require` },
+        encoding: 'utf8', timeout: 2500,
+      });
+      assert.equal(result.status, 1);
+      assert.equal(result.signal, null);
+      assert.match(result.stderr, /includes\(u.hostname\)|Neon hostname required/);
+    });
+  }
+}

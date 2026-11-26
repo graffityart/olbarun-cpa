@@ -13,7 +13,7 @@ assert.ok(["postgres:", "postgresql:"].includes(u.protocol));
 assert.equal(u.pathname, "/mypickup_payout_test");
 assert.ok(u.username && u.password);
 assert.equal(u.port, "");
-assert.ok(u.hostname.endsWith(".neon.tech"));
+assert.ok(["ep-dry-frog-berkq3yn.c-9.us-east-2.aws.neon.tech", "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech"].includes(u.hostname));
 assert.equal(u.searchParams.get("sslmode"), "require");
 if (process.env.DATABASE_URL) {
   assert.notEqual(u.hostname.toLowerCase(), new URL(process.env.DATABASE_URL).hostname.toLowerCase());
