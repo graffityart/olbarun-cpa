@@ -24,7 +24,7 @@
     "db:check-payout-fixtures": "node scripts/check-payout-synthetic-fixtures.mjs",
     "test:synthetic-seed": "node --test scripts/seed-payout-synthetic-users.test.mjs",
     "test:payout-preview-http": "node scripts/check-payout-preview-http.mjs",
-    "test:payout-preview-guards": "node --test scripts/check-payout-preview-http.test.mjs scripts/check-payout-test-db.test.mjs scripts/verify-payout-preview-identity.test.mjs",
+    "test:payout-preview-guards": "node --test scripts/check-payout-preview-http.test.mjs scripts/check-payout-test-db.test.mjs scripts/verify-payout-preview-identity.test.mjs scripts/check-payout-runtime-db.test.mjs",
     "test:payout-local-http": "node scripts/check-payout-local-http.mjs",
     "test:payout-local-preflight": "node --test scripts/check-payout-local-http.test.mjs",
     "test:payout-auth-local-guards": "node --test scripts/payout-auth-http-local-guards.test.mjs",

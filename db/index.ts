@@ -28,7 +28,8 @@ export function getValidatedDatabaseUrl() {
     }
     if (
       !["postgres:", "postgresql:"].includes(target.protocol) ||
-      !target.hostname.endsWith(".neon.tech") ||
+      !["ep-dry-frog-berkq3yn.c-9.us-east-2.aws.neon.tech", "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech"].includes(target.hostname) ||
+      target.port !== "" ||
       target.pathname !== "/mypickup_payout_test" ||
       target.searchParams.get("sslmode") !== "require" ||
       !target.username ||
