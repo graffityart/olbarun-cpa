@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+const files = ['scripts/seed-payout-auth-http-local.mjs', 'scripts/test-payout-auth-http-local.mjs', 'scripts/payout-auth-http-local-guards.test.mjs', 'scripts/payout-auth-fixture-schema.test.mjs'];
+const read = file => readFileSync(file, 'utf8');
+const pkg = JSON.parse(read('package.json'));
+assert.match(pkg.scripts['test:all'], /test:payout-auth-local-guards/);
+assert.match(pkg.scripts['test:all'], /test:payout-auth-fixture-schema/);
+for (const file of files) assert.ok(read(file).length > 100, `${file} missing`);
+const seed = read(files[0]);
+const e2e = read(files[1]);
+for (const source of [seed, e2e]) {
+  assert.match(source, /PAYOUT_LOCAL_AUTH_TEST_CONFIRM/);
+  assert.match(source, /disposable-only/);
+  assert.match(source, /127\.0\.0\.1/);
+  assert.match(source, /payout_auth_test/);
+  assert.match(source, /NODE_ENV/);
+}
+assert.match(seed, /0003_posting_finance\.sql/);
+assert.match(e2e, /SETTLEMENT_REQUEST/);
+assert.match(e2e, /SETTLEMENT_APPROVE/);
+assert.match(e2e, /SETTLEMENT_PAID/);
+assert.match(e2e, /SETTLEMENT_REJECT/);
+assert.match(e2e, /Promise\.all/);
+assert.match(e2e, /Concurrent requests must create exactly one settlement/);
+assert.match(e2e, /Invalid requests must not reserve earnings/);
+assert.match(e2e, /rejectedState\.earning_status, 'AVAILABLE'/);
+assert.match(e2e, /local_fail_settlement_item_insert/);
+assert.match(e2e, /failed\.status, 500/);
+assert.match(e2e, /failed\.data\.error, 'CREATE_FAILED'/);
+assert.match(e2e, /Failed request must roll back settlement/);
+assert.match(e2e, /Failed request must roll back settlement items/);
+assert.match(e2e, /Failed request must restore AVAILABLE earnings/);
+assert.match(e2e, /Failed request must roll back settlement audit/);
+assert.match(e2e, /drop trigger if exists local_fail_settlement_item_insert/);
+const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
+if (dirty) console.warn('NOTICE: working tree has uncommitted changes');
+console.log('PASS payout release static preflight; production environment, credentials, database, and deployed HTTP behavior NOT verified');

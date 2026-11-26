@@ -7,6 +7,7 @@ const migrations = [
   "0000_initial.sql",
   "0001_advertiser_users.sql",
   "0002_notifications.sql",
+  "0003_posting_finance.sql",
   "0005_audit_logs.sql",
   "0006_login_attempts.sql",
   "0011_settlement_item_uniqueness.sql",
@@ -341,7 +342,7 @@ test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validate
   assert.match(source, /PAYOUT_TEST_ISOLATION_CONFIRMED/);
   assert.match(source, /PAYOUT_EXTERNAL_EFFECTS_DISABLED/);
   assert.match(source, /PAYOUT_PREVIEW_READ_ONLY/);
-  assert.match(source, /mypickup-payout-test-/);
+  assert.match(source, /await fetchVerifiedPreview/);
   assert.match(source, /response\.status, 401/);
   assert.match(source, /cache-control/);
   assert.match(source, /redirect: "manual"/);

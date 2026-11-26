@@ -1,23 +1,29 @@
 import assert from "node:assert/strict";
+import { fetchVerifiedPreview } from "./verify-payout-preview-identity.mjs";
 
 const base = process.env.PAYOUT_PREVIEW_URL;
 assert.ok(base, "PAYOUT_PREVIEW_URL is required");
 const url = new URL(base);
 assert.equal(url.protocol, "https:", "HTTPS Preview required");
-assert.ok(url.hostname.startsWith("mypickup-payout-test-"), "Only dedicated payout Preview deployments are permitted");
+assert.match(url.hostname, /^mypickup-payout-integration-isolated-[a-z0-9]+\.vercel\.app$/, "Only dedicated payout Preview candidates are permitted");
 assert.ok(url.hostname.endsWith(".vercel.app"), "Only Vercel Preview host is permitted");
 assert.equal(url.pathname, "/", "Use deployment root URL only");
 assert.equal(url.search, "", "Preview URL must not contain a query");
 assert.equal(url.hash, "", "Preview URL must not contain a fragment");
+assert.equal(url.username, "", "Preview URL must not embed credentials");
+assert.equal(url.password, "", "Preview URL must not embed credentials");
+assert.equal(url.port, "", "Preview URL must use standard HTTPS port");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes");
-assert.notEqual(process.env.VERCEL_ENV, "production");
+assert.equal(process.env.VERCEL_ENV, "preview", "Payout Preview smoke requires VERCEL_ENV=preview");
+assert.notEqual(process.env.NODE_ENV, "production", "Do not run payout Preview smoke in a production Node environment");
 assert.equal(process.env.PAYOUT_EXTERNAL_EFFECTS_DISABLED, "yes",
   "Payout Preview smoke must explicitly disable external effects");
 assert.equal(process.env.PAYOUT_PREVIEW_READ_ONLY, "yes",
   "Explicit read-only smoke consent is required");
 
 
+await fetchVerifiedPreview(url.hostname, process.env.PAYOUT_PREVIEW_COMMIT ?? "", process.env.VERCEL_TOKEN);
 const headers = { accept: "application/json" };
 if (process.env.PAYOUT_PREVIEW_BYPASS_TOKEN) {
   headers["x-vercel-protection-bypass"] = process.env.PAYOUT_PREVIEW_BYPASS_TOKEN;

@@ -9,7 +9,7 @@ assert.ok(["postgres:", "postgresql:"].includes(parsed.protocol), "PostgreSQL UR
 assert.equal(parsed.pathname, "/mypickup_payout_test", "Only the dedicated payout test database is allowed");
 assert.ok(parsed.username && parsed.password, "Dedicated test database credentials required");
 assert.equal(parsed.searchParams.get("sslmode"), "require", "Explicit TLS requirement is mandatory");
-assert.equal(parsed.hostname.endsWith(".neon.tech"), true, "Dedicated Neon hostname required");
+assert.ok(["ep-dry-frog-berkq3yn.c-9.us-east-2.aws.neon.tech", "ep-dry-frog-berkq3yn-pooler.c-9.us-east-2.aws.neon.tech"].includes(parsed.hostname), "Verified isolated Neon endpoint required");
 assert.equal(parsed.port, "", "Unexpected database port");
 assert.equal(process.env.PAYOUT_TEST_PROJECT_ID, "orange-salad-93665842", "Dedicated Neon project confirmation required");
 assert.equal(process.env.PAYOUT_TEST_ISOLATION_CONFIRMED, "yes", "Explicit isolation confirmation required");

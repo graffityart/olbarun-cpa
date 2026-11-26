@@ -86,3 +86,30 @@ Before any authenticated HTTP test:
 - **Do not run `scripts/seed-test-users.mjs` unchanged**: it contains fixed `@olbarunad.kr` email addresses. Use reserved invalid domains (e.g. `.invalid`) for synthetic identities and disable all external notification/postback paths before seeding.
 - Next gate: apply reviewed app migrations **only to this test project**, create non-deliverable synthetic identities and earnings, and configure a dedicated test deployment. Never change the existing Preview/Production `DATABASE_URL` because their resources may be shared.
 - The existing `scripts/check-payout-phase1-staging.mjs` validates configuration assertions but does not connect to a database or verify notification isolation. Actual authenticated E2E tests remain blocked until runtime isolation is independently verified.
+## Verification update (2026-11-23, PR #83)
+
+- Draft PR #83 targets `release/payout-phase1-20261110`; current proposed head `0335bacc607586d3313feaa9a83959ae9adfa4a5`. Do not merge or deploy without explicit production approval.
+- GitHub Actions on this exact head: CPA checks run 45123212736, CPA and settlement tests run 45123212804, Phase 1 payout release safety run 45123212777: all completed successfully.
+- The minimum payout schema plan now includes `0003_posting_finance.sql`, matching the authenticated payout fixture and the `earnings.posting_submission_id` schema dependency.
+- Authenticated partner/admin HTTP lifecycle was exercised locally against a freshly created disposable PostgreSQL 16 database, with synthetic identities, restricted loopback access and external effects disabled. The exercised path included request, duplicate rejection, authorization boundaries, approve, paid confirmation and audit assertions. This does not establish the full 15-step acceptance checklist: reject flow, UI timeout, and notification delivery still need independent coverage.
+- Vercel created a READY Preview deployment from the PR branch; this does not imply production readiness. Production is still on `main` commit `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1` at the time of inspection.
+- Vercel environment-variable inventory shows `DATABASE_URL` configured for both Preview and Production, but encrypted values were not inspected; isolation is not established. Production Neon project access is not available through the currently connected Neon integration, so production schema state remains unverified.
+- Keep KYC excluded and preserve the no-production-writes rule. Release remains blocked pending production schema/environment verification and explicit approval.
+
+## Verification update (2026-11-23, commit 6d8969c)
+
+- The four reviewed local commits (`49d7579`, `0f4d750`, `733f1f6`, `6d8969c`) were pushed together to `fix/payout-origin-test-crlf-20261123`; the draft PR #83 remains unmerged.
+- GitHub Actions on `6d8969cb7656162ee28b134f392a806bf5f601d9` all completed successfully: CPA checks 45126973472, CPA and settlement tests 45126973535, and Phase 1 payout release safety 45126973576.
+- Vercel Preview `dpl_Fm768NS1BmxWNDvoyRpT17FNd38v` is READY for this commit. Production remains at `90c7eff8163193d4b45fabaf0f4a8cc6e5c415f1`; no production merge or deployment occurred.
+- Authenticated HTTP tests against disposable localhost PostgreSQL 16 now cover valid and invalid partner requests, concurrent duplicate rejection, APPROVE/PAID and REJECT lifecycles, earning release, and audit consistency. The HTTP test exited 0. These tests did not use Vercel Preview or production data.
+- All 26 database-backed settlement/concurrency/rollback tests passed against a separate disposable localhost PostgreSQL 16 instance, with zero skipped. TypeScript and the five release preflight tests also passed.
+- Vercel metadata shows one `DATABASE_URL` variable targeted at both `production` and `preview`. Its secret value was not decrypted; therefore Preview/Production database isolation is **not proven**. Do not perform authenticated write tests on the shared Preview deployment or assume the dedicated synthetic Neon project is wired to it.
+- Remaining release gates: establish isolated Preview DB and external-effect isolation, verify production schema and migration state through authorized read-only access, complete UI/notification acceptance checks, and obtain explicit production approval. Do not enable KYC as part of phase 1.
+## Verification update (2026-11-23, commit 5a581f3)
+
+- Draft PR #83 development branch `fix/payout-origin-test-crlf-20261123` head `5a581f3d2493e8e92d44b2ea6fe369eb095417ab` was pushed without merging to `main`.
+- GitHub Actions on that exact commit all succeeded: CPA checks run 45129531010, CPA and settlement tests run 45129531039, and Phase 1 payout release safety run 45129531119.
+- Vercel Preview deployment `dpl_7CeHdSxzwvjt2g58Eg569bKkvgw8` is READY; this is a Preview build, not a production rollout.
+- Local disposable PostgreSQL 16 authenticated HTTP test passed after injecting a synthetic `settlement_items` INSERT failure: HTTP 500 `CREATE_FAILED`, settlement and item rollback, AVAILABLE earning preserved, and no orphaned settlement audit. Existing concurrent, PAID, and REJECT scenarios also passed. The disposable database and test server were removed after testing; unrelated n8n service was not modified.
+- Static release preflight now requires rollback failure injection and rollback assertions; all 7 preflight tests, 23 staging guard tests, and 14 local authentication guard tests passed. The static preflight does not replace the disposable HTTP test.
+- **Release remains blocked**: Preview and Production share the same Vercel `DATABASE_URL` environment variable target metadata, so actual runtime isolation is not proven. No authenticated write tests against Preview or Production. Confirm production schema read-only, dedicated synthetic runtime isolation, notifications, and explicit operator approval before production merge/deploy.

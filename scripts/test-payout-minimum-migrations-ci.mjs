@@ -29,6 +29,7 @@ const files = [
   "0000_initial.sql",
   "0001_advertiser_users.sql",
   "0002_notifications.sql",
+  "0003_posting_finance.sql",
   "0005_audit_logs.sql",
   "0006_login_attempts.sql",
   "0011_settlement_item_uniqueness.sql",
