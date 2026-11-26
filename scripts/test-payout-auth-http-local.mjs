@@ -7,7 +7,7 @@ assert.notEqual(process.env.VERCEL_ENV, 'production');
 assert.equal(dbUrl.protocol, 'postgresql:');
 assert.equal(dbUrl.hostname, '127.0.0.1');
 assert.equal(dbUrl.port, '55441');
-assert.equal(dbUrl.pathname, '/payout_minimal_auth_test_20261126');
+assert.equal(dbUrl.pathname, '/payout_minimal_harden_auth_test_20261126');
 const base = 'http://127.0.0.1:3219';
 const sql = postgres(dbUrl.toString(), { max: 1 });
 const password = process.env.PAYOUT_LOCAL_SYNTHETIC_PASSWORD;

@@ -9,13 +9,13 @@ assert.notEqual(process.env.VERCEL_ENV, 'production');
 assert.equal(url.protocol, 'postgresql:');
 assert.equal(url.hostname, '127.0.0.1');
 assert.equal(url.port, '55441');
-assert.equal(url.pathname, '/payout_minimal_auth_test_20261126');
+assert.equal(url.pathname, '/payout_minimal_harden_auth_test_20261126');
 const password = process.env.PAYOUT_LOCAL_SYNTHETIC_PASSWORD;
 assert.ok(password?.length >= 16);
 const sql = postgres(url.toString(), { max: 1 });
 try {
   const [identity] = await sql`select current_database() as name, current_setting('server_version_num')::int as version`;
-  assert.equal(identity.name, 'payout_minimal_auth_test_20261126');
+  assert.equal(identity.name, 'payout_minimal_harden_auth_test_20261126');
   assert.ok(identity.version >= 160000, 'PostgreSQL 16+ required');
   const existing = await sql`select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE'`;
   assert.equal(existing.length, 0, 'Seeding is permitted only on a completely empty disposable database');
