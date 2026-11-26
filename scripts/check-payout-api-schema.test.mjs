@@ -342,7 +342,7 @@ test("isolated Preview HTTP smoke uses unauthenticated GET and POST and validate
   assert.match(source, /PAYOUT_TEST_ISOLATION_CONFIRMED/);
   assert.match(source, /PAYOUT_EXTERNAL_EFFECTS_DISABLED/);
   assert.match(source, /PAYOUT_PREVIEW_READ_ONLY/);
-  assert.match(source, /mypickup-payout-integration-isolated-3cun8dibg/);
+  assert.match(source, /await fetchVerifiedPreview/);
   assert.match(source, /response\.status, 401/);
   assert.match(source, /cache-control/);
   assert.match(source, /redirect: "manual"/);

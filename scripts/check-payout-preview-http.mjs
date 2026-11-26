@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
+import { fetchVerifiedPreview } from "./verify-payout-preview-identity.mjs";
 
 const base = process.env.PAYOUT_PREVIEW_URL;
 assert.ok(base, "PAYOUT_PREVIEW_URL is required");
 const url = new URL(base);
 assert.equal(url.protocol, "https:", "HTTPS Preview required");
-assert.equal(url.hostname, "mypickup-payout-integration-isolated-3cun8dibg.vercel.app", "Only the verified dedicated payout Preview deployment is permitted");
+assert.match(url.hostname, /^mypickup-payout-integration-isolated-[a-z0-9]+\.vercel\.app$/, "Only dedicated payout Preview candidates are permitted");
 assert.ok(url.hostname.endsWith(".vercel.app"), "Only Vercel Preview host is permitted");
 assert.equal(url.pathname, "/", "Use deployment root URL only");
 assert.equal(url.search, "", "Preview URL must not contain a query");
@@ -22,6 +23,7 @@ assert.equal(process.env.PAYOUT_PREVIEW_READ_ONLY, "yes",
   "Explicit read-only smoke consent is required");
 
 
+await fetchVerifiedPreview(url.hostname, process.env.PAYOUT_PREVIEW_COMMIT ?? "", process.env.VERCEL_TOKEN);
 const headers = { accept: "application/json" };
 if (process.env.PAYOUT_PREVIEW_BYPASS_TOKEN) {
   headers["x-vercel-protection-bypass"] = process.env.PAYOUT_PREVIEW_BYPASS_TOKEN;

@@ -31,7 +31,7 @@ if (db) {
 let base;
 try { base = new URL(process.env.PAYOUT_STAGING_BASE_URL ?? ""); } catch { if (process.env.PAYOUT_STAGING_BASE_URL) errors.push("staging URL is invalid"); }
 if (base && base.pathname !== "/") errors.push("staging base URL must have root path");
-if (base && (base.hostname !== "mypickup-payout-integration-isolated-3cun8dibg.vercel.app" || !base.hostname.endsWith(".vercel.app"))) errors.push("staging must use a dedicated payout test Vercel hostname");
+if (base && !/^mypickup-payout-integration-isolated-[a-z0-9]+\.vercel\.app$/.test(base.hostname)) errors.push("staging must use a dedicated payout test Vercel hostname");
 if (base && base.port) errors.push("staging must use standard HTTPS port");
 if (base && base.protocol !== "https:") errors.push("staging URL must use HTTPS");
 if (base && (base.hostname.toLowerCase() === "mypickup.kr" || base.hostname.toLowerCase().endsWith(".mypickup.kr"))) errors.push("production domain and its subdomains are forbidden");
@@ -49,5 +49,5 @@ if (errors.length) {
 } else {
   assert.ok(db && base);
   console.log("Payout staging preflight: configuration attestations passed. No network calls or payouts were performed.");
-  console.log("Manual verification of resource isolation and test identities is still required.");
+  console.log("Manual verification of resource isolation and test identities is still required. This offline preflight does not authorize HTTP requests; verify deployment identity through the Vercel API first.");
 }

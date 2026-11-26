@@ -52,3 +52,12 @@ for (const [label, overrides] of [
     assert.match(result.stderr, /AssertionError/);
   });
 }
+
+test("preview smoke blocks new deployment without API credentials", () => {
+  const result = check("https://mypickup-payout-integration-isolated-qwuqtkzqw.vercel.app/", {
+    PAYOUT_PREVIEW_COMMIT: "bc340f9a2ab87c07cfe130cc065a501e3c661d37",
+    VERCEL_TOKEN: "",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Vercel API token required/);
+});
