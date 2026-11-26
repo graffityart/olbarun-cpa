@@ -7,6 +7,9 @@ function check(url, overrides = {}) {
   return spawnSync(process.execPath, ['scripts/check-payout-preview-http.mjs'], {
     env: {
       ...process.env,
+      NODE_ENV: 'test',
+      VERCEL_TOKEN: '',
+      PAYOUT_PREVIEW_COMMIT: '',
       PAYOUT_PREVIEW_URL: url,
       PAYOUT_TEST_PROJECT_ID: 'orange-salad-93665842',
       PAYOUT_TEST_ISOLATION_CONFIRMED: 'yes',
